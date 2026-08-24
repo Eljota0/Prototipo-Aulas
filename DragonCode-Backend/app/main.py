@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import engine, Base
-from app.routes import auth, aulas, usuarios, progreso
+from app.database import engine, Base, SessionLocal
+from app.initial_data import seed_initial_data
+from app.routes import academico, auth, aulas, notificaciones, usuarios, progreso
 
 # Crear tablas automáticamente al iniciar
 Base.metadata.create_all(bind=engine)
+with SessionLocal() as db:
+    seed_initial_data(db)
 
 app = FastAPI(
     title="DragonCode API",
@@ -25,7 +28,9 @@ app.add_middleware(
 app.include_router(auth.router,      prefix="/api/auth",     tags=["Autenticación"])
 app.include_router(usuarios.router,  prefix="/api/usuarios", tags=["Usuarios & Tienda"])
 app.include_router(aulas.router,     prefix="/api/aulas",    tags=["Aulas Virtuales"])
+app.include_router(academico.router, prefix="/api/aulas",    tags=["Seguimiento Académico"])
 app.include_router(progreso.router,  prefix="/api/progreso", tags=["Progreso del Juego"])
+app.include_router(notificaciones.router, prefix="/api/notificaciones", tags=["Notificaciones"])
 
 @app.get("/", tags=["Root"])
 def read_root():

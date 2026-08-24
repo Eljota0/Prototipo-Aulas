@@ -5,13 +5,24 @@ from sqlalchemy.orm import Session
 from typing import List, Any
 
 from app.database import get_db
-from app.models.models import AulaVirtual, AulaJugador, Usuario, RetoNivel, RetoPersonalizado, EstadoAula, RolUsuario, TipoReto
+from app.models.models import (
+    AulaVirtual,
+    AulaJugador,
+    Usuario,
+    RetoNivel,
+    RetoPersonalizado,
+    ProgresoAula,
+    Notificacion,
+    EstadoAula,
+    EstadoReto,
+)
 from app.schemas.aula import (
     AulaCreate, AulaResponse, AulaDetalleResponse,
     UnirseAulaRequest, JugadorEnAulaResponse, RetoNivelResponse,
     RetoPersonalizadoCreate, RetoPersonalizadoResponse
 )
 from app.core.deps import get_current_user
+from app.core.academic import normalizar_fecha_utc
 
 router = APIRouter()
 
@@ -80,7 +91,6 @@ def mis_aulas(
                 # Si hay retos, asumimos False hasta encontrar uno que no esté completado
                 actividades_pendientes = False
                 for reto in retos_aula:
-                    from app.models.progreso import ProgresoAula  # Importación local para evitar dependencias cruzadas si no está
                     progreso = db.query(ProgresoAula).filter(
                         ProgresoAula.reto_personalizado_id == reto.id,
                         ProgresoAula.jugador_id == current_user.id,
@@ -132,6 +142,17 @@ def unirse_aula(
         jugador_id=current_user.id
     )
     db.add(nueva_inscripcion)
+
+    retos_publicados = db.query(RetoPersonalizado).filter(
+        RetoPersonalizado.aula_id == aula.id,
+    ).all()
+    for reto in retos_publicados:
+        db.add(Notificacion(
+            usuario_id=current_user.id,
+            titulo="Actividad disponible",
+            mensaje=f"La actividad '{reto.titulo}' está disponible en el aula '{aula.nombre_aula}'.",
+        ))
+
     db.commit()
 
     return {
@@ -252,12 +273,24 @@ def crear_reto_en_aula(
     # 4. Crear el reto personalizado en la BD
     nuevo_reto = RetoPersonalizado(
         aula_id=aula_id,
+        reto_nivel_id=nivel_oficial.id,
         titulo=datos.titulo,
+        estado=EstadoReto.publicado,
         tipo_reto=nivel_oficial.tipo_reto,   # Hereda el tipo del nivel oficial
         parametros_evaluacion=parametros_dict,
-        recompensa_estrellas=datos.recompensa_estrellas
+        recompensa_estrellas=datos.recompensa_estrellas,
+        fecha_limite=normalizar_fecha_utc(datos.fecha_limite),
     )
     db.add(nuevo_reto)
+
+    inscripciones = db.query(AulaJugador).filter(AulaJugador.aula_id == aula_id).all()
+    for inscripcion in inscripciones:
+        db.add(Notificacion(
+            usuario_id=inscripcion.jugador_id,
+            titulo="Nueva actividad asignada",
+            mensaje=f"Se publicó la actividad '{datos.titulo}' en el aula '{aula.nombre_aula}'.",
+        ))
+
     db.commit()
     db.refresh(nuevo_reto)
     return nuevo_reto
@@ -265,8 +298,6 @@ def crear_reto_en_aula(
 # ------------------------------------------------------------------
 # VER RETOS DEL AULA (Anfitrión o Jugador inscrito)
 # ------------------------------------------------------------------
-from app.models.models import AulaVirtual, AulaJugador, Usuario, RetoNivel, RetoPersonalizado, EstadoAula, RolUsuario, TipoReto, ProgresoAula
-
 @router.get("/{aula_id}/retos", response_model=list[RetoPersonalizadoResponse])
 def retos_del_aula(
     aula_id: str,

@@ -118,12 +118,15 @@ class RetoPersonalizado(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     aula_id = Column(String, ForeignKey("aulas_virtuales.id"), nullable=False)
+    reto_nivel_id = Column(Integer, ForeignKey("retos_niveles.id"), nullable=False)
     titulo = Column(String, nullable=False)
     estado = Column(Enum(EstadoReto), default=EstadoReto.borrador)
     tipo_reto = Column(Enum(TipoReto), default=TipoReto.laberinto)
     parametros_evaluacion = Column(JSON, nullable=False)
     recompensa_estrellas = Column(Integer, default=5)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
+    fecha_limite = Column(DateTime, nullable=True)
+    fecha_cierre = Column(DateTime, nullable=True)
 
     # Relaciones
     aula = relationship("AulaVirtual", back_populates="retos")

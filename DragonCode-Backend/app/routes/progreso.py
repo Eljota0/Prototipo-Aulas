@@ -1,49 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
 from typing import Any
 
 from app.database import get_db
-from app.models.models import ProgresoJugador, RetoNivel, Usuario, RetoPersonalizado, ProgresoAula
+from app.models.models import (
+    ProgresoJugador,
+    RetoNivel,
+    Usuario,
+    RetoPersonalizado,
+    ProgresoAula,
+    AulaVirtual,
+    Notificacion,
+)
 from app.schemas.progreso import GuardarProgresoRequest, ProgresoResponse
 from app.core.deps import get_current_user
+from app.core.scoring import calcular_calificacion, calcular_estrellas
+from app.core.academic import ahora_utc, plazo_vencido
 
 router = APIRouter()
-
-# ------------------------------------------------------------------
-# LÓGICA DE CALIFICACIÓN: Calcula estrellas según el rendimiento
-# ------------------------------------------------------------------
-def calcular_estrellas(tiempo_segundos: int, intentos: int, parametros: dict) -> int:
-    """
-    Lógica de calificación basada en los parámetros del nivel.
-    Los parámetros se guardan en la BD en la columna 'parametros_evaluacion' del RetoNivel.
-    
-    Ejemplo de parámetros:
-    {
-      "tiempo_3_estrellas": 60,   -> Completa en menos de 60s = 3 estrellas
-      "tiempo_2_estrellas": 120,  -> Completa en menos de 120s = 2 estrellas
-      "intentos_max_sin_penalidad": 2  -> Más de 2 intentos = -1 estrella
-    }
-    """
-    # Extraer parámetros con valores por defecto seguros
-    t3 = parametros.get("tiempo_3_estrellas", 60)
-    t2 = parametros.get("tiempo_2_estrellas", 120)
-    penalidad_intentos = parametros.get("intentos_max_sin_penalidad", 3)
-
-    # Calcular base de estrellas por tiempo
-    if tiempo_segundos <= t3:
-        estrellas = 3
-    elif tiempo_segundos <= t2:
-        estrellas = 2
-    else:
-        estrellas = 1
-
-    # Aplicar penalidad por intentos excesivos
-    if intentos > penalidad_intentos:
-        estrellas = max(1, estrellas - 1)
-
-    return estrellas
-
 
 # ------------------------------------------------------------------
 # GUARDAR PROGRESO DE UN NIVEL (Modo Aventura)
@@ -72,11 +46,25 @@ def guardar_progreso(
         if datos.reto_personalizado_id:
             query = query.filter(RetoPersonalizado.id == datos.reto_personalizado_id)
         else:
-            query = query.filter(RetoPersonalizado.tipo_reto == reto.tipo_reto)
+            query = query.filter(RetoPersonalizado.reto_nivel_id == datos.reto_nivel_id)
             
         reto_personalizado = query.first()
-        if reto_personalizado:
-            parametros = reto_personalizado.parametros_evaluacion or parametros
+        if not reto_personalizado:
+            raise HTTPException(
+                status_code=404,
+                detail="La actividad indicada no existe o no pertenece al aula.",
+            )
+        if reto_personalizado.reto_nivel_id != datos.reto_nivel_id:
+            raise HTTPException(
+                status_code=409,
+                detail="La actividad no corresponde al nivel enviado.",
+            )
+        if reto_personalizado.fecha_cierre is not None or plazo_vencido(reto_personalizado.fecha_limite):
+            raise HTTPException(
+                status_code=409,
+                detail="La actividad está cerrada o su fecha límite ya venció.",
+            )
+        parametros = reto_personalizado.parametros_evaluacion or parametros
 
     # 2. Calcular las estrellas ganadas en este intento
     estrellas_ganadas = calcular_estrellas(
@@ -84,6 +72,7 @@ def guardar_progreso(
         datos.intentos,
         parametros
     )
+    calificacion_numerica = calcular_calificacion(datos.intentos)
 
     # 3. Buscar si ya existe un registro previo de este jugador en este nivel
     progreso_existente = db.query(ProgresoJugador).filter(
@@ -103,7 +92,7 @@ def guardar_progreso(
             intentos=datos.intentos,
             tiempo_segundos=datos.tiempo_segundos,
             codigo_solucion=datos.codigo_solucion,
-            fecha_completado=datetime.utcnow()
+            fecha_completado=ahora_utc()
         )
         db.add(nuevo_progreso)
         # Sumar estrellas al perfil del usuario (primera vez)
@@ -120,13 +109,13 @@ def guardar_progreso(
             progreso_existente.tiempo_segundos = datos.tiempo_segundos
             progreso_existente.intentos = datos.intentos
             progreso_existente.codigo_solucion = datos.codigo_solucion
-            progreso_existente.fecha_completado = datetime.utcnow()
+            progreso_existente.fecha_completado = ahora_utc()
 
         # Si el resultado es igual o peor, no tocamos nada (pero sí actualizamos intentos)
         progreso_existente.intentos += 1
 
     # 3.5 Guardar o actualizar progreso de aula si existe reto_personalizado
-    if datos.aula_id and 'reto_personalizado' in locals() and reto_personalizado:
+    if datos.aula_id and reto_personalizado:
         progreso_aula = db.query(ProgresoAula).filter(
             ProgresoAula.jugador_id == current_user.id,
             ProgresoAula.reto_personalizado_id == reto_personalizado.id
@@ -138,19 +127,36 @@ def guardar_progreso(
                 reto_personalizado_id=reto_personalizado.id,
                 completado=True,
                 estrellas_obtenidas=estrellas_ganadas,
+                calificacion_numerica=calificacion_numerica,
                 intentos=datos.intentos,
                 tiempo_segundos=datos.tiempo_segundos,
                 codigo_solucion=datos.codigo_solucion,
-                fecha_completado=datetime.utcnow()
+                fecha_completado=ahora_utc()
             )
             db.add(nuevo_progreso_aula)
+
+            aula = db.query(AulaVirtual).filter(AulaVirtual.id == datos.aula_id).first()
+            if aula:
+                db.add(Notificacion(
+                    usuario_id=aula.anfitrion_id,
+                    titulo="Actividad entregada",
+                    mensaje=(
+                        f"{current_user.nombre} {current_user.apellido} completó "
+                        f"'{reto_personalizado.titulo}' con calificación {calificacion_numerica}."
+                    ),
+                ))
         else:
-            if estrellas_ganadas > progreso_aula.estrellas_obtenidas:
-                progreso_aula.estrellas_obtenidas = estrellas_ganadas
+            mejora_estrellas = estrellas_ganadas > (progreso_aula.estrellas_obtenidas or 0)
+            mejora_calificacion = calificacion_numerica > (progreso_aula.calificacion_numerica or 0)
+            if mejora_estrellas or mejora_calificacion:
+                if mejora_estrellas:
+                    progreso_aula.estrellas_obtenidas = estrellas_ganadas
+                if mejora_calificacion:
+                    progreso_aula.calificacion_numerica = calificacion_numerica
+                progreso_aula.intentos = datos.intentos
                 progreso_aula.tiempo_segundos = datos.tiempo_segundos
                 progreso_aula.codigo_solucion = datos.codigo_solucion
-                progreso_aula.fecha_completado = datetime.utcnow()
-            progreso_aula.intentos += 1
+                progreso_aula.fecha_completado = ahora_utc()
 
     # 4. Guardar todos los cambios en la BD en una sola transacción
     db.commit()
