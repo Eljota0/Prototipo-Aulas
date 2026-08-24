@@ -1,0 +1,357 @@
+/* ================================================================
+   KEYFRAMES (Específicas de la Tienda)
+================================================================ */
+@keyframes selectedPulse {
+  0%, 100% { box-shadow: 0 0 0 2px #82F4E0, 0 0 10px rgba(130, 244, 224, 0.3); }
+  50%       { box-shadow: 0 0 0 2px #82F4E0, 0 0 24px rgba(130, 244, 224, 0.65); }
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(28px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ================================================================
+   MODALES (Tienda)
+================================================================ */
+.shop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.87);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInOverlay 0.2s ease;
+}
+
+.shop-modal {
+  position: relative;
+  width: min(90vw, 900px); /* Ensanchado significativamente */
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* El scroll ahora está en la cuadrícula */
+  background: rgba(4, 9, 7, 0.96); /* Mucho más oscuro, casi negro con leve tono esmeralda */
+  border: 2px solid #82F4E0;
+  border-radius: 0;
+  box-shadow:
+    0 0 0 2px #000,
+    0 0 40px rgba(130, 244, 224, 0.22),
+    0 20px 60px rgba(0, 0, 0, 0.85);
+  padding: 32px 32px 36px;
+  animation: slideUpModal 0.25s ease;
+}
+
+.avatars-grid::-webkit-scrollbar { width: 6px; }
+.avatars-grid::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
+.avatars-grid::-webkit-scrollbar-thumb { background: rgba(130,244,224,0.35); }
+
+.shop-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.shop-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.shop-stars-counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--chip-bg-solid-star);
+  border: 1px solid #FFD700;
+  padding: 6px 12px;
+}
+
+.shop-stars-counter .star-icon {
+  color: #FFD700;
+  font-size: 1.1rem;
+}
+
+.shop-stars-counter .star-count {
+  font-family: 'TuFuentePixel', monospace;
+  color: #FFD700;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+.shop-title {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  color: #82F4E0;
+  letter-spacing: 2px;
+  text-shadow: 0 0 14px rgba(130, 244, 224, 0.5);
+  margin: 0;
+}
+
+.shop-close-btn {
+  background: #1a0808;
+  border: 1px solid #ff6666;
+  color: #ff9999;
+  font-size: 1.1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.2s ease;
+}
+
+.shop-close-btn:hover {
+  filter: brightness(1.3);
+}
+
+.shop-subtitle {
+  flex-shrink: 0;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.78rem;
+  color: rgba(200, 200, 225, 0.5);
+  margin: 0 0 22px 0;
+  line-height: 1.5;
+}
+
+.avatars-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  overflow-y: auto;
+  padding-right: 12px; /* Espacio para el scrollbar */
+  margin-right: -12px; /* Compensar el padding para no afectar el ancho total */
+  padding-bottom: 20px; /* Espacio extra al final del scroll */
+}
+
+.avatar-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(130, 244, 224, 0.2);
+  border-radius: 0;
+  padding: 16px 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.avatar-card:hover {
+  background: rgba(130, 244, 224, 0.08);
+  border-color: rgba(130, 244, 224, 0.5);
+  transform: translateY(-4px);
+}
+
+.avatar-card.is-selected {
+  border-color: #82F4E0;
+  background: rgba(130, 244, 224, 0.1);
+  animation: selectedPulse 2.2s ease-in-out infinite;
+}
+
+.avatar-card-img {
+  width: clamp(140px, 35vw, 180px); /* Base layout size */
+  height: clamp(140px, 35vw, 180px);
+  object-fit: contain;
+  transform: scale(1.8); /* Doble de grandes visualmente */
+  transform-origin: center center;
+  margin: 10px 0; /* Darle un poco de aire al escalar */
+}
+
+.avatar-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.avatar-card-name {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.9rem;
+  color: rgba(215, 215, 235, 0.9);
+  text-shadow: 1px 1px 0 #000;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.avatar-card-price {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.85rem;
+  color: #FFD700;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 4px 10px;
+  border: 1px solid #FFD700;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.avatar-card-desc {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.65rem;
+  color: rgba(215, 215, 235, 0.6);
+  text-align: center;
+  line-height: 1.4;
+  margin: 0;
+  padding: 0 8px;
+}
+
+.avatar-active-badge {
+  position: absolute;
+  bottom: -10px;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.75rem;
+  color: #82F4E0;
+  background: #091a14;
+  border: 1px solid rgba(130, 244, 224, 0.4);
+  padding: 4px 12px;
+  letter-spacing: 1px;
+}
+
+/* ================================================================
+   MODAL DE CONFIRMACIÓN DE COMPRA
+================================================================ */
+.shop-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 2000; /* Debe estar por encima de la tienda */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInOverlay 0.2s ease;
+}
+
+.shop-confirm-modal {
+  background: #050d0a;
+  border: 2px solid #FFD700;
+  padding: 30px;
+  width: min(90vw, 400px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 0 0 2px #000, 0 10px 40px rgba(0, 0, 0, 0.8);
+  /* Use fadeInOverlay or slideUp if scaleIn is missing, actually let's add scaleIn */
+  animation: scaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.confirm-title {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.2rem;
+  color: #FFD700;
+  margin: 0;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.confirm-text {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.85rem;
+  color: #e0e0f0;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.confirm-price {
+  color: #FFD700;
+  font-size: 1rem;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.confirm-actions button {
+  flex: 1;
+  padding: 12px;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.8rem;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel {
+  background: #1a0808;
+  border: 1px solid #ff6666;
+  color: #ff9999;
+}
+.btn-cancel:hover { background: #331010; }
+
+.btn-confirm {
+  background: #091a14;
+  border: 1px solid #FFD700;
+  color: #FFD700;
+}
+.btn-confirm:hover { background: #133328; }
+
+/* ================================================================
+   RESPONSIVE — MODO CELULAR (max-width: 768px)
+================================================================ */
+@media (max-width: 768px) {
+  .shop-modal {
+    width: 95vw;
+    padding: 18px 14px 22px;
+    overflow-x: hidden; /* Evitar scroll lateral en la modal */
+  }
+
+  /* Ajustar la cabecera para que no se desborde en celular */
+  .shop-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .shop-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .shop-title {
+    font-size: 1.2rem;
+  }
+
+  .avatars-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* Reducir tamaño base en celular para que entren 2 por fila */
+  .avatar-card-img {
+    width: clamp(80px, 25vw, 110px);
+    height: clamp(80px, 25vw, 110px);
+    transform: scale(1.7); 
+    margin: 5px 0;
+  }
+
+  .avatar-card-desc {
+    font-size: 0.6rem;
+    padding: 0 4px;
+  }
+
+  .avatar-card-price {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+  }
+}

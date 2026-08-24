@@ -1,0 +1,25 @@
+<app-cyber-layout>
+
+  <form class="cyber-form" (submit)="submitForm($event)">
+
+    <!-- Encabezado -->
+    <h2 class="cyber-title">RECUPERAR ACCESO</h2>
+    <p class="cyber-text">
+      Ingresa tu dirección de correo electrónico asociada. Te enviaremos un enlace encriptado para restaurar tu contraseña.
+    </p>
+
+    <!-- Campo de Entrada -->
+    <div class="cyber-input-group">
+      <label for="recovery-email">Correo Electrónico</label>
+      <input type="email" id="recovery-email" name="email" [(ngModel)]="email" #emailModel="ngModel" email required placeholder="draco@dragoncode.com">
+    </div>
+
+    <!-- Fila de acciones: Volver + Enviar Enlace -->
+    <div class="cyber-btn-row">
+      <button type="submit" class="cyber-btn" [disabled]="!emailModel.valid">ENVIAR ENLACE</button>
+      <a routerLink="/login" class="cyber-btn">VOLVER</a>
+    </div>
+
+  </form>
+
+</app-cyber-layout>

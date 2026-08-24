@@ -1,0 +1,231 @@
+/* =========================================
+   PANEL DE CONTROL MANUAL
+   (Variables CSS del diseño visual compartido)
+========================================= */
+:host {
+
+  /* Participa en la columna flex del AppComponent */
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+
+  /* 1. Control del Fondo Oceánico Atmosférico */
+  --color-oceano-centro: #112240; /* El foco de luz (Azul marino brumoso) */
+  --color-oceano-borde: #020c1b;  /* La oscuridad profunda (Azul casi negro) */
+
+  /* Nuevo control estelar: Azul claro vibrante */
+  --color-estrella: #9bc0ff;
+
+  /* 3. Control Geométrico del Panel */
+  --tabla-ancho: 1000px;
+  --tabla-alto-minimo: 450px;
+  --tabla-margen-superior: 15px; /* Controla si se aleja o se solapa con Draco */
+  
+  /* 4. Textura y Materiales */
+  --escala-agua: 700px; 
+  --opacidad-agua: 0.4;
+
+  /* --- Física de la Marea Retro --- */
+  --agua-velocidad: 3s;
+  --agua-distancia-salto: -6px;
+  
+  /* 5. Motor Neón */
+  --color-neon: #77ddca;
+  --grosor-neon: 6px;
+
+  /* 2. Control de Draco Hacker */
+  --draco-tamano: 380px;
+  --draco-posicion-y: 2vh;
+  --draco-velocidad-tipeo: 2.5s;
+}
+
+/* RESET GLOBAL VITAL */
+* { box-sizing: border-box; }
+
+/* =========================================
+   ESCENARIO Y FONDO ATMOSFÉRICO
+========================================= */
+.recovery-layout {
+  position: relative;
+  width: 100%;
+  flex: 1; /* Llena el espacio del :host */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  background-color: #111430;
+}
+
+/* =========================================
+   DRACO HACKER (ANIMACIÓN DE 2 FRAMES)
+========================================= */
+.avatar-container {
+  margin-top: var(--draco-posicion-y);
+  z-index: 10;
+}
+
+/* Animación de entrada suave para evitar pestañeos */
+@keyframes suaveAparicion {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.draco-hacker {
+  width: var(--draco-tamano);
+  height: auto;
+  object-fit: contain;
+  
+  /* Mantiene los píxeles cortantes y nítidos */
+  image-rendering: pixelated; 
+  
+  /* Motor de animación con salto discreto (step-end) y fade-in */
+  animation: hackerTyping var(--draco-velocidad-tipeo) step-end infinite, suaveAparicion 0.4s ease-out forwards;
+}
+
+/* =========================================
+   SISTEMA ESTELAR CIBERNÉTICO
+========================================= */
+
+.starfield {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  background-color: var(--color-estrella);
+  border-radius: 50%;
+  opacity: 0;
+  box-shadow: 0 0 6px var(--color-estrella);
+  will-change: opacity; 
+}
+
+/* =========================================
+   PANEL CIBERNÉTICO (TABLA DE RECUPERACIÓN)
+========================================= */
+
+.recovery-table {
+  /* DIMENSIONES Y POSICIÓN */
+  width: var(--tabla-ancho);
+  min-height: var(--tabla-alto-minimo);
+  margin-top: var(--tabla-margen-superior);
+  
+  position: relative; 
+  z-index: 5;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+
+  /* EL EFECTO NEÓN */
+  border-radius: 12px;
+  border: var(--grosor-neon) solid var(--color-neon);
+
+  /* EL CORTADOR: Obliga a recortar la textura al borde exacto */
+  overflow: hidden; 
+}
+
+/* LA TEXTURA DE AGUA AISLADA (Capa Profunda) */
+.recovery-table::before {
+  content: "";
+  position: absolute;
+  /* EL SANGRADO: Expande la capa para que se meta debajo del borde de neón */
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  z-index: -1; 
+  
+  background-image: url('../../assets/images/recuperarcuenta/aguafondo.png');
+  background-repeat: repeat;
+  background-size: var(--escala-agua);
+  image-rendering: pixelated; 
+
+  opacity: var(--opacidad-agua); 
+
+  animation: retroWaterSway var(--agua-velocidad) step-end infinite;
+  will-change: background-position;
+}
+
+/* Bucle SCSS: Repartición y desincronización aleatoria de las 40 estrellas */
+@for $i from 1 through 40 {
+  .star:nth-child(#{$i}) {
+    $size: random(2) + 1 + px; 
+    width: $size;
+    height: $size;
+    top: random(100) * 1vh;
+    left: random(100) * 1vw;
+    animation: starBlink (random(4) + 4) + s ease-in-out infinite;
+    animation-delay: (random(10) * -1) + s; 
+  }
+}
+
+/* =========================================
+   KEYFRAMES
+========================================= */
+
+/* LA LÍNEA DE TIEMPO (Solo 2 estados) */
+@keyframes hackerTyping {
+  0%   { content: url('../../assets/images/draco/dracoanimaciones/dracohaker/dracohaker1.png'); }
+  50%  { content: url('../../assets/images/draco/dracoanimaciones/dracohaker/dracohaker2.png'); }
+  100% { content: url('../../assets/images/draco/dracoanimaciones/dracohaker/dracohaker1.png'); }
+}
+
+/* Keyframe de respiración estelar */
+@keyframes starBlink {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: 0.6; }
+}
+
+/* =========================================
+   MOTOR DE MAREA (16-BITS)
+========================================= */
+@keyframes retroWaterSway {
+  0%   { background-position: 0px 0px; }
+  50%  { background-position: var(--agua-distancia-salto) 0px; }
+  100% { background-position: 0px 0px; }
+}
+
+/* ============================================ */
+/* MODO CELULAR — Pantallas angostas (Mobile)   */
+/* ============================================ */
+
+@media (max-width: 768px) {
+  
+  :host {
+    --draco-tamano: 300px; 
+    --tabla-ancho: 92vw; 
+    --tabla-alto-minimo: 400px; 
+    --tabla-margen-superior: 30px;
+    --escala-agua: 670px; 
+  }
+
+  .recovery-layout {
+    padding-bottom: 24px; /* El fondo de la pantalla se extiende hasta el footer sin gap */
+  }
+
+  .recovery-table {
+    padding: 30px 20px;
+  }
+}
+
+/* ============================================ */
+/* MODO COMPACTO — Desktop con Zoom o Poca Altura */
+/* ============================================ */
+
+@media (max-height: 700px) and (min-width: 769px) {
+
+  :host {
+    --draco-tamano: 260px; 
+    --tabla-margen-superior: -2px;
+    --tabla-alto-minimo: 280px;
+  }
+
+  .recovery-layout {
+    padding-bottom: 24px; /* El fondo de la pantalla se extiende hasta el footer sin gap */
+  }
+  
+  .recovery-table {
+    padding: 25px 40px; 
+  }
+}

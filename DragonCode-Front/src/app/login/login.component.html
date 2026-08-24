@@ -1,0 +1,79 @@
+<!-- El contenedor maestro con el fondo de la cueva -->
+<div class="login-layout">
+  
+  <!-- La Capa Programática de Runas (Fondo aislado) -->
+  <div class="runes-layer">
+    @for (rune of runes; track $index) {
+      <span class="rune"
+            [style.top]="rune.top"
+            [style.left]="rune.left"
+            [style.color]="rune.color"
+            [style.animation-delay]="rune.delay"
+            [style.animation-duration]="rune.duration"
+            [style.font-size]="rune.fontSize">
+        {{ rune.symbol }}
+      </span>
+    }
+  </div>
+
+  <!-- 1. El cuerpo principal que crecerá para empujar el footer -->
+  <main class="main-content">
+    
+    <!-- 2. La caja fuerte que mantendrá todo centrado de forma segura -->
+    <div class="login-wrapper">
+
+      <!-- La columna central flexible (Tu código original intacto) -->
+      <section class="content-column">
+        
+        <!-- Avatar dinámico -->
+        <div class="avatar-container">
+          <div class="draco-avatar idle-animation"></div>
+        </div>
+
+        <!-- Título del juego -->
+        <div class="title-container">
+          <img src="assets/images/login/titulo.png" alt="Dragon Code" class="game-title">
+        </div>
+
+        <div class="form-container">
+          
+          <form class="login-form">
+            <!-- Título -->
+            <h2 class="form-title">INICIAR SESIÓN</h2>
+
+            <!-- Grupo: Email -->
+            <div class="input-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" [(ngModel)]="email" name="email" autocomplete="off" spellcheck="false" placeholder="draco@dragoncode.com">
+            </div>
+
+            <!-- Grupo: Contraseña -->
+            <div class="input-group">
+              <label for="password">Contraseña</label>
+              <input type="password" id="password" [(ngModel)]="password" name="password" placeholder="••••••••">
+            </div>
+
+            <!-- NUEVO: Botones de Acción -->
+          <button type="button" (click)="iniciarSesion()" [disabled]="isLoading" class="retro-btn primary-btn">
+            {{ isLoading ? 'CARGANDO...' : 'INICIAR AVENTURA' }}
+          </button>
+          
+          <button type="button" (click)="iniciarConGoogle()" class="retro-btn google-btn">
+            INICIAR CON GOOGLE
+          </button>
+
+            <!-- Enlaces de acción inferiores -->
+            <div class="form-actions">
+              <a routerLink="/crear-cuenta" class="retro-link">Crear Cuenta</a>
+              <a routerLink="/recuperar-cuenta" class="retro-link">Recuperar Cuenta</a>
+            </div>
+          </form>
+
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+</div>

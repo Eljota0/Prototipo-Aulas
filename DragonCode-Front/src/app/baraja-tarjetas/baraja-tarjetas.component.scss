@@ -1,0 +1,507 @@
+:host {
+  display: block;
+  height: 100%;
+  
+  /* ==========================================================================
+     PANEL DE CONTROL: TARJETAS EN MÓVIL
+     Ajusta estas variables para cambiar el tamaño de todas las tarjetas en la vista celular.
+     ========================================================================== */
+  
+  /* Espaciado interno (padding) de las tarjetas. Aumenta estos valores para hacerlas más anchas o altas. */
+  --mobile-card-padding-y: 0.8rem; 
+  --mobile-card-padding-x: 0.4rem;
+  
+  /* Tamaño de la fuente del título de la tarjeta (Ej. "Arriba", "Atacar") */
+  --mobile-card-title-size: 0.8rem;
+  
+  /* Tamaño de la fuente del código de la tarjeta (Ej. "ogro.caminarArriba()") */
+  --mobile-card-code-size: 0.55rem;
+  
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inventory-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #1a1a1a;
+  border: 4px solid #4a9e8e; /* Borde turquesa */
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+.inventory-main-header {
+  background-color: #252526;
+  padding: 5px 15px;
+  border-bottom: 2px solid #4a9e8e; /* Turquesa */
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.inventory-title {
+  color: #4a9e8e; /* Turquesa */
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+.inventory-body {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  overflow: hidden;
+  position: relative; /* Para posicionar el botón divisor */
+}
+
+.inventory-section {
+  display: flex;
+  flex-direction: column;
+  padding: 0; /* Sin padding para que las líneas toquen los extremos */
+  height: 100%;
+}
+
+.section-subtitle {
+  color: #4a9e8e;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.75rem;
+  width: 100%;
+  display: block;
+  border-bottom: 2px solid #4a9e8e;
+  padding: 0.5rem 10px; /* Padding horizontal para el texto, no margin */
+  margin: 0;
+  box-sizing: border-box;
+  flex-shrink: 0; /* El título NUNCA se scrollea */
+}
+
+
+
+/* ==========================================================================
+   BOTÓN DIVISOR — Centrado en la línea entre paneles
+   ========================================================================== */
+.toggle-drawer-btn {
+  position: absolute;
+  right: 10%; /* Coincide con el ancho del panel de objetos */
+  top: 50%;
+  transform: translate(50%, -50%);
+  z-index: 10;
+  background-color: #1e1e1e;
+  border: 2px solid #4a9e8e;
+  color: #4a9e8e;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.85rem;
+  padding: 8px 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  line-height: 1;
+  transition: right 0.15s ease-out;
+}
+
+/* Cuando el cajón se cierra, el botón se pega al borde derecho */
+.inventory-body:has(.cajon-cerrado) .toggle-drawer-btn {
+  right: 0;
+  transform: translate(0, -50%);
+}
+
+.toggle-drawer-btn:hover {
+  background-color: #2a2a2a;
+}
+
+/* ==========================================================================
+   LAYOUT HORIZONTAL Y DRAWER
+   ========================================================================== */
+.actions-section {
+  width: 90%;
+  position: relative;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden; /* No scrollea — el scroll vive dentro de cards-scroll-area */
+}
+
+.actions-section.cajon-cerrado {
+  width: 100%;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Contenedor scrolleable SOLO para las tarjetas (el título queda fijo arriba) */
+.cards-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  direction: rtl; /* Truco: empuja la scrollbar a la IZQUIERDA */
+}
+
+/* Devolvemos la dirección normal al contenido interior */
+.cards-scroll-area > .cards-grid {
+  direction: ltr;
+}
+
+/* Scrollbar personalizado dentro del área de tarjetas */
+.cards-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+.cards-scroll-area::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+.cards-scroll-area::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border: 1px solid #1a1a1a;
+  border-radius: 2px;
+}
+.cards-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+
+.objects-section {
+  width: 10%;
+  border-left: 2px solid #4a9e8e;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s;
+  overflow: hidden;
+  min-width: 0; /* Permite comprimir a 0 */
+  opacity: 1;
+}
+
+.objects-section.hidden {
+  width: 0;
+  opacity: 0;
+  padding: 0;
+  border-left-width: 0; /* Cierra suavemente el borde */
+  overflow: hidden;
+}
+
+.cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 10px; /* El padding que antes estaba en inventory-section */
+}
+
+/* ==========================================================================
+   DISEÑO DE TARJETA RETRO-SOLID
+   ========================================================================== */
+.action-card {
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  border: 2px solid #000;
+  border-radius: 4px; /* Un redondeo mínimo, casi cuadrado */
+  padding: 0.5rem;
+  word-break: break-word;
+  
+  /* Sombra dura hacia abajo que simula la altura del bloque, 
+     más un brillo interno (inset) blanco arriba para darle volumen 16-bits */
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.3), 0 5px 0 #000;
+  
+  color: #FFF;
+  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  cursor: pointer;
+  
+  /* Alineación para que no salte al empujar */
+  margin-bottom: 5px; 
+}
+
+.action-card:hover {
+  transform: translateY(-1px);
+  /* Al hacer hover, se eleva un poco más */
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.4), 0 6px 0 #000;
+}
+
+.action-card:active {
+  /* Física del click: El botón se hunde 5px */
+  transform: translateY(5px);
+  /* La sombra externa desaparece al estar presionado */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0px 0 #000;
+}
+
+.card-title {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 5px;
+  border-bottom: 1px solid rgba(0,0,0,0.5);
+  padding-bottom: 3px;
+}
+
+.card-code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.objects-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  height: 100%;
+}
+
+/* ==========================================================================
+   OBJETOS MÁGICOS
+   ========================================================================== */
+/* Sockets y Tamaños Base */
+.objeto-socket {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.objeto-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  width: auto;
+  height: auto;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Tamaños Diferenciados */
+.objeto-img.libro {
+  max-width: 45px;
+}
+
+.objeto-img.pocion {
+  max-width: 32px;
+}
+
+/* Efectos visuales base para objetos mágicos */
+.magic-obj {
+  /* Al reducir imágenes grandes, 'pixelated' las rompe. Dejamos el renderizado suave por defecto */
+  image-rendering: auto;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.magic-obj:hover {
+  transform: rotate(-5deg) scale(1.1);
+}
+
+.obj-libro:hover { filter: drop-shadow(0 0 8px #9b59b6); }
+.obj-clarividencia:hover { filter: drop-shadow(0 0 8px #F0CF5C); }
+.obj-vida:hover { filter: drop-shadow(0 0 8px #E46B80); }
+.obj-tiempo:hover { filter: drop-shadow(0 0 8px #379462); }
+
+.placeholder-vacio {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(119, 221, 202, 0.2);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Feedback Visual de Error */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px) rotate(-2deg); }
+  75% { transform: translateX(4px) rotate(2deg); }
+}
+
+.temblor {
+  animation: shake 0.4s;
+}
+
+/* ANIMACIÓN DE NEGACIÓN (Poción al máximo de vida) */
+@keyframes sacudidaNegacion {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.animacion-negacion {
+  animation: sacudidaNegacion 0.4s ease-in-out;
+}
+
+/* ==========================================================================
+   ANIMACIONES EN CADENA (Staggered Animation)
+   ========================================================================== */
+@keyframes saltito {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+
+.salto-ola {
+  animation: saltito 0.4s ease-in-out;
+}
+
+/* ==========================================================================
+   ANIMACIÓN OBJETOS (Temblor en Desktop, Ola en Mobile)
+   ========================================================================== */
+.animacion-objeto {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* ==========================================================================
+   CABECERA DE PESTAÑAS (Oculta por defecto en escritorio)
+   ========================================================================== */
+.tabs-header {
+  display: none;
+}
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #7a8fa6;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.9rem;
+  padding: 12px 0;
+  cursor: pointer;
+  text-align: center;
+  transition: color 0.2s ease;
+}
+.tab-btn.active {
+  color: #77DDCA;
+}
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  height: 3px;
+  background-color: #77DDCA;
+  transition: transform 0.3s ease-in-out;
+}
+.tab-indicator.es-objetos {
+  transform: translateX(100%);
+}
+
+/* ==========================================================================
+   AJUSTES RESPONSIVOS (Tablet, Mobile & Zoom <= 1280px)
+   ========================================================================== */
+@media (max-width: 1280px) {
+  .desktop-only { display: none !important; }
+  
+  .tabs-header {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    border-bottom: 2px solid #333;
+    background-color: #1a2233;
+  }
+
+  .mobile-hidden { display: none !important; }
+
+  /* Aseguramos que la caja contenedora apile sus paneles como 1 sola ventana */
+  .inventory-section {
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    flex-grow: 1;
+  }
+
+  /* Sobrescribimos el estado "hidden" del drawer para que no colapse objetos */
+  .objects-section.hidden {
+    opacity: 1;
+    width: 100% !important;
+    padding: 0;
+    border: none;
+  }
+
+  .objects-container {
+    flex-direction: row;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    justify-content: space-evenly;
+    align-items: center;
+    align-content: center;
+    padding: 1rem;
+    height: 100%;
+    gap: 1rem;
+  }
+
+  /* Cambiar a la animación de ola en pantallas tipo tab */
+  .animacion-objeto {
+    animation: saltito 0.4s ease-in-out;
+  }
+
+  /* Hacer los objetos más grandes para aprovechar el ancho */
+  .objeto-socket {
+    width: 65px;
+    height: 65px;
+  }
+  .objeto-img.libro { max-width: 65px; }
+  .objeto-img.pocion { max-width: 50px; }
+  .placeholder-vacio { width: 45px; height: 45px; }
+
+  .cards-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .action-card {
+    padding: var(--mobile-card-padding-y) var(--mobile-card-padding-x);
+    border-width: 1px;
+    max-width: calc(50% - 6px);
+  }
+
+  .card-title { font-size: var(--mobile-card-title-size); margin-bottom: 2px; padding-bottom: 1px; }
+  .card-code { font-size: var(--mobile-card-code-size); }
+  .inventory-main-header { padding: 4px 10px; }
+  .inventory-title { font-size: 0.75rem; }
+}
+
+/* ==========================================================================
+   ZOOM 150% / Pantallas pequeñas de alta densidad
+   Cuando la ventana es pequeña por zoom del navegador (ej. 150%)
+   los elementos se comprimen proporcionalmente.
+   ========================================================================== */
+@media (max-height: 700px) {
+  .inventory-main-header {
+    padding: 3px 10px;
+  }
+
+  .inventory-title {
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+  }
+
+  .section-subtitle {
+    font-size: 0.65rem;
+    padding: 0.3rem 8px;
+  }
+
+  .toggle-drawer-btn {
+    padding: 6px 3px;
+    font-size: 0.7rem;
+  }
+
+  .cards-grid {
+    gap: 0.5rem;
+    padding: 6px;
+  }
+
+  .action-card {
+    padding: 0.3rem;
+  }
+
+  .card-title {
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+    padding-bottom: 2px;
+  }
+
+  .card-code {
+    font-size: 0.6rem;
+  }
+
+  .empty-msg {
+    font-size: 0.65rem;
+    margin-top: 8px;
+  }
+}

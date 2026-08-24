@@ -1,0 +1,606 @@
+/* --- PANEL DE CONTROL MANUAL --- */
+:host {
+  /* 1. Control de Draco */
+  --draco-tamano: 380px;         
+  --draco-distancia-techo: 1.5vh;  
+  /* CRÍTICO: Debe tener el signo MENOS (-) para que pise la tabla y baje */
+  --draco-margen-inferior: 7px; 
+  --draco-velocidad: 1.5s; /* <--- AÑADE ESTA LÍNEA (Tiempo total del ciclo) */
+  
+  /* 2. Control de la Geometría de la Tabla */
+  --tabla-ancho-maximo: 1250px;  /* Esto expande el "óvalo" horizontalmente */
+  --tabla-altura-minima: 400px; /* <--- AÑADE ESTA LÍNEA */
+  --grosor-borde-negro: 10px;    
+  --grosor-borde-lava: 12px;    
+  --radio-esquinas: 10px;       
+  
+  /* 3. Control de Texturas (Agranda o achica las imágenes) */
+  --escala-ladrillos: 300px;     
+  --escala-lava-borde: 360px;   /* Tamaño de la lava que fluye */
+  --escala-metal-titulo: 500px; /* <--- TU NUEVA PALANCA PARA EL METAL */
+  --escala-lava-titulo: 190px;  /* Tamaño de la textura estática del título */
+  --escala-reja-titulo: 80px; /* <--- AÑADE ESTA LÍNEA */
+}
+
+/* --- RESET GLOBAL --- */
+/* Esta regla es vital para que los bordes no se estrangulen entre sí */
+* { box-sizing: border-box; }
+
+:host { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100vw; overflow-x: hidden; }
+
+/* --- FONDO BASE --- */
+.forge-layout {
+  position: relative; 
+  width: 100%;
+  flex: 1;       /* Ocupa el espacio del :host sin forzar un min-height absoluto */
+  min-height: 0;
+  background: radial-gradient(circle, #18131A 0%, #18131A 100%); /* Usando tus colores */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: var(--draco-distancia-techo); 
+  padding-bottom: 2rem;
+}
+
+/* Animación de entrada suave para evitar pestañeos */
+@keyframes suaveAparicion {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* --- DRACO HERRERO --- */
+.draco-sprite {
+  width: var(--draco-tamano); 
+  height: auto;
+  flex-shrink: 0;
+  object-fit: contain;
+  image-rendering: pixelated; 
+  margin-bottom: var(--draco-margen-inferior); 
+  position: relative;
+  z-index: 10; 
+  /* LA MAGIA: Conecta los frames con salto discreto (step-end) */
+  animation: dracoForgeLoop var(--draco-velocidad) step-end infinite, suaveAparicion 0.4s ease-out forwards;
+}
+
+/* --- CONTENEDOR DE LA TABLA --- */
+.forge-table-wrapper {
+  position: relative;
+  width: 90%; /* Expande la tabla al 90% en celulares */
+  max-width: var(--tabla-ancho-maximo); /* La frena en monitores grandes */
+  margin-top: 25px; 
+  z-index: 5;
+}
+
+/* --- EL YUNQUE DEL TÍTULO (PLACA METÁLICA) --- */
+.table-cauldron {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translate(-50%, -50%); 
+  z-index: 6;
+  overflow: hidden; 
+  
+  width: 40%; 
+  min-width: 320px; 
+  padding: 18px 0; 
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Inyección de la textura metálica sin efecto chicle */
+  background-image: url('../../assets/images/crearcuenta/fondometal.png');
+  background-repeat: repeat;
+  background-size: var(--escala-metal-titulo);
+
+  border: var(--grosor-borde-negro) solid #111;
+  border-radius: 16px;
+  
+  /* Sombra externa para elevarlo + Sombra interna (inset) para darle peso al metal */
+  box-shadow: 0 8px 0 rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.9); 
+  white-space: nowrap; 
+}
+
+
+.cauldron-text {
+  position: relative; 
+  z-index: 1;         
+  
+  /* --- NUEVO ESTILO IMPONENTE --- */
+  color: #f0ede7; /* Oro brillante que hace sinergia con la lava */
+  font-family: 'TuFuentePixel', monospace; /* MANTÉN el nombre de tu fuente aquí */
+  
+  font-size: 1.8rem; /* Aumentamos el tamaño significativamente */
+  letter-spacing: 3px;
+  
+  /* Efecto de Trazo (Stroke) Negro Sólido para aislar las letras de la reja */
+  text-shadow: 
+    -2px -2px 0 #000,  
+     2px -2px 0 #000,
+    -2px  2px 0 #000,
+     2px  2px 0 #000,
+     0px  6px 0 rgba(0,0,0,0.8); /* Sombra paralela hacia abajo para profundidad */
+
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* --- ARQUITECTURA DE BORDES ANIDADOS --- */
+/* Forzamos a todos los bordes a ocupar el 100% de la tabla ovalada */
+.border-outer-black, .border-middle-lava, .border-inner-black {
+  width: 100%;
+}
+
+.border-outer-black {
+  background-color: #111;
+  padding: var(--grosor-borde-negro);
+  border-radius: var(--radio-esquinas);
+  box-shadow: 0 15px 30px rgba(95, 53, 26, 0.678);
+}
+
+.border-middle-lava {
+  /* Textura cayendo con tamaño controlado */
+  background-image: url('../../assets/images/crearcuenta/lavacayendo.png');
+  background-repeat: repeat;
+  background-size: var(--escala-lava-borde);
+  animation: lavaFlow 80s linear infinite;
+  transform: translateZ(0); 
+
+  padding: var(--grosor-borde-lava);
+  border-radius: calc(var(--radio-esquinas) - var(--grosor-borde-negro));
+}
+
+.border-inner-black {
+  background-color: #111;
+  padding: var(--grosor-borde-negro);
+  border-radius: calc(var(--radio-esquinas) - var(--grosor-borde-negro) - var(--grosor-borde-lava));
+}
+
+/* --- EL LIENZO DE LADRILLOS --- */
+.brick-content {
+  width: 100%;
+  min-height: var(--tabla-altura-minima);
+  background-image: url('../../assets/images/crearcuenta/fondoladrillo.png');
+  background-repeat: repeat;
+  background-size: var(--escala-ladrillos); 
+  
+  border-radius: calc(var(--radio-esquinas) - (var(--grosor-borde-negro) * 2) - var(--grosor-borde-lava));
+  padding: 2rem;
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+}
+
+/* --- MOTOR DE ANIMACIÓN DE LA LAVA --- */
+@keyframes lavaFlow {
+  from { background-position-y: 0; }
+  to { background-position-y: var(--escala-lava-borde); }
+}
+
+/* =========================================
+   CAPA DE EFECTOS: CENIZAS VOLADORAS
+========================================= */
+
+.ashes-container {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  overflow: hidden;
+  z-index: 1; /* Detrás de Draco y la tabla */
+  
+  /* CRÍTICO: Evita que las cenizas invisibles bloqueen los clics del usuario en el formulario */
+  pointer-events: none; 
+}
+
+.ash {
+  position: absolute;
+  bottom: -20px; /* Nacen justo debajo de la pantalla */
+  border-radius: 50%;
+  opacity: 0;
+  
+  /* Le avisa al navegador que mande esto a la GPU (Tarjeta Gráfica) */
+  will-change: transform, opacity; 
+}
+
+/* Bucle SCSS: Generamos el comportamiento aleatorio AL COMPILAR, no en el navegador */
+$ash-colors: #BC4B42, #E43C19, #EC4121, #8B2216;
+
+@for $i from 1 through 20 {
+  .ash:nth-child(#{$i}) {
+    /* 1. Tamaño aleatorio entre 3px y 6px */
+    $size: random(4) + 2 + px; 
+    width: $size;
+    height: $size;
+    
+    /* 2. Posición inicial aleatoria en el eje X */
+    left: random(100) * 1vw; 
+    
+    /* 3. Escoge un color al azar de tu lista */
+    background-color: nth($ash-colors, random(4)); 
+    
+    /* 4. Distancia de la ondulación aleatoria (Sway) hacia izquierda/derecha */
+    --sway-1: #{random(80) - 40}px;
+    --sway-2: #{random(80) - 40}px;
+    
+    /* 5. Duración aleatoria (lento: entre 10 y 25 segundos) y retraso para que no salgan de golpe */
+    animation: ashFloat (random(15) + 10) + s linear infinite;
+    animation-delay: (random(15) * -1) + s; 
+  }
+}
+
+/* El Keyframe usando translate3d (Aceleración por Hardware) */
+@keyframes ashFloat {
+  0% { 
+    opacity: 0; 
+    transform: translate3d(0, 0, 0); 
+  }
+  15% { 
+    opacity: 0.7; /* Se encienden */
+  }
+  33% {
+    transform: translate3d(var(--sway-1), -33vh, 0);
+  }
+  66% {
+    transform: translate3d(var(--sway-2), -66vh, 0);
+  }
+  85% { 
+    opacity: 0.7; 
+  }
+  100% { 
+    opacity: 0; /* Se apagan antes de llegar arriba */
+    transform: translate3d(0, -110vh, 0); 
+  }
+}
+
+/* =========================================
+   SISTEMA DEL FORMULARIO (CSS GRID)
+========================================= */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 columnas en escritorio */
+  gap: 20px 15px; /* 20px espacio vertical, 15px horizontal */
+  width: 100%;
+}
+
+.full-width {
+  grid-column: 1 / -1; /* Rompe la cuadrícula y ocupa todo el ancho disponible */
+}
+
+/* RESPONSIVE: Si la pantalla es menor a 600px (Celulares), todo pasa a 1 columna */
+@media (max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+
+/* --- ESTILOS DE ENTRADA (INPUTS) --- */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* --- ETIQUETAS BLANCAS Y GRUESAS --- */
+.input-group label {
+  color: #ffffff; /* Blanco puro */
+  font-weight: bold; /* Engrosamiento base */
+  font-family: 'TuFuentePixel', monospace; 
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  /* Sombra doble hacia abajo y la derecha para dar volumen sólido al píxel */
+  text-shadow: 2px 2px 0 #000, 1px 1px 0 #000; 
+}
+
+/* --- MENSAJE DE ERROR (OCULTO POR DEFECTO) --- */
+.error-text {
+  color: #ff4444; 
+  font-size: 0.75rem;
+  font-family: 'TuFuentePixel', monospace;
+  text-shadow: 1px 1px 0 #000;
+  margin-top: 4px;
+  
+  /* Lo escondemos desde el inicio */
+  display: none; 
+}
+
+/* =========================================
+   LA MAGIA CSS (Validación sin TypeScript)
+========================================= */
+/* 
+  TRADUCCIÓN DE ESTA REGLA:
+  "Si el input de contraseña NO está mostrando el placeholder (es decir, el usuario ya escribió algo) 
+  Y TAMBIÉN es :invalid (no cumple el pattern de arriba), ENTONCES busca al hermano '.error-text' y muéstralo."
+*/
+.input-group input[type="password"]:not(:placeholder-shown):invalid ~ .error-text {
+  display: block;
+}
+
+/* Opcional: Pintar el borde de rojo si hay error al escribir */
+.input-group input[type="password"]:not(:placeholder-shown):invalid {
+  border-color: #ff4444;
+}
+
+.input-group input {
+  background-color: rgba(17, 17, 17, 0.75); /* Cristal oscuro */
+  border: 2px solid #4a3b2c;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #fff;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 3px 6px rgba(0,0,0,0.8); /* Sombra interna para dar profundidad */
+}
+
+/* El efecto al hacer clic dentro del input */
+.input-group input:focus {
+  border-color: #ffb700;
+  box-shadow: 0 0 10px rgba(255, 183, 0, 0.2), inset 0 3px 6px rgba(0,0,0,0.8);
+}
+
+/* --- MENSAJES DE ERROR --- */
+.error-text {
+  color: #ff4444; /* Rojo de alerta */
+  font-size: 0.75rem;
+  font-family: 'TuFuentePixel', monospace;
+  text-shadow: 1px 1px 0 #000;
+  margin-top: 2px;
+}
+
+/* --- TÉRMINOS Y CONDICIONES --- */
+.checkbox-group {
+  margin-top: 5px;
+  display: flex;
+  justify-content: center;
+}
+
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ddd;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* Tintamos el checkbox del sistema */
+.custom-checkbox input[type="checkbox"] {
+  accent-color: #ff6600; 
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* --- FILA DE ACCIONES (2 botones lado a lado) --- */
+.action-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;        /* Espacio entre Volver y Forjar Cuenta */
+  flex-wrap: wrap;  /* En pantallas muy estrechas se apilan */
+  margin-top: 15px;
+}
+
+/* --- BOTÓN PIXEL ART NATIVO (OPCIÓN A) --- */
+.forge-btn {
+  /* Variables de control del bloque 3D */
+  --pixel: 4px; /* Define el tamaño del "píxel" del botón */
+  --btn-color: #c97618; /* Naranja base de la forja */
+  --btn-shadow: #7a1f0d; /* Sombra interna oscura */
+  --btn-border: #111111; /* Marco sólido */
+
+  position: relative;
+  background: var(--btn-color);
+  border: none;
+  color: #ffffff;
+  font-family: 'TuFuentePixel', monospace; /* Mantén el nombre de tu fuente */
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 
+    3px 0 0 #000,    /* Borde derecho */
+    -3px 0 0 #000,   /* Borde izquierdo */
+    0 2px 0 #000,    /* Borde inferior */
+    0 -2px 0 #000;   /* Borde superior */
+
+  padding: 16px 32px;
+  cursor: pointer;
+  
+  /* Margen para evitar que las sombras exteriores pisen los ladrillos */
+  margin: var(--pixel);
+  margin-bottom: calc(var(--pixel) * 3);
+
+  /* El Motor de Renderizado 16-bits */
+  box-shadow:
+    /* 1. Luces y sombras internas (El relieve tallado del botón) */
+    inset calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 var(--btn-shadow),
+    inset var(--pixel) var(--pixel) 0 0 rgba(255, 255, 255, 0.25),
+    
+    /* 2. El marco negro exterior (Arriba, Abajo, Izquierda, Derecha) */
+    calc(var(--pixel) * -1) 0 0 0 var(--btn-border),
+    var(--pixel) 0 0 0 var(--btn-border),
+    0 calc(var(--pixel) * -1) 0 0 var(--btn-border),
+    0 var(--pixel) 0 0 var(--btn-border),
+    
+    /* 3. Las esquinas perfectas del marco negro */
+    calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 var(--btn-border),
+    var(--pixel) calc(var(--pixel) * -1) 0 0 var(--btn-border),
+    calc(var(--pixel) * -1) var(--pixel) 0 0 var(--btn-border),
+    var(--pixel) var(--pixel) 0 0 var(--btn-border),
+    
+    /* 4. Sombra de profundidad proyectada en la pared de ladrillos */
+    0 calc(var(--pixel) * 3) 0 0 rgba(0, 0, 0, 0.6);
+    
+  transition: transform 0.1s ease-out;
+
+  /* Necesario cuando se usa como <a> en lugar de <button> */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+/* Variante: Botón Volver (mismo motor pixel art, color gris neutro) */
+.forge-btn--back {
+  --btn-color: #943611;  /* Gris púzura oscura — neutro, no compite con el naranja */
+  --btn-shadow: #2a2a38; /* Sombra más profunda */
+}
+
+/* Física al presionar el botón */
+.forge-btn:active {
+  /* Desplazamiento del elemento en el Eje Y para hundirlo */
+  transform: translateY(calc(var(--pixel) * 2));
+  
+  /* Inversión total de la matriz de sombras internas */
+  box-shadow:
+    /* La luz ahora está abajo y la sombra arriba (efecto de cavidad) */
+    inset calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 rgba(255, 255, 255, 0.1),
+    inset var(--pixel) var(--pixel) 0 0 var(--btn-shadow),
+    
+    /* El marco negro se mantiene intacto */
+    calc(var(--pixel) * -1) 0 0 0 var(--btn-border),
+    var(--pixel) 0 0 0 var(--btn-border),
+    0 calc(var(--pixel) * -1) 0 0 var(--btn-border),
+    0 var(--pixel) 0 0 var(--btn-border),
+    calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 var(--btn-border),
+    var(--pixel) calc(var(--pixel) * -1) 0 0 var(--btn-border),
+    calc(var(--pixel) * -1) var(--pixel) 0 0 var(--btn-border),
+    var(--pixel) var(--pixel) 0 0 var(--btn-border),
+    
+    /* La sombra proyectada se reduce drásticamente por la proximidad al fondo */
+    0 var(--pixel) 0 0 rgba(0, 0, 0, 0.8);
+}
+
+/* --- LÍNEA DE TIEMPO: ANIMACIÓN DE FORJA --- */
+@keyframes dracoForgeLoop {
+  0%   { content: url('../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero1.png'); }
+  25%  { content: url('../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero2.png'); }
+  50%  { content: url('../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero3.png'); }
+  75%  { content: url('../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero4.png'); }
+  100% { content: url('../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero1.png'); }
+}
+
+
+/* ============================================ */
+/* MODO CELULAR — Pantallas angostas (Mobile)   */
+/* ============================================ */
+
+@media (max-width: 768px) {
+  
+  /* --- PANEL DE CONTROL MÓVIL --- */
+  /* Estas variables sobreescriben a las del escritorio SOLO en celular */
+  :host {
+    /* 1. Draco más compacto */
+    --draco-tamano: 350px; 
+    --draco-distancia-techo: 2vh;
+    --draco-margen-inferior: -10px; /* Sigue pisando el título, pero con menos fuerza */
+    
+    /* 2. Geometría de la Tabla: Optimizada para no asfixiar la pantalla */
+    /* Reducimos el grosor de la lava y los marcos negros para ganar espacio interno */
+    --grosor-borde-negro: 4px;
+    --grosor-borde-lava: 8px;
+    --radio-esquinas: 16px;
+    
+    /* 3. Texturas adaptadas para que no se vean gigantes en pantallas chicas */
+    --escala-ladrillos: 200px;
+    --escala-lava-borde: 200px;
+    --escala-metal-titulo: 350px;
+  }
+
+  /* --- ESTRUCTURA AL LÍMITE DE LA PANTALLA --- */
+  .forge-table-wrapper {
+    /* 94vw deja exactamente 3% de "aire" a cada lado para ver el contorno */
+    width: 94vw; 
+    margin-top: 30px;
+  }
+
+  /* --- REPARACIÓN DEL TÍTULO DESBORDADO --- */
+  .table-cauldron {
+    width: 85vw; /* Nunca será más ancho que la pantalla */
+    max-width: 320px;
+    padding: 10px 15px;
+    /* CRÍTICO: Permitimos que el texto baje a dos líneas si el celular es muy angosto */
+    white-space: normal; 
+    text-align: center;
+  }
+
+  .cauldron-text {
+    font-size: 1rem; /* Letra ligeramente más pequeña para encajar mejor */
+    line-height: 1.2;
+  }
+
+  /* --- EL LIENZO INTERNO (LADRILLOS) --- */
+  .brick-content {
+    /* Reducimos el padding de 2rem a algo más manejable para no estrangular los inputs */
+    padding: 25px 15px 15px 15px; 
+  }
+
+  /* --- AJUSTES DEL FORMULARIO --- */
+  /* La grilla ya pasa a 1 columna por la regla de 600px que pusimos antes, 
+     aquí solo ajustamos tamaños de fuente y espacios */
+  
+  .input-group label {
+    font-size: 0.8rem;
+  }
+
+  .input-group input {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  /* Botón adaptado a las proporciones táctiles (pulgar) */
+  .forge-btn {
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    flex: 1;        /* Cada botón ocupa la mitad del ancho disponible */
+    min-width: 120px;
+  }
+  
+  .custom-checkbox {
+    font-size: 0.75rem; /* Evita que los términos y condiciones se salgan */
+  }
+}
+/* ============================================ */
+/* MODO COMPACTO — Desktop con Zoom o Poca Altura */
+/* ============================================ */
+@media (max-height: 700px) and (min-width: 769px) {
+
+    /* --- PANEL DE CONTROL: MODO COMPACTO --- */
+  :host {
+    /* Tu palanca de tamaño exclusiva para cuando hay mucho zoom */
+    --draco-tamano: 320px; 
+    
+    /* Y te dejo esta por si al achicarlo necesitas reacomodarlo hacia arriba o abajo */
+    --draco-margen-inferior: 0px; 
+  }
+  
+  /* Achicamos el título superior */
+  .table-cauldron {
+    padding: 8px 24px;
+  }
+  .cauldron-text {
+    font-size: 0.95rem; 
+  }
+
+  /* Reducimos el padding general de los ladrillos */
+  .brick-content {
+    padding: 1.5rem; 
+  }
+
+  /* Afinamos las etiquetas y campos de texto */
+  .input-group {
+    margin-bottom: 0.5rem;
+  }
+  .input-group label {
+    font-size: 0.75rem;
+  }
+  .input-group input {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  /* Botón más esbelto */
+  .forge-btn {
+    padding: 10px 24px;
+    font-size: 1rem;
+  }
+}

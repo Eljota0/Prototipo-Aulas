@@ -1,0 +1,93 @@
+/* ================================================================
+   PANEL DE CONTROL (VARIABLES SCSS)
+================================================================ */
+:host {
+  /* Distancia que baja la notificación en celulares (ej: 20px, 40px) */
+  --toast-mobile-drop: 2px; 
+}
+
+.toast-container {
+  position: fixed;
+  top: 0;
+  left: 20px; /* Alineado a la izquierda */
+  
+  /* Cero fade: Transición exclusiva por GPU */
+  transform: translateY(-150%); 
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  
+  z-index: 9999;
+  
+  /* Cristal oscuro */
+  background: rgba(10, 15, 20, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  
+  /* Borde base */
+  border: 1px solid transparent; /* Borde más fino para ser más discreto */
+  border-radius: 8px;
+  
+  padding: 12px 20px; /* Un poco menos de padding interno */
+  min-width: 250px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  pointer-events: none; /* No bloquea clicks debajo */
+}
+
+.toast-container.visible {
+  transform: translateY(5px); /* No baja tanto, más pegado al borde superior */
+}
+
+/* Modificadores de Estado (Éxito vs Error) con colores suavizados */
+.toast-container.success {
+  border-color: rgba(57, 255, 20, 0.3); /* Verde neón menos intenso */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 8px rgba(57, 255, 20, 0.15);
+}
+
+.toast-container.success .toast-icon {
+  color: rgba(57, 255, 20, 0.8);
+}
+
+.toast-container.error {
+  border-color: rgba(255, 0, 60, 0.3); /* Rojo neón menos intenso */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 8px rgba(255, 0, 60, 0.15);
+}
+
+.toast-container.error .toast-icon {
+  color: rgba(255, 0, 60, 0.8);
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast-icon {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.4rem;
+  text-shadow: 0 0 8px currentColor;
+}
+
+.toast-message {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.1rem;
+  color: #ffffff;
+  letter-spacing: 1px;
+}
+
+/* ================================================================
+   RESPONSIVE (Solo Celulares)
+================================================================ */
+@media (max-width: 768px) {
+  .toast-container {
+    left: 50%;
+    /* En celular lo centramos y reducimos su escala global un 20% manteniendo el layout original */
+    transform: translate(-50%, -150%) scale(0.8);
+    width: 100vw; /* Aseguramos que no se salga de la pantalla */
+    min-width: unset; /* Quitamos el min-width para que el width 90vw mande */
+  }
+
+  .toast-container.visible {
+    transform: translate(-50%, var(--toast-mobile-drop)) scale(0.8);
+  }
+}
+

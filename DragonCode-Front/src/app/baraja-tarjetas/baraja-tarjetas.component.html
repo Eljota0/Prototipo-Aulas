@@ -1,0 +1,98 @@
+<div class="inventory-container">
+  <div class="inventory-main-header">
+    <span class="inventory-title">INVENTARIO</span>
+  </div>
+
+  <!-- CABECERA DE PESTAÑAS (Visible en <= 1280px) -->
+  <div class="tabs-header">
+    <button class="tab-btn" [class.active]="pestanaActiva === 'acciones'" (click)="cambiarPestana('acciones')">ACCIONES</button>
+    <button class="tab-btn" [class.active]="pestanaActiva === 'objetos'" (click)="cambiarPestana('objetos')">OBJETOS</button>
+    <div class="tab-indicator" [class.es-objetos]="pestanaActiva === 'objetos'"></div>
+  </div>
+
+  <div class="inventory-body">
+    <!-- Sector Izquierdo: Acciones -->
+    <div class="inventory-section actions-section" [class.cajon-cerrado]="!mostrarObjetos || modoJuego === 'aula'" [class.mobile-hidden]="pestanaActiva === 'objetos'">
+      <h3 class="section-subtitle desktop-only">ACCIONES</h3>
+      
+      <div class="cards-scroll-area">
+        <div class="cards-grid">
+          @for (tarjeta of configuracion; track tarjeta.accion; let i = $index) {
+            <div class="action-card" 
+                 [style.backgroundColor]="tarjeta.colorBoton" 
+                 [style.animation-delay]="animandoOla ? (i * 0.1) + 's' : '0s'"
+                 [class.salto-ola]="animandoOla"
+                 (click)="seleccionarTarjeta(tarjeta)">
+              <span class="card-title">{{ tarjeta.nombre }}</span>
+              <span class="card-code">{{ tarjeta.accion }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (modoJuego === 'aventura') {
+      <!-- Botón divisor: vive en la línea entre ambos paneles -->
+      <button class="toggle-drawer-btn desktop-only" (click)="toggleObjetos()">
+        {{ mostrarObjetos ? '▶' : '◀' }}
+      </button>
+
+      <!-- Sector Derecho: Objetos -->
+      <div class="inventory-section objects-section" [class.hidden]="!mostrarObjetos" [class.mobile-hidden]="pestanaActiva === 'acciones'">
+        <h3 class="section-subtitle desktop-only">OBJETOS</h3>
+        <div class="objects-container">
+          <!-- Libro -->
+          <div class="objeto-socket" [class.animacion-objeto]="animandoOla" [style.animation-delay]="animandoOla ? '0s' : '0s'">
+            @if (estadoObjetos.libro.activo) {
+              <img class="magic-obj objeto-img obj-libro libro" src="assets/images/aventura/objetos/libro-ayuda.png" alt="Libro de Ayuda" title="Tomo de los Ancestros. Susurra antiguos secretos de programación para guiar tu camino en este nivel.">
+            } @else {
+              <div class="placeholder-vacio"></div>
+            }
+          </div>
+          
+          <!-- Clarividencia -->
+          <div class="objeto-socket" [class.animacion-objeto]="animandoOla" [style.animation-delay]="animandoOla ? '0.1s' : '0s'">
+            @if (estadoObjetos.clarividencia.activo && !estadoObjetos.clarividencia.consumida) {
+              <img class="magic-obj objeto-img obj-clarividencia pocion" 
+                   (click)="onUsarItem.emit('amarilla')" 
+                   [class.animacion-negacion]="amarillaTemblando"
+                   src="assets/images/aventura/objetos/pocion-clarividencia.png" 
+                   alt="Poción de Clarividencia" 
+                   title="Esencia de Visión Verdadera. Revela un destello del código correcto en tu consola, pero la magia es efímera.">
+            } @else {
+              <div class="placeholder-vacio"></div>
+            }
+          </div>
+
+          <!-- Vida -->
+          <div class="objeto-socket" [class.animacion-objeto]="animandoOla" [style.animation-delay]="animandoOla ? '0.2s' : '0s'">
+            @if (estadoObjetos.vida.activo && !estadoObjetos.vida.consumida) {
+              <img class="magic-obj objeto-img obj-vida pocion" 
+                   (click)="onUsarItem.emit('roja')" 
+                   [class.animacion-negacion]="rojaTemblando"
+                   src="assets/images/aventura/objetos/pocion-vida.png" 
+                   alt="Poción de Vida" 
+                   title="Sangre de Dragón Cristalizada. Restaura un corazón herido para que puedas intentar compilar tu magia una vez más.">
+            } @else {
+              <div class="placeholder-vacio"></div>
+            }
+          </div>
+
+          <!-- Tiempo -->
+          <div class="objeto-socket" [class.animacion-objeto]="animandoOla" [style.animation-delay]="animandoOla ? '0.3s' : '0s'">
+            @if (estadoObjetos.tiempo.activo && !estadoObjetos.tiempo.consumida) {
+              <img class="magic-obj objeto-img obj-tiempo pocion" 
+                   (click)="onUsarItem.emit('verde')" 
+                   [class.animacion-negacion]="verdeTemblando"
+                   src="assets/images/aventura/objetos/pocion-tiempo.png" 
+                   alt="Poción de Tiempo" 
+                   title="Arena de Reloj Líquida. Dilata los segundos, dándote un respiro vital antes de que la magia colapse.">
+            } @else {
+              <div class="placeholder-vacio"></div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

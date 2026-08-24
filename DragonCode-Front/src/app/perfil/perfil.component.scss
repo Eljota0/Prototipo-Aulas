@@ -1,0 +1,476 @@
+/* ================================================================
+   PANEL DE CONTROL (VARIABLES SCSS)
+   Ajusta los colores, brillos y dimensiones desde aquí
+================================================================ */
+:host {
+  --modal-bg-color: #000000;          /* Fondo negro sólido (Opción 2) */
+  --modal-border-color: #56a194;      /* Color del borde principal */
+  --modal-glow: rgba(130, 244, 224, 0.4);
+  
+  --title-color: #FFD700;             /* Color del título */
+  --text-color-primary: #ffffff;
+  --text-color-secondary: #a9b2c3;
+  
+  --input-bg: #06090e;
+  --input-border: #82F4E0;
+  
+  --btn-danger-color: #ff3333;        /* Rojo para cerrar / cancelar */
+  --btn-save-color: #FFD700;          /* Dorado para guardar */
+  
+  --modal-width: 900px;               /* Modal más ancho */
+  
+  --avatar-scale: 1.8;                /* Tamaño del avatar (Desktop) */
+  --avatar-pos-x: 0px;                /* Mover avatar horizontalmente (Desktop) */
+  --avatar-pos-y: 50px;               /* Mover avatar verticalmente (Desktop) */
+
+  /* Controles móviles para el Avatar (Celular) */
+  --avatar-scale-mobile: 1.6;         
+  --avatar-pos-x-mobile: 0px;         
+  --avatar-pos-y-mobile: 25px;        /* Más arriba para que esté en el centro del cuadro */
+}
+
+/* ================================================================
+   OVERLAY Y ANIMACIONES
+================================================================ */
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInOverlay 0.3s ease-out forwards;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.profile-modal {
+  background-color: var(--modal-bg-color);
+  border: 3px solid var(--modal-border-color);
+  border-radius: 8px;
+  box-shadow: 0 0 20px var(--modal-glow), inset 0 0 10px rgba(130, 244, 224, 0.2);
+  width: 90vw;
+  max-width: var(--modal-width);
+  position: relative;
+  animation: slideUpModal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  padding: 30px;
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(30px) scale(0.95); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* ================================================================
+   BOTÓN CERRAR
+================================================================ */
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: #1a0f14;
+  border: 2px solid var(--btn-danger-color);
+  color: var(--btn-danger-color);
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.close-btn:hover {
+  background: var(--btn-danger-color);
+  color: #000;
+  box-shadow: 0 0 12px rgba(255, 51, 51, 0.6);
+}
+
+/* ================================================================
+   LAYOUT PRINCIPAL
+================================================================ */
+.view-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-title {
+  font-family: 'TuFuentePixel', monospace;
+  color: var(--title-color);
+  font-size: 1.6rem;
+  margin: 0 0 15px 0;
+  text-shadow: 2px 2px 0 #000;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.title-divider {
+  height: 2px;
+  background: var(--modal-border-color); /* Línea sólida en lugar de difuminada */
+  margin-bottom: 30px;
+  width: calc(100% + 60px); /* Para compensar el padding de 30px del modal */
+  margin-left: -30px; /* Jalar a la izquierda */
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+}
+
+/* Columna Izquierda: Avatar */
+.profile-left {
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.avatar-frame {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(130, 244, 224, 0.5);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+  overflow: hidden;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Usando las variables del panel de control para ajustar la imagen desde SCSS */
+  transform: scale(var(--avatar-scale)) translate(var(--avatar-pos-x), var(--avatar-pos-y));
+  transform-origin: bottom center;
+}
+
+.join-date {
+  font-family: 'TuFuentePixel', monospace;
+  color: #82F4E0;
+  font-size: 0.8rem;
+  text-align: center;
+  background: rgba(130, 244, 224, 0.1);
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(130, 244, 224, 0.3);
+}
+
+/* Columna Derecha: Formulario */
+.profile-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Campos de Edición en Línea */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-family: 'TuFuentePixel', monospace;
+  color: var(--text-color-secondary);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.static-value {
+  flex: 1;
+  font-family: 'TuFuentePixel', monospace;
+  color: var(--text-color-primary);
+  font-size: 1.1rem;
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.retro-input {
+  flex: 1;
+  font-family: 'TuFuentePixel', monospace;
+  color: var(--modal-border-color);
+  font-size: 1.1rem;
+  padding: 8px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  outline: none;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
+  transition: box-shadow 0.2s;
+}
+
+.retro-input:focus {
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.8), 0 0 8px rgba(130, 244, 224, 0.4);
+}
+
+/* Iconos de Edición */
+.edit-icon-btn, .save-icon-btn, .cancel-icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-color-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-icon-btn:hover {
+  color: var(--modal-border-color);
+  background: rgba(130, 244, 224, 0.1);
+  border-color: rgba(130, 244, 224, 0.3);
+}
+
+.save-icon-btn {
+  color: var(--btn-save-color);
+  border-color: rgba(255, 215, 0, 0.4);
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.save-icon-btn:hover {
+  background: rgba(255, 215, 0, 0.2);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.cancel-icon-btn {
+  color: var(--btn-danger-color);
+  border-color: rgba(255, 51, 51, 0.4);
+  background: rgba(255, 51, 51, 0.1);
+}
+
+.cancel-icon-btn:hover {
+  background: rgba(255, 51, 51, 0.2);
+  box-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
+}
+
+/* ================================================================
+   SECCIÓN DE CONTRASEÑA
+================================================================ */
+.password-section {
+  margin-top: 10px;
+  padding-top: 20px;
+  border-top: 1px dashed rgba(130, 244, 224, 0.2);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.change-password-btn {
+  background: transparent;
+  border: none;
+  color: var(--modal-border-color);
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 5px 10px;
+  margin-left: -10px;
+  transition: color 0.2s;
+}
+
+.change-password-btn:hover {
+  color: #fff;
+  text-shadow: 0 0 5px var(--modal-border-color);
+}
+
+/* Vista de Contraseña */
+.password-view {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.password-hint {
+  display: block;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.65rem;
+  color: var(--text-color-secondary);
+  margin-top: 6px;
+  margin-left: 2px;
+  transition: color 0.3s ease;
+}
+
+.password-hint.error-hint {
+  color: #ff4c4c;
+  font-weight: bold;
+}
+
+.password-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.forgot-pass-btn {
+  background: transparent;
+  border: none;
+  color: #a9b2c3;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.forgot-pass-btn:hover:not(:disabled) {
+  color: var(--modal-border-color);
+}
+
+.forgot-pass-btn:disabled {
+  color: #555;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.retro-btn {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1rem;
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--btn-save-color);
+  border: 2px solid var(--btn-save-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.retro-btn:hover:not(:disabled) {
+  background: rgba(255, 215, 0, 0.15);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.retro-btn:disabled {
+  border-color: #555;
+  color: #555;
+  cursor: not-allowed;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ================================================================
+   RESPONSIVE
+================================================================ */
+@media (max-width: 768px) {
+  .profile-modal {
+    padding: 15px; /* Reducimos padding del modal para ganar espacio */
+    width: 95vw;
+  }
+
+  /* Botón de cerrar (Aumentado 20%) */
+  .close-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+    top: 10px;
+    right: 10px;
+    border-width: 1px;
+  }
+
+  /* Título 40% más pequeño y debajo del botón de cerrar */
+  .profile-title {
+    font-size: 1rem; /* Reducido un ~40% (antes 1.6rem) */
+    margin-top: 20px; /* Empujado hacia abajo para no chocar con la X */
+    margin-bottom: 10px;
+  }
+
+  .title-divider {
+    margin-bottom: 15px;
+    width: calc(100% + 30px); /* Ajustado al nuevo padding de 15px */
+    margin-left: -15px;
+  }
+
+  .profile-content {
+    flex-direction: column;
+    align-items: stretch; /* Permite que los recuadros de abajo ocupen todo el ancho */
+    gap: 15px; /* Menos espacio entre el avatar y el form */
+  }
+
+  /* Avatar y su marco más acoplados */
+  .profile-left {
+    flex: none;
+    width: 140px; /* Cuadro de avatar más pequeño */
+    margin: 0 auto; /* Lo centramos porque el contenedor padre ahora hace stretch */
+  }
+  
+  /* Draco centrado según las variables móviles */
+  .profile-avatar-img {
+    transform: scale(var(--avatar-scale-mobile)) translate(var(--avatar-pos-x-mobile), var(--avatar-pos-y-mobile));
+  }
+  
+  .join-date {
+    font-size: 0.75rem; /* Aumentado 20% */
+    padding: 4px 8px;
+  }
+
+  /* Reducimos textos, inputs e iconos un 40% aprox */
+  .form-group label {
+    font-size: 0.65rem; /* Aumentado 20% */
+  }
+
+  .static-value, .retro-input {
+    font-size: 0.9rem; /* Aumentado 20% */
+    padding: 6px 10px; 
+  }
+
+  .edit-icon-btn, .save-icon-btn, .cancel-icon-btn {
+    font-size: 1rem; /* Aumentado 20% */
+    padding: 4px;
+  }
+
+  .password-section {
+    padding-top: 10px;
+    margin-top: 5px;
+  }
+
+  .change-password-btn {
+    font-size: 0.8rem; /* Aumentado 20% */
+  }
+
+  .password-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .retro-btn {
+    font-size: 0.9rem; /* Aumentado 20% */
+    padding: 8px 15px;
+  }
+}

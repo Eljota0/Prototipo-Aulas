@@ -1,0 +1,618 @@
+<div class="main-layout">
+
+  <!-- CAPA DE RUNAS -->
+  <div class="runes-layer">
+    @for (rune of runes; track $index) {
+      <span class="rune"
+            [style.top]="rune.top"
+            [style.left]="rune.left"
+            [style.color]="rune.color"
+            [style.animation-delay]="rune.delay"
+            [style.animation-duration]="rune.duration"
+            [style.font-size]="rune.fontSize">
+        {{ rune.symbol }}
+      </span>
+    }
+  </div>
+
+  <!-- HUD BAR -->
+  <header class="hud-bar">
+    <div class="hud-left">
+      <button type="button" class="hud-btn notif-btn" (click)="toggleNotif()" title="Notificaciones">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        @if (notifications.length > 0) {
+          <span class="notif-badge"></span>
+        }
+      </button>
+      @if (isNotifOpen) {
+        <div class="notif-overlay-invisible" (click)="closeNotif()"></div>
+        <div class="notif-dropdown">
+          <header class="notif-header"><h3>NOTIFICACIONES</h3></header>
+          <div class="notif-body">
+            @if (notifications.length === 0) {
+              <div class="notif-empty">
+                <p>¡El viento sopla en silencio!</p>
+                <span>No tienes notificaciones nuevas por ahora.</span>
+              </div>
+            } @else {
+              <ul class="notif-list">
+                @for (n of notifications; track $index) { <li>{{ n }}</li> }
+              </ul>
+            }
+          </div>
+          <footer class="notif-footer">
+            <button class="notif-read-btn" (click)="markAllAsRead()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              MARCAR TODAS COMO LEÍDAS
+            </button>
+          </footer>
+        </div>
+      }
+    </div>
+    <div class="hud-center">
+      <img src="assets/images/login/titulo.png" alt="DragonCode" class="game-title">
+    </div>
+    <div class="hud-right">
+      <button type="button" class="hud-btn logout-btn" (click)="openLogout()" title="Cerrar Sesión">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- CUERPO PRINCIPAL -->
+  <main class="main-content">
+    <div class="player-panels-row">
+      <button type="button" class="profile-panel" (click)="openProfile()" title="Ver perfil">
+        <p class="profile-label">PERFIL</p>
+        <img [src]="selectedAvatar" alt="Tu avatar" class="player-avatar">
+      </button>
+      <div class="greeting-panel" [style.--greeting-bg]="'url(' + greetingBg + ')'">
+        <div class="greeting-panel-content">
+          <p class="player-name">{{ (userProfile$ | async)?.nombre }}</p>
+          <p class="greeting-text">{{ greetingMessage$ | async }}</p>
+        </div>
+      </div>
+      <div class="right-panels-column">
+        <button type="button" class="shop-panel" (click)="openShop()" title="Tienda de avatares">
+          <p class="shop-label">TIENDA</p>
+          <div class="shop-icon-wrapper">
+            <svg class="shop-panel-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="square" stroke-linejoin="miter">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </div>
+        </button>
+        <button type="button" class="stars-panel" (click)="openStarsModal()" title="Progreso de Estrellas">
+          <span class="star-icon">★</span>
+          <span class="star-count">{{ (userProfile$ | async)?.estrellas_totales || 0 }}</span>
+        </button>
+      </div>
+    </div>
+
+    <p class="section-title">¿QUÉ DESEAS HACER HOY?</p>
+
+    <!-- AQUÍ SE ELIMINÓ LA TARJETA MIS AULAS, SOLO QUEDAN 3 -->
+    <section class="mode-cards">
+      <article class="mode-card card-aventura" [routerLink]="['/aventura']">
+        <div class="card-image-area card-img-aventura"></div>
+        <div class="card-text-panel">
+          <div class="card-text-bg"></div>
+          <div class="card-text-content">
+            <h2 class="card-title">MODO AVENTURA</h2>
+            <p class="card-desc">Aprende a tu ritmo en misiones epicas</p>
+          </div>
+        </div>
+      </article>
+      <article class="mode-card card-crear" (click)="openCrearAula()" style="cursor:pointer">
+        <div class="card-image-area card-img-crear"></div>
+        <div class="card-text-panel">
+          <div class="card-text-bg"></div>
+          <div class="card-text-content">
+            <h2 class="card-title">CREAR AULA</h2>
+            <p class="card-desc">Forja tu propio reino del conocimiento</p>
+          </div>
+        </div>
+      </article>
+      <article class="mode-card card-unirse" (click)="openUnirseAula()" style="cursor:pointer">
+        <div class="card-image-area card-img-unirse"></div>
+        <div class="card-text-panel">
+          <div class="card-text-bg"></div>
+          <div class="card-text-content">
+            <h2 class="card-title">UNIRSE A UN AULA</h2>
+            <p class="card-desc">Unete a la aventura de otro maestro</p>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+
+  <!-- ═══ MODAL: TIENDA ═══ -->
+  @if (isShopOpen) {
+    <app-tienda [avatarActual]="selectedAvatar" (closeModal)="closeShop()" (avatarChanged)="onAvatarChanged($event)"></app-tienda>
+  }
+
+  <!-- ═══ MODAL: CONFIRMAR SALIDA ═══ -->
+  @if (isLogoutModalOpen) {
+    <div class="logout-overlay" (click)="closeLogout()">
+      <div class="logout-modal" (click)="$event.stopPropagation()">
+        <h2 class="logout-title">¿CERRAR SESIÓN?</h2>
+        <p class="logout-message">¿Estás seguro de que deseas abandonar DragonCode y volver al mundo real?</p>
+        <div class="logout-actions">
+          <button type="button" class="logout-action-btn cancel-btn" (click)="closeLogout()">CANCELAR</button>
+          <button type="button" class="logout-action-btn confirm-btn" (click)="confirmLogout()">SÍ, SALIR</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ═══ MODAL: PERFIL ═══ -->
+  @if (isProfileOpen) {
+    <app-perfil (closeModal)="closeProfile()" [avatarActual]="selectedAvatar"></app-perfil>
+  }
+
+  <!-- ═══ MODAL: PROGRESO DE ESTRELLAS ═══ -->
+  @if (isStarsModalOpen) {
+    <div class="stars-overlay" (click)="closeStarsModal()">
+      <div class="stars-modal" (click)="$event.stopPropagation()">
+        <div class="stars-modal-header">
+          <h2 class="stars-modal-title">Progreso de Niveles</h2>
+          <button class="stars-close-btn" (click)="closeStarsModal()">×</button>
+        </div>
+        <div class="stars-modal-content">
+          <ul class="worlds-list">
+            @for (world of worldsProgress; track world.level) {
+              <li class="world-item">
+                <span class="world-name">{{ world.name }}</span>
+                <span class="world-stars">
+                  @for (s of [1,2,3]; track $index) {
+                    <span class="star" [class.earned]="world.stars >= s">★</span>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ═══ MODAL: CREAR AULA — Asistente 3 pasos + MIS AULAS ═══ -->
+  @if (isCrearAulaOpen) {
+    <div class="logout-overlay" (click)="closeCrearAula()">
+      <div class="cyber-modal" (click)="$event.stopPropagation()">
+
+        @if (creandoNuevaAula && pasoCrearAula < 4) {
+          <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
+            @for (paso of [1,2,3]; track paso) {
+              <div style="width:10px; height:10px; border-radius:50%; transition:background 0.3s;"
+                   [style.background]="pasoCrearAula >= paso ? '#FFD700' : '#444'"></div>
+            }
+          </div>
+        }
+
+        <!-- PASO 1: Mis Aulas / Escribir Nombre -->
+        @if (pasoCrearAula === 1) {
+          @if (!creandoNuevaAula) {
+            <h2 class="cyber-modal-title">GESTIÓN DE AULAS</h2>
+            <p class="cyber-modal-message" style="margin-top:-6px;">Administra tus clases y crea nuevas aventuras.</p>
+            
+            <div style="margin: 8px 0 14px 0; width: 100%;">
+              <button class="cyber-glow-btn glow-green" style="width: 100%; padding: 10px; font-size: 1rem; text-shadow: 1px 1px 0 #000;" (click)="iniciarCreacionAula()">
+                + CREAR NUEVA AULA
+              </button>
+            </div>
+
+            <!-- Lista de Mis Aulas Creadas -->
+            <div style="margin-bottom:14px; width:100%;">
+              <h3 style="color:#FFD700; font-family:'TuFuentePixel',monospace; font-size:1rem; text-align:left; border-bottom:2px solid rgba(255,215,0,0.3); padding-bottom:6px; margin-bottom:10px; text-shadow:1px 1px 0 #000;">
+                TUS AULAS CREADAS <span style="font-size:0.75rem; color:#a3bac2; font-family:'TuFuentePixel',monospace; float:right;">{{ misAulasLista.length }} aula(s)</span>
+              </h3>
+
+            
+            <div style="margin-top:4px; max-height:210px; overflow-y:auto; padding-right:8px; margin-right:-8px;">
+              @if (misAulasLista.length === 0) {
+                <p style="color:#aaa; font-size:0.85rem; text-align:center; padding:10px 0; font-family:'TuFuentePixel',monospace;">
+                  Aún no has creado ninguna aula.
+                </p>
+              }
+              @for (aula of misAulasLista; track aula.id) {
+                  <div class="cyber-glow-card">
+                    
+                    <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px;">
+                      <div>
+                        <p style="color:#ffffff; font-family:'TuFuentePixel',monospace; font-size:1.1rem; text-shadow: 2px 2px 0 #000; margin:0 0 6px 0; display:flex; align-items:center; gap:8px;">
+                          {{ aula.nombre_aula }}
+                          @if (aula.actividades_pendientes === true) {
+                            <span style="color:#f87171; font-size:0.9rem; text-shadow: 0 0 5px rgba(248,113,113,0.5);" title="Actividades pendientes">❗</span>
+                          } @else if (aula.actividades_pendientes === false) {
+                            <span style="color:#4ade80; font-size:0.9rem; text-shadow: 0 0 5px rgba(74,222,128,0.5);" title="Todo completado">✔️</span>
+                          }
+                        </p>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <span style="color:#a3bac2; font-size:0.8rem; font-family:'TuFuentePixel',monospace;">CÓDIGO:</span>
+                          <span style="color:#FFD700; font-size:0.9rem; letter-spacing:0.2rem; font-family:monospace; font-weight:bold; text-shadow: 0 0 5px rgba(255, 215, 0, 0.4);">{{ aula.codigo_acceso }}</span>
+                        </div>
+                      </div>
+                      <button (click)="eliminarAulaAdmin(aula.id)" title="Eliminar aula"
+                              class="cyber-action-btn cyber-cancel"
+                              style="padding:6px; flex:none; width:40px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                      <button class="cyber-glow-btn glow-purple"
+                              style="padding:8px 0; flex:1;"
+                              (click)="entrarAlAula(aula.id)">
+                        ACTIVIDADES
+                      </button>
+                      <button class="cyber-glow-btn"
+                              style="padding:8px 0; flex:1;"
+                              (click)="abrirAgregarActividad(aula)">
+                        + ACTIVIDAD
+                      </button>
+                      <button class="cyber-glow-btn glow-gold"
+                              style="padding:8px 0; flex:1;"
+                              (click)="seleccionarAulaAdmin(aula.id)">
+                        {{ aulaSeleccionadaAdmin === aula.id ? 'OCULTAR' : 'ALUMNOS' }}
+                      </button>
+                    </div>
+
+                    <!-- Inline Participants View -->
+                    @if (aulaSeleccionadaAdmin === aula.id) {
+                      <div style="margin-top:10px; padding:12px; border:1px solid rgba(255,215,0,0.3); border-radius:6px; background:rgba(0,0,0,0.6);">
+                        <h4 style="color:#FFD700; font-family:'TuFuentePixel',monospace; font-size:0.8rem; margin:0 0 8px 0; text-align:center;">
+                          ESTUDIANTES INSCRITOS:
+                        </h4>
+                        @if (cargandoJugadores) {
+                          <p style="color:#aaa; text-align:center; font-family:'TuFuentePixel',monospace; font-size:0.85rem;">Cargando...</p>
+                        } @else if (jugadoresAulaLista.length === 0) {
+                          <p style="color:#aaa; text-align:center; font-family:'TuFuentePixel',monospace; font-size:0.85rem;">No hay alumnos todavía.</p>
+                        } @else {
+                          <div style="display:flex; flex-direction:column; gap:6px;">
+                            @for (jugador of jugadoresAulaLista; track jugador.jugador_id) {
+                              <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:6px 10px; border-radius:4px;">
+                                <span style="color:#fff; font-family:'TuFuentePixel',monospace; font-size:0.9rem;">{{ jugador.nombre }} {{ jugador.apellido }}</span>
+                                <span style="color:#FFD700; font-family:'TuFuentePixel',monospace; font-size:0.8rem;">⭐ {{ jugador.estrellas_totales }}</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+
+                  </div>
+                }
+
+                @if (mostrarAgregarActividad && aulaParaActividad) {
+                  <div style="background:rgba(130,244,224,0.06); border:1px solid rgba(130,244,224,0.25); border-radius:7px; padding:12px; margin-top:6px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                      <span style="color:#82F4E0; font-size:0.75rem; font-family:'TuFuentePixel',monospace;">+ ACTIVIDAD — {{ aulaParaActividad.nombre_aula }}</span>
+                      <button class="stars-close-btn" style="font-size:0.85rem;" (click)="mostrarAgregarActividad=false">&#x2715;</button>
+                    </div>
+                    @for (nivel of nivelesDisponibles; track nivel.id) {
+                      <div (click)="nivelSeleccionado = nivel.id"
+                           style="padding:7px 10px; border-radius:5px; cursor:pointer; margin-bottom:5px; border:1.5px solid;"
+                           [style.border-color]="nivelSeleccionado === nivel.id ? '#FFD700' : '#333'"
+                           [style.background]="nivelSeleccionado === nivel.id ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.02)'">
+                        <p style="margin:0; color:#FFD700; font-size:0.78rem; font-weight:bold;">{{ nivel.nombre }}</p>
+                      </div>
+                      @if (nivelSeleccionado === nivel.id && nivel.id === 1) {
+                        <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; margin-bottom:8px; border:1px solid rgba(130,244,224,0.2);">
+                          <span style="color:#82F4E0; font-family: 'TuFuentePixel', monospace; font-size: 0.75rem;">Fases a impartir:</span>
+                          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+                            @for (fase of [1,2,3,4]; track fase) {
+                              <div (click)="toggleFase(fase)"
+                                   [class]="parametrosReto.fases_seleccionadas?.includes(fase) ? 'cyber-glow-btn' : 'cyber-glow-btn'"
+                                   style="padding: 4px 8px; font-size: 0.7rem; flex: 1; text-align: center; border-width: 1.5px; cursor: pointer;"
+                                   [style.background-color]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : 'rgba(255,255,255,0.05)'"
+                                   [style.border-color]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : '#444'"
+                                   [style.color]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : '#888'"
+                                   [style.box-shadow]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : 'inset 0 2px 8px rgba(0,0,0,0.8)'">
+                                FASE {{fase}}
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                    }
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:5px;">
+                      <label style="display:flex; flex-direction:column; gap:3px; font-size:0.72rem; font-family:'TuFuentePixel',monospace;">
+                        <span style="color:#82F4E0;">⭐⭐⭐ Tiempo 3★ (seg)</span>
+                        <input type="number" [(ngModel)]="parametrosReto.tiempo_3_estrellas" min="10" max="300" class="cyber-input" style="padding:4px 7px;">
+                      </label>
+                      <label style="display:flex; flex-direction:column; gap:3px; font-size:0.72rem; font-family:'TuFuentePixel',monospace;">
+                        <span style="color:#a3bac2;">⭐⭐ Tiempo 2★ (seg)</span>
+                        <input type="number" [(ngModel)]="parametrosReto.tiempo_2_estrellas" min="20" max="600" class="cyber-input" style="padding:4px 7px;">
+                      </label>
+                    </div>
+                    
+                    <div (click)="parametrosReto.anti_copia = !parametrosReto.anti_copia"
+                         style="display:flex; align-items:center; gap:8px; font-size:0.75rem; font-family:'TuFuentePixel',monospace; margin-top:10px; cursor:pointer;">
+                      <div style="width: 16px; height: 16px; border: 2px solid #82F4E0; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #05070a; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);">
+                        @if (parametrosReto.anti_copia) {
+                          <span style="color: #82F4E0; font-size: 12px; line-height: 1; text-shadow: 0 0 4px #82F4E0;">✔</span>
+                        }
+                      </div>
+                      <span style="color:#82F4E0; text-shadow: 1px 1px 0 #000;">🛡️ Bloquear Copiar/Pegar</span>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                      <button class="cyber-glow-btn glow-green" style="font-size:0.72rem; padding:6px 12px;"
+                              [disabled]="cargandoCrearAula" (click)="confirmarAgregarActividad()">
+                        {{ cargandoCrearAula ? 'GUARDANDO...' : '+ GUARDAR ACTIVIDAD' }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            <div class="logout-actions">
+              <button type="button" class="cyber-glow-btn glow-red"
+                      style="padding:10px 0; flex:1;"
+                      (click)="closeCrearAula()">CERRAR</button>
+            </div>
+          }
+
+          @if (creandoNuevaAula) {
+            <h2 class="cyber-modal-title">CREAR AULA</h2>
+            <p class="cyber-modal-message">Dale un nombre épico a tu reino del conocimiento.</p>
+            <div style="margin: 16px 0; width: 100%;">
+              <input type="text" [(ngModel)]="nuevoNombreAula" placeholder="Ej: Programación 4to Grado"
+                     class="cyber-input" style="width:100%; box-sizing:border-box;"
+                     (keyup.enter)="siguientePaso1()" autofocus>
+            </div>
+            
+            <div class="logout-actions" style="margin-top: 16px;">
+              <button type="button" class="cyber-glow-btn glow-red"
+                      style="padding:10px 0; flex:1;"
+                      (click)="cancelarCreacionAula()">CANCELAR</button>
+              <button type="button" class="cyber-glow-btn glow-green"
+                      style="padding:10px 0; flex:1;"
+                      (click)="siguientePaso1()">SIGUIENTE →</button>
+            </div>
+          }
+        }
+
+        <!-- PASO 2: Seleccionar Nivel + Fases -->
+        @if (pasoCrearAula === 2) {
+          <h2 class="cyber-modal-title">SELECCIONAR NIVEL</h2>
+          <p class="cyber-modal-message">Elige el nivel que tus estudiantes deberán superar.</p>
+          <div style="margin: 16px 0; display:flex; flex-direction:column; gap:8px; width: 100%;">
+            @for (nivel of nivelesDisponibles; track nivel.id) {
+              <div (click)="nivelSeleccionado = nivel.id"
+                   style="padding:14px; border-radius:6px; cursor:pointer; transition:all 0.2s; border: 2px solid; background-color: #05070a;"
+                   [style.border-color]="nivelSeleccionado === nivel.id ? '#d946ef' : '#222'"
+                   [style.box-shadow]="nivelSeleccionado === nivel.id ? '0 0 10px rgba(217,70,239,0.3), inset 0 0 10px rgba(0,0,0,0.9)' : 'inset 0 0 10px rgba(0,0,0,0.9)'">
+                <p style="margin:0; font-family:'TuFuentePixel',monospace; font-size:1.1rem; text-shadow:1px 1px 0 #000; letter-spacing:1px;"
+                   [style.color]="nivelSeleccionado === nivel.id ? '#d946ef' : '#888'">{{ nivel.nombre }}</p>
+                <p style="margin:6px 0 0; font-family:'TuFuentePixel',monospace; font-size:0.85rem; color:#a3bac2;">{{ nivel.descripcion }}</p>
+              </div>
+              
+              @if (nivelSeleccionado === nivel.id && nivel.id === 1) {
+                <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px;
+                            margin-top: -4px; margin-bottom: 8px; border: 1px solid rgba(130,244,224,0.2);
+                            display: flex; flex-direction: column; gap: 8px; text-align: left;">
+                  <span style="color:#82F4E0; font-family: 'TuFuentePixel', monospace; font-size: 0.9rem; text-shadow: 1px 1px 0 #000;">Selecciona las fases a impartir:</span>
+                  <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px;">
+                    @for (fase of [1,2,3,4]; track fase) {
+                      <div (click)="toggleFase(fase)"
+                           [class]="parametrosReto.fases_seleccionadas?.includes(fase) ? 'cyber-glow-btn' : 'cyber-glow-btn'"
+                           style="padding: 8px 12px; font-size: 0.8rem; flex: 1; text-align: center; border-width: 2px; cursor: pointer;"
+                           [style.background-color]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : 'rgba(255,255,255,0.05)'"
+                           [style.border-color]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : '#444'"
+                           [style.color]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : '#888'"
+                           [style.box-shadow]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : 'inset 0 2px 8px rgba(0,0,0,0.8)'">
+                        FASE {{fase}}
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            }
+          </div>
+          <div class="logout-actions">
+            <button type="button" class="cyber-glow-btn glow-red"
+                    style="padding:10px 0; flex:1;"
+                    (click)="pasoCrearAula = 1">← ATRÁS</button>
+            <button type="button" class="cyber-glow-btn glow-green"
+                    style="padding:10px 0; flex:1;"
+                    (click)="siguientePaso2()">SIGUIENTE →</button>
+          </div>
+        }
+
+        <!-- PASO 3: Parámetros -->
+        @if (pasoCrearAula === 3) {
+          <h2 class="cyber-modal-title">AJUSTAR DIFICULTAD</h2>
+          <p class="cyber-modal-message">Configura los criterios de evaluación para tu clase.</p>
+          <div style="margin: 16px 0; display:flex; flex-direction:column; gap:14px; width: 100%; text-align: left;">
+            <label style="display:flex; flex-direction:column; gap:4px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace;">
+              <span style="color:#82F4E0;">⭐⭐⭐ Tiempo para 3 estrellas (seg)</span>
+              <input type="number" [(ngModel)]="parametrosReto.tiempo_3_estrellas" min="10" max="300"
+                     class="cyber-input" style="width:100%; box-sizing:border-box;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:4px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace;">
+              <span style="color:#a3bac2;">⭐⭐ Tiempo para 2 estrellas (seg)</span>
+              <input type="number" [(ngModel)]="parametrosReto.tiempo_2_estrellas" min="20" max="600"
+                     class="cyber-input" style="width:100%; box-sizing:border-box;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:4px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace;">
+              <span style="color:#a3bac2;">🔄 Intentos sin penalidad de estrella</span>
+              <input type="number" [(ngModel)]="parametrosReto.intentos_max_sin_penalidad" min="1" max="10"
+                     class="cyber-input" style="width:100%; box-sizing:border-box;">
+            </label>
+            <div (click)="parametrosReto.anti_copia = !parametrosReto.anti_copia"
+                 style="display:flex; align-items: center; gap:10px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace; margin-top: 10px; cursor: pointer;">
+              <div style="width: 20px; height: 20px; border: 2px solid #82F4E0; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #05070a; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);">
+                @if (parametrosReto.anti_copia) {
+                  <span style="color: #82F4E0; font-size: 16px; line-height: 1; text-shadow: 0 0 5px #82F4E0;">✔</span>
+                }
+              </div>
+              <span style="color:#82F4E0; text-shadow: 1px 1px 0 #000;">🛡️ Bloquear Copiar/Pegar en Consola</span>
+            </div>
+          </div>
+          <div class="logout-actions">
+            <button type="button" class="cyber-glow-btn glow-red"
+                    style="padding:10px 0; flex:1;"
+                    (click)="pasoCrearAula = 2">← ATRÁS</button>
+            <button type="button" class="cyber-glow-btn glow-green"
+                    style="padding:10px 0; flex:1;"
+                    [disabled]="cargandoCrearAula" (click)="confirmarCrearAula()">
+              {{ cargandoCrearAula ? 'CREANDO...' : '¡CREAR AULA!' }}
+            </button>
+          </div>
+        }
+
+        <!-- PASO 4: Éxito -->
+        @if (pasoCrearAula === 4 && aulaCreada) {
+          <h2 class="cyber-modal-title" style="color: #FFD700; text-shadow: 2px 2px 0px #000, 0 0 10px rgba(255,215,0,0.5);">¡NUEVA AULA FORJADA!</h2>
+          <p class="cyber-modal-message">Tu reino del conocimiento ha sido creado.</p>
+          
+          <div class="cyber-glow-card" style="margin-top: 15px; width: 100%; border-color: #82F4E0; padding: 20px;">
+            <p class="cyber-modal-aula-name">
+              {{ aulaCreada.nombre_aula | uppercase }}
+            </p>
+            <p class="cyber-modal-aula-label">CÓDIGO DE ACCESO ESTUDIANTIL</p>
+            
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; background: rgba(0,0,0,0.6); padding: 12px; border-radius: 6px; border: 1px solid #333;">
+              <span class="cyber-modal-aula-code">
+                {{ aulaCreada.codigo_acceso }}
+              </span>
+              <button class="cyber-glow-btn glow-cyan" style="padding: 10px 15px; font-size: 1.2rem;" (click)="copiarCodigo(aulaCreada.codigo_acceso)" title="Copiar código al portapapeles">
+                📋
+              </button>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 15px; width: 100%; margin-top: 20px;">
+            <button type="button" class="cyber-action-btn cyber-cancel" style="padding: 14px;" (click)="closeCrearAula()">CERRAR</button>
+            <button type="button" class="cyber-action-btn cyber-confirm" style="padding: 14px;" (click)="irAlAula()">IR AL PANEL</button>
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+
+  <!-- ═══ MODAL: UNIRSE A UN AULA (Lista de aulas inscritas + unirse a nueva) ═══ -->
+  @if (isUnirseAulaOpen) {
+    <div class="logout-overlay" (click)="closeUnirseAula()">
+      <div class="cyber-modal" style="max-width:560px; width:95%;" (click)="$event.stopPropagation()">
+
+        <h2 class="cyber-modal-title">MIS AULAS</h2>
+
+        <div style="margin: 12px 0 0; width: 100%;">
+          @if (aulaActividadesSeleccionada) {
+            <!-- LISTA DE ACTIVIDADES DEL AULA -->
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px;">
+              <h3 style="color:#FFD700; font-family:'TuFuentePixel',monospace; font-size:1.1rem; margin:0; text-shadow:1px 1px 0 #000;">{{ aulaActividadesSeleccionada.nombre_aula }} - ACTIVIDADES</h3>
+              <button class="cyber-glow-btn glow-red" style="padding: 4px 10px; font-size: 0.8rem;" (click)="volverAulasInscritas()">← VOLVER</button>
+            </div>
+            
+            @if (cargandoActividadesAula) {
+              <p style="color:#aaa; text-align:center; font-size:0.85rem; padding:20px 0; font-family:'TuFuentePixel',monospace;">Cargando actividades...</p>
+            } @else if (actividadesAulaEstudiante.length === 0) {
+              <p style="color:#aaa; text-align:center; font-size:0.85rem; padding:20px 0; font-family:'TuFuentePixel',monospace;">No hay actividades asignadas a esta aula todavía.</p>
+            } @else {
+              <div style="display:flex; flex-direction:column; gap:10px; max-height:280px; overflow-y:auto; padding-right:8px; margin-right:-8px;">
+                @for (actividad of actividadesAulaEstudiante; track actividad.id) {
+                  <div class="cyber-glow-card" style="display:flex; align-items:center; justify-content:space-between; padding:14px; border-color: {{ actividad.completado ? '#4ade80' : '#82F4E0' }}; box-shadow: inset 0 0 10px {{ actividad.completado ? 'rgba(74, 222, 128, 0.2)' : 'rgba(130, 244, 224, 0.1)' }};">
+                    <div>
+                      <p style="color:#ffffff; font-family:'TuFuentePixel',monospace; font-size:1.1rem; text-shadow: 2px 2px 0 #000; margin:0 0 6px 0;">Reto Nivel {{ actividad.nivel_id }}</p>
+                      @if (actividad.completado) {
+                        <span style="color:#4ade80; font-size:0.8rem; font-family:'TuFuentePixel',monospace; text-shadow: 0 0 5px rgba(74, 222, 128, 0.4);">✔️ COMPLETADO</span>
+                      } @else {
+                        <span style="color:#f87171; font-size:0.8rem; font-family:'TuFuentePixel',monospace; text-shadow: 0 0 5px rgba(248,113,113,0.5);">❗ PENDIENTE</span>
+                      }
+                    </div>
+                    <button class="cyber-glow-btn" [class.glow-green]="!actividad.completado" [class.glow-purple]="actividad.completado"
+                            style="padding:8px 16px; flex:none;"
+                            (click)="jugarReto(actividad)">
+                      {{ actividad.completado ? 'REPETIR' : 'JUGAR' }}
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          } @else {
+            <!-- LISTA DE AULAS INSCRITAS -->
+            @if (cargandoAulasInscritas) {
+              <p style="color:#aaa; text-align:center; font-size:0.85rem; padding:20px 0; font-family:'TuFuentePixel',monospace;">Cargando tus aulas...</p>
+            } @else if (aulasInscritas.length === 0) {
+              <p style="color:#aaa; text-align:center; font-size:0.85rem; padding:20px 0; font-family:'TuFuentePixel',monospace;">No estás en ninguna aula todavía.</p>
+            } @else {
+              <p style="color:#82F4E0; font-size:0.8rem; font-family:'TuFuentePixel',monospace; margin-bottom:10px;">Selecciona un aula para ver actividades:</p>
+              <div style="display:flex; flex-direction:column; gap:10px; max-height:280px; overflow-y:auto; padding-right:8px; margin-right:-8px;">
+                @for (aula of aulasInscritas; track aula.id) {
+                  <div class="cyber-glow-card" style="display:flex; align-items:center; justify-content:space-between; padding:14px;">
+                    <div>
+                      <p style="color:#ffffff; font-family:'TuFuentePixel',monospace; font-size:1.1rem; text-shadow: 2px 2px 0 #000; margin:0 0 6px 0; display:flex; align-items:center; gap:8px;">
+                        {{ aula.nombre_aula }}
+                        @if (aula.actividades_pendientes === true) {
+                          <span style="color:#f87171; font-size:0.9rem; text-shadow: 0 0 5px rgba(248,113,113,0.5);" title="Actividades pendientes">❗</span>
+                        } @else if (aula.actividades_pendientes === false) {
+                          <span style="color:#4ade80; font-size:0.9rem; text-shadow: 0 0 5px rgba(74,222,128,0.5);" title="Todo completado">✔️</span>
+                        }
+                      </p>
+                      <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="color:#a3bac2; font-size:0.8rem; font-family:'TuFuentePixel',monospace;">CÓDIGO:</span>
+                        <span style="color:#FFD700; font-size:0.9rem; letter-spacing:0.2rem; font-family:monospace; font-weight:bold; text-shadow: 0 0 5px rgba(255, 215, 0, 0.4);">{{ aula.codigo_acceso }}</span>
+                      </div>
+                    </div>
+                    <button class="cyber-glow-btn glow-green"
+                            style="padding:8px 16px; flex:none;"
+                            (click)="entrarAlAula(aula.id)">
+                      ENTRAR →
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          <!-- Separador -->
+          <div style="display:flex; align-items:center; gap:10px; margin:18px 0 12px;">
+            <div style="flex:1; height:1px; background:rgba(255,255,255,0.12);"></div>
+            <span style="color:#aaa; font-size:0.75rem; font-family:'TuFuentePixel',monospace; white-space:nowrap;">UNIRME A OTRA AULA</span>
+            <div style="flex:1; height:1px; background:rgba(255,255,255,0.12);"></div>
+          </div>
+
+          <input
+            type="text"
+            [(ngModel)]="codigoAulaInput"
+            placeholder="Código del aula (Ej: DRGN2A)"
+            class="cyber-input"
+            style="width:100%; box-sizing:border-box; text-transform:uppercase; letter-spacing:0.3rem;"
+            maxlength="6"
+            (keyup.enter)="confirmarUnirseAula()">
+        </div>
+
+        <div class="logout-actions" style="margin-top:20px;">
+          <button type="button" class="cyber-glow-btn glow-red"
+                  style="padding:10px 0; flex:1;"
+                  (click)="closeUnirseAula()">CANCELAR</button>
+          <button type="button" class="cyber-glow-btn glow-green"
+                  style="padding:10px 0; flex:1;"
+                  [disabled]="cargandoUnirse"
+                  (click)="confirmarUnirseAula()">
+            {{ cargandoUnirse ? 'UNIENDO...' : 'UNIRSE →' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+</div>

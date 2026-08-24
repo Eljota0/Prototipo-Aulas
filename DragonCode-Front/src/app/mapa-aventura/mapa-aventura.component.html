@@ -1,0 +1,38 @@
+<div class="lobby-container">
+  <!-- Cabecera del Lobby -->
+  <header class="lobby-header">
+    <h1 class="lobby-title">MODO AVENTURA</h1>
+    <p class="lobby-subtitle">Selecciona tu próximo desafío, Maestro Dragón</p>
+    <a routerLink="/pantalla-principal" class="btn-back">
+      <span class="back-icon">◄</span> VOLVER
+    </a>
+  </header>
+
+  <!-- Cuadrícula de Niveles -->
+  <main class="levels-grid">
+    @for (level of niveles; track level.id) {
+      @if (level.bloqueado) {
+        <!-- Renderizado de nivel bloqueado (estático, sin routerLink) -->
+        <article class="level-card locked-level">
+          <div class="level-icon-wrapper">
+            <div class="padlock-icon"></div>
+          </div>
+          <h3 class="level-number">{{ level.id }}</h3>
+          <p class="level-title">BLOQUEADO</p>
+        </article>
+      } @else {
+        <!-- Renderizado de nivel desbloqueado (interactivo, con routerLink) -->
+        <a [routerLink]="['/aventura/nivel', level.id]" class="level-card unlocked-level">
+          <div class="level-icon-wrapper">
+            <div class="dragon-icon"></div>
+          </div>
+          <h3 class="level-number">{{ level.id }}</h3>
+          <p class="level-title">{{ level.titulo }}</p>
+          @if (level.completado) {
+            <span class="badge-completed">COMPLETADO</span>
+          }
+        </a>
+      }
+    }
+  </main>
+</div>

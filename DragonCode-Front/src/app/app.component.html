@@ -1,0 +1,11 @@
+<!-- Componente Global de Notificaciones (Siempre al frente) -->
+<app-toast></app-toast>
+
+<!-- El punto de montaje del router: aquí vive Login, Crear Cuenta, y cualquier pantalla futura -->
+<router-outlet></router-outlet>
+
+<!-- Pie de página legal global: aparece en TODAS las pantallas automáticamente, excepto niveles -->
+<footer class="global-legal-footer" *ngIf="mostrarFooter">
+  <p>© 2026 DragonCode. Todos los derechos reservados.</p>
+</footer>
+

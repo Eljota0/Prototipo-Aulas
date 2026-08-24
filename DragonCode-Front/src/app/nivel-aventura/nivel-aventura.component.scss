@@ -1,0 +1,75 @@
+.level-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #0b0f19;
+  background-image: 
+    linear-gradient(rgba(11, 15, 25, 0.95), rgba(11, 15, 25, 0.95)),
+    url('/assets/images/fondo/aguafondo.png');
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  image-rendering: pixelated;
+  padding: 20px;
+}
+
+.level-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.level-title {
+  color: #f7d959;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 4rem;
+  letter-spacing: 4px;
+  margin-bottom: 10px;
+  text-shadow: 4px 4px 0 #000, -2px -2px 0 #000;
+}
+
+.level-subtitle {
+  color: #77ddca;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.2rem;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.pixel-box {
+  background-color: #1a2233;
+  border: 4px solid #77ddca;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 8px 0 #000, inset 0 0 15px rgba(0,0,0,0.8);
+}
+
+.pixel-box p {
+  color: #fff;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+}
+
+.btn-return {
+  display: inline-block;
+  background-color: transparent;
+  color: #77ddca;
+  border: 2px solid #77ddca;
+  padding: 12px 24px;
+  font-family: 'TuFuentePixel', monospace;
+  text-decoration: none;
+  font-size: 1.2rem;
+  box-shadow: 4px 4px 0 #000;
+  transition: all 0.1s step-end;
+}
+
+.btn-return:hover {
+  background-color: rgba(119, 221, 202, 0.1);
+  color: #fff;
+}
+
+.btn-return:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 #000;
+}

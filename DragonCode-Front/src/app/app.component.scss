@@ -1,0 +1,33 @@
+/* ============================================
+   SHELL GLOBAL DE LA APLICACIÓN
+   Convierte app-root en una columna flexible
+   para que el footer siempre ancle al fondo.
+============================================ */
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* ============================================
+   PIE DE PÁGINA LEGAL GLOBAL
+   Estilos idénticos al footer original del login.
+   Vive aquí para aplicarse a TODAS las pantallas.
+============================================ */
+.global-legal-footer {
+  text-align: center;
+  padding: 20px 10px;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.70rem;
+  letter-spacing: 1px;
+
+  /* El separador: fondo ultra oscuro y borde superior color madera/tierra */
+  background-color: #05040a;
+  border-top: 2px solid #3d2b1f;
+
+  /* Posicionamiento: siempre encima del fondo, siempre al final */
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0; /* Nunca se encoge: su altura siempre es la misma */
+}

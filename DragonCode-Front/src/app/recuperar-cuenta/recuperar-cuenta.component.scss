@@ -1,0 +1,191 @@
+/* Participa en la cadena flex del AppComponent */
+:host {
+  display: flex;
+  flex: 1;
+}
+
+/* =========================================
+   FORMULARIO CIBERNÉTICO — RECUPERAR ACCESO
+   (Estilos propios de esta pantalla)
+========================================= */
+
+.cyber-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 90%; 
+  max-width: 900px;
+  flex: 1; 
+  text-align: center;
+}
+
+/* --- TIPOGRAFÍA BASE --- */
+.cyber-title {
+  color: #ffffff;
+  font-family: 'TuFuentePixel', monospace; 
+  font-size: 2.2rem; 
+  letter-spacing: 2px;
+  margin-bottom: 15px;
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000; 
+}
+
+.cyber-text {
+  color: #e0e0e0;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.95rem; 
+  font-weight: bold; 
+  line-height: 1.6;
+  margin-bottom: 40px;
+  text-shadow: 2px 2px 0 #000, 1px 1px 0 #000;
+}
+
+/* --- CAMPO DE TEXTO (GLASS TERMINAL) --- */
+.cyber-input-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+}
+
+.cyber-input-group label {
+  color: #77ddca; /* var(--color-neon) — valor literal para encapsulación */
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.95rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.cyber-input-group input {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.6); 
+  border: 1px solid rgba(130, 244, 224, 0.5); 
+  border-radius: 6px;
+  padding: 14px 18px; 
+  color: #fff;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.1rem; 
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.cyber-input-group input:focus {
+  border-color: #77ddca;
+  box-shadow: 0 0 10px rgba(130, 244, 224, 0.2), inset 0 0 8px rgba(0,0,0,0.8);
+}
+
+/* --- FILA DE BOTONES --- */
+.cyber-btn-row {
+  margin-top: auto;     /* Empuja toda la fila al fondo del formulario */
+  padding-top: 20px;    /* Asegura un espacio mínimo respecto a los campos de arriba */
+  display: flex;
+  gap: 16px;            /* Espacio entre Volver y Enviar Enlace */
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;      /* Se apilan si el espacio es muy estrecho */
+  width: 100%;
+}
+
+/* --- BOTÓN DE ACCIÓN --- */
+.cyber-btn {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.2rem;
+  padding: 14px 40px;
+  border: 2px solid #77ddca;
+  border-radius: 6px;
+  cursor: pointer;
+  text-shadow: 1px 1px 0 #000;
+  box-shadow: 0 4px 0 #000;
+  transition: all 0.2s ease;
+  flex: 1;              /* Ambos botones comparten el ancho de la fila */
+  min-width: 140px;
+  max-width: 260px;
+
+  /* Necesario cuando se usa como <a> en lugar de <button> */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+
+.cyber-btn:hover {
+  background-color: rgba(130, 244, 224, 0.1);
+  box-shadow: 0 4px 0 #000, 0 0 15px rgba(130, 244, 224, 0.4);
+}
+
+.cyber-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #000;
+}
+
+.cyber-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(80%);
+  pointer-events: none;
+}
+
+/* ============================================ */
+/* MODO CELULAR                                 */
+/* ============================================ */
+@media (max-width: 768px) {
+
+  .cyber-form {
+    width: 100%;
+  }
+
+  .cyber-title {
+    font-size: 1.6rem;
+    margin-bottom: 10px;
+  }
+
+  .cyber-text {
+    font-size: 0.85rem;
+    margin-bottom: 25px;
+  }
+
+  .cyber-input-group input {
+    padding: 12px 15px;
+    font-size: 1rem;
+  }
+
+  .cyber-btn-row {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .cyber-btn {
+    padding: 12px 16px;
+    font-size: 1rem;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+/* ============================================ */
+/* MODO COMPACTO — Desktop con Poca Altura      */
+/* ============================================ */
+@media (max-height: 700px) and (min-width: 769px) {
+
+  .cyber-title {
+    font-size: 1.8rem; 
+    margin-bottom: 10px;
+  }
+
+  .cyber-text {
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
+
+  .cyber-input-group {
+    margin-bottom: 20px;
+  }
+
+  .cyber-btn {
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+}

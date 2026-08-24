@@ -1,0 +1,60 @@
+<div class="shop-overlay" (click)="onClose()">
+  <div class="shop-modal" (click)="$event.stopPropagation()">
+
+    <header class="shop-header">
+      <h2 class="shop-title">TIENDA DE AVATARES</h2>
+      <div class="shop-header-actions">
+        <div class="shop-stars-counter">
+          <span class="star-icon">⭐</span>
+          <span class="star-count">{{ userProfile?.estrellas_totales || 0 }}</span>
+        </div>
+        <button type="button" class="shop-close-btn" (click)="onClose()">X</button>
+      </div>
+    </header>
+
+    <p class="shop-subtitle">Selecciona tu companero de aventura</p>
+
+    <div class="avatars-grid">
+      @for (avatar of avatars; track avatar.id) {
+        <button
+          type="button"
+          class="avatar-card"
+          [class.is-selected]="avatarActual === avatar.url_imagen"
+          [class.is-locked]="!avatar.desbloqueado && avatar.precio_estrellas > 0"
+          (click)="selectAvatar(avatar)">
+          <img [src]="avatar.url_imagen" [alt]="avatar.nombre_skin" class="avatar-card-img">
+          <div class="avatar-card-info">
+            <span class="avatar-card-name">{{ avatar.nombre_skin }}</span>
+            @if (avatar.precio_estrellas > 0 && !avatar.desbloqueado) {
+              <span class="avatar-card-price">{{ avatar.precio_estrellas }} ⭐</span>
+            } @else if (avatar.desbloqueado || avatar.precio_estrellas === 0) {
+              <span class="avatar-card-price" style="color: #4CAF50;">Desbloqueado</span>
+            }
+          </div>
+          @if (avatarActual === avatar.url_imagen) {
+            <span class="avatar-active-badge">ACTIVO</span>
+          } @else if (!avatar.desbloqueado && avatar.precio_estrellas > 0) {
+            <span class="avatar-active-badge" style="background:#555; color:#ccc;">BLOQUEADO</span>
+          }
+        </button>
+      }
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN DE COMPRA -->
+@if (isConfirmModalOpen && avatarToBuy) {
+  <div class="shop-confirm-overlay" (click)="cancelPurchase()">
+    <div class="shop-confirm-modal" (click)="$event.stopPropagation()">
+      <h3 class="confirm-title">¿Desbloquear Avatar?</h3>
+      <p class="confirm-text">¿Deseas gastar <span class="confirm-price">{{ avatarToBuy.precio_estrellas }} ⭐</span> en <strong>{{ avatarToBuy.nombre_skin }}</strong>?</p>
+      <div class="confirm-actions">
+        <button class="btn-cancel" (click)="cancelPurchase()" [disabled]="cargandoCompra">Atrás</button>
+        <button class="btn-confirm" (click)="confirmPurchase()" [disabled]="cargandoCompra">
+          {{ cargandoCompra ? 'Comprando...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

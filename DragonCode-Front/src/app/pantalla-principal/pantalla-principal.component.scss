@@ -1,0 +1,1577 @@
+/* ================================================================
+   PANTALLA PRINCIPAL — DRAGONCODE
+   ─────────────────────────────────────────────────────────────
+   PANEL DE CONTROL: Todos los parámetros ajustables están aquí.
+   Modifica SOLO esta sección para cambiar tamaños, colores, etc.
+   sin necesidad de buscar valores enterrados en el código abajo.
+================================================================ */
+
+.main-layout {
+
+  /* ── HUD BAR ──────────────────────────────────────────────────
+     Controla la barra superior (fondo, altura, relleno).
+  ────────────────────────────────────────────────────────────── */
+  --hud-height:              clamp(58px, 6.5vw, 72px);
+  --hud-padding-h:           clamp(12px, 3vw, 24px);  /* Padding lateral (separa logo y botones de los bordes) */
+  --hud-btn-size:            clamp(26px, 3vw, 33px);  /* Tamaño de los botones del HUD (reducido 25%) */
+  --hud-bg-overlay:          rgba(0, 0, 0, 0.4);      /* Oscurecimiento sobre la textura del HUD */
+
+  /* ── TEXTURA fondotitulo.png (técnica de mosaico como crear-cuenta) ─
+     Funciona igual que fondoladrillo / fondolava: repeat + size fijo.
+  ────────────────────────────────────────────────────────────── */
+  --escala-fondotitulo:      420px;      /* Escala del mosaico fondotitulo — súbelo para más zoom */
+
+  /* ── LOGO DRAGONCODE ──────────────────────────────────────────
+     El logo puede desbordarse por debajo del borde del HUD.
+  ────────────────────────────────────────────────────────────── */
+  --title-width:             clamp(220px, 22vw, 420px);  /* Ancho del logo */
+  --title-overflow:          28px;       /* Cuánto desborda el logo por debajo del HUD */
+  --title-vertical-center:   38px;        /* Ajuste fino vertical dentro del HUD (+arr/-abj) */
+
+  /* ── BORDE INFERIOR ANIMADO DEL HUD ─────────────────────────
+     Mismo color que el glow del logo, mismo tiempo de latido.
+  ────────────────────────────────────────────────────────────── */
+  --hud-border-color:        rgba(127, 255, 212, 1);
+  --hud-border-width:        2px;        /* Grosor de la línea separadora */
+  --hud-glow-duration:       4s;         /* Duración del latido — igual que titleGlow */
+
+  /* ── BOTONES HUD (Notificaciones y Salir) ────────────────────────
+     Botones cuadrados a los extremos del HUD.
+  ────────────────────────────────────────────────────────────── */
+  --hud-btn-bg-logout:       #2c0d0d;    /* Fondo rojo oscuro (salir) */
+  --hud-icon-logout:         #ff9999;    /* Color del icono (salir) */
+  --hud-btn-bg-notif:        #2a2200;    /* Fondo amarillo oscuro (notificaciones) */
+  --hud-icon-notif:          #FFD700;    /* Color del icono (notificaciones) */
+
+  /* ── CHIP DE ESTRELLAS (dentro del panel de perfil) ─────────
+  ────────────────────────────────────────────────────────────── */
+  --chip-bg-solid-star:      #2a2200;    /* Fondo sólido dorado oscuro */
+
+  /* ── DISTRIBUCIÓN DE ESPACIO (ESCALAS) ───────────────────────
+     Controla qué tan grandes son los paneles vs las tarjetas
+  ────────────────────────────────────────────────────────────── */
+  --top-panels-scale:        0.8;  /* 1.0 = tamaño original. 0.7 = 30% más pequeño */
+  --cards-scale:             1.1;  /* 1.0 = tamaño original. 1.1 = 10% más grandes */
+
+  /* ── DOS PANELES DEL JUGADOR ─────────────────────────────────
+     Controla posición, tamaños y separación de ambos paneles.
+  ────────────────────────────────────────────────────────────── */
+  --player-panels-mt:        clamp(10px, 5vw, 44px); /* Margen desde el HUD hasta los paneles */
+  --player-panels-gap:       14px;       /* Separación entre el panel de perfil y el de saludo */
+
+  /* Panel de perfil (izquierdo) y columna derecha: proporciones simétricas */
+  --profile-panel-w:         calc(clamp(110px, 13vw, 175px) * var(--top-panels-scale));  /* Ancho del panel lateral */
+  --right-column-w:          var(--profile-panel-w);     /* La columna derecha refleja al perfil */
+  --right-panel-shop-ratio:  70;         /* Proporción de altura para Tienda (flex-grow) */
+  --right-panel-stars-ratio: 30;         /* Proporción de altura para Estrellas (flex-grow) */
+  --profile-panel-py:        calc(16px * var(--top-panels-scale));       /* Relleno vertical de paneles laterales */
+  --profile-panel-px:        calc(14px * var(--top-panels-scale));       /* Relleno horizontal de paneles laterales */
+  --profile-panel-opacity:   0.72;       /* Opacidad del fondo negro (0=transparente, 1=sólido) */
+  --player-avatar-h:         calc(clamp(33px, 17vh, 150px) * var(--top-panels-scale));  /* Alto de la imagen del avatar */
+
+  /* Panel de saludo (derecho): nombre + mensaje */
+  --greeting-panel-extra-w:  150px;        /* Aumenta este valor (ej: 150px) para extender el panel de saludo hacia los lados */
+  --greeting-panel-w:        calc(clamp(420px, 85vw, 940px) * var(--top-panels-scale) + var(--greeting-panel-extra-w));  /* Ancho base + extra */
+  --greeting-panel-py:       calc(20px * var(--top-panels-scale));       /* Relleno vertical del panel de saludo */
+  --greeting-panel-px:       calc(38px * var(--top-panels-scale));       /* Relleno horizontal del panel de saludo */
+  --player-panel-border:     rgba(105, 202, 184, 0.5);   /* Color del borde compartido de ambos paneles */
+  --player-name-size:        calc(4rem * var(--top-panels-scale));       /* Tamaño del nombre del usuario */
+  --player-greeting-size:    calc(clamp(0.92rem, 1.4vw, 1.15rem) * var(--top-panels-scale)); /* Tamaño del texto de saludo */
+
+  /* Fondo dinámico del panel de saludo (fondodia / fondotarde / fondonoche)
+     La imagen cambia según la hora — se pasa como CSS var desde Angular */
+  --greeting-bg-scale:       210px;      /* Escala del mosaico de la imagen de fondo */
+  --greeting-bg-opacity:     0.55;       /* Opacidad de la imagen de fondo (0=invisible, 1=sólido) */
+  --greeting-bg-speed:       50s;         /* Velocidad del scroll infinito hacia la derecha */
+  --greeting-bg-frames:      32;         /* Número de saltos retro para completar un ciclo */
+
+  /* ── TEXTO "¿QUÉ DESEAS HACER HOY?" ──────────────────────────
+     Texto flotante entre los paneles y las tarjetas.
+  ────────────────────────────────────────────────────────────── */
+  --section-title-size:      clamp(1rem, 1.8vw, 1.45rem);   /* Tamaño del texto de sección */
+
+  /* ── TARJETAS DE MODO ────────────────────────────────────────
+     Cada tarjeta tiene 2 zonas: imagen (arriba) + texto (abajo).
+     Marco pulsante similar al HUD (con control de color, frecuencia e intensidad).
+  ────────────────────────────────────────────────────────────── */
+  --card-w:                  calc(clamp(240px, 27vw, 410px) * var(--cards-scale));  /* Ancho de cada tarjeta */
+  --card-h:                  calc(clamp(380px, 40vh, 550px) * var(--cards-scale));  /* Alto total de cada tarjeta */
+  --card-image-ratio:        75%;        /* Porcentaje del alto para la imagen (70% img, 30% texto) */
+  --card-grayscale:          30%;         /* Filtro gris en reposo (0%=color, 100%=B&N total) */
+  --card-title-size:         clamp(1.25rem, 2vw, 1.75rem);  /* Tamaño título tarjeta */
+  --card-desc-size:          clamp(0.78rem, 1.1vw, 0.95rem);  /* Tamaño descripción tarjeta */
+  --card-text-weight:        bold;       /* Peso del texto de las tarjetas */
+  
+  /* Sistema de zoom de altísima calidad (re-dibuja los píxeles en lugar de estirar la foto) */
+  --card-img-zoom-base:      -7.5%;      /* Zoom base por defecto. Valores negativos expanden la imagen (ej: -7.5% = +15% de zoom) */
+  --card-img-zoom-hover:     -12.5%;     /* Zoom en hover (ej: -12.5% = +25% de zoom) */
+
+  /* Marco pulsante de las tarjetas (borde de neón simple, tipo HUD) */
+  --card-frame-color:        #4cfddd;    /* Color del borde y glow del marco */
+  --card-frame-width:        2px;        /* Grosor del borde */
+  --card-frame-glow-min:     4px;        /* Intensidad mínima del brillo (en reposo) */
+  --card-frame-glow-max:     16px;       /* Intensidad máxima del brillo (en pico) */
+  --card-frame-duration:     4s;         /* Frecuencia del latido */
+
+  /* ── TEXTURA fondoventanas.png (panel de texto de tarjetas) ──
+     Mismo sistema mosaico que fondotitulo.
+  ────────────────────────────────────────────────────────────── */
+  --escala-fondoventanas:    496px;       /* Escala del mosaico fondoventanas */
+  --fondoventanas-opacity:   0.45;       /* Opacidad (0=invisible / 1=sólido) */
+
+  /* ── BOTÓN FLOTANTE TIENDA (FAB) ─────────────────────────────
+     Posición fija en esquina inferior derecha (sobre el footer).
+  ────────────────────────────────────────────────────────────── */
+  --fab-bottom:              80px;       /* Distancia desde el borde inferior */
+  --fab-right:               28px;       /* Distancia desde el borde derecho */
+  --fab-bg-solid:            #091a14;    /* Fondo sólido del FAB (sin transparencia) */
+
+  /* ── MODAL TIENDA ────────────────────────────────────────────
+     Panel emergente que muestra los 6 avatares disponibles.
+  ────────────────────────────────────────────────────────────── */
+  --modal-panel-w:           clamp(320px, 82vw, 920px);  /* Ancho del panel */
+  --modal-panel-bg:          #0c0b1a;    /* Fondo del panel interior */
+  --avatar-card-img-w:       clamp(90px, 12vw, 160px);   /* Tamaño de cada imagen de avatar */
+}
+
+
+/* ================================================================
+   KEYFRAMES
+================================================================ */
+
+/* Parpadeo de runas — idéntico al login */
+@keyframes twinkleRune {
+  0%   { opacity: 0;    }
+  50%  { opacity: 0.85; }
+  100% { opacity: 0;    }
+}
+
+/* Brillo del logo — idéntico al login */
+@keyframes titleGlow {
+  0%   { filter: drop-shadow(0 0 4px  rgba(127, 255, 212, 0.2)); }
+  50%  { filter: drop-shadow(0 0 12px rgba(127, 255, 212, 0.6)); }
+  100% { filter: drop-shadow(0 0 4px  rgba(127, 255, 212, 0.2)); }
+}
+
+/* Latido del borde inferior del HUD — mismo color y duración que titleGlow */
+@keyframes borderGlow {
+  0%   { box-shadow: 0 2px 4px  rgba(127, 255, 212, 0.25), 0 6px 20px rgba(0,0,0,0.5); }
+  50%  { box-shadow: 0 2px 14px rgba(127, 255, 212, 0.7),  0 6px 20px rgba(0,0,0,0.5); }
+  100% { box-shadow: 0 2px 4px  rgba(127, 255, 212, 0.25), 0 6px 20px rgba(0,0,0,0.5); }
+}
+
+/* Latido del marco de las tarjetas — frecuencia, color e intensidad
+   controlados por variables del panel de control */
+@keyframes cardBorderGlow {
+  0%   { box-shadow: 0 0 var(--card-frame-glow-min) var(--card-frame-color), inset 0 0 var(--card-frame-glow-min) var(--card-frame-color); }
+  50%  { box-shadow: 0 0 var(--card-frame-glow-max) var(--card-frame-color), inset 0 0 var(--card-frame-glow-max) var(--card-frame-color); }
+  100% { box-shadow: 0 0 var(--card-frame-glow-min) var(--card-frame-color), inset 0 0 var(--card-frame-glow-min) var(--card-frame-color); }
+}
+
+/* Scroll infinito hacia la derecha para el fondo del panel de saludo
+   saltando mediante frames (definido en steps) para el loop perfecto */
+@keyframes scrollRight {
+  from { background-position: 0px 0px; }
+  to   { background-position: var(--greeting-bg-scale) 0px; }
+}
+
+/* Palpitación del borde del avatar activo en la tienda */
+@keyframes selectedPulse {
+  0%, 100% { box-shadow: 0 0 0 2px #82F4E0, 0 0 10px rgba(130, 244, 224, 0.3); }
+  50%       { box-shadow: 0 0 0 2px #82F4E0, 0 0 24px rgba(130, 244, 224, 0.65); }
+}
+
+/* Entrada del overlay del modal */
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Entrada del panel interior del modal */
+@keyframes slideUpModal {
+  from { transform: translateY(28px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+
+/* ================================================================
+   HOST — Participa en la cadena flex del AppComponent
+================================================================ */
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+
+/* ================================================================
+   LAYOUT MAESTRO
+================================================================ */
+.main-layout {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #13111f;
+  padding-top: var(--hud-height); /* Compensa el espacio de la barra fixed */
+}
+
+
+/* ================================================================
+   CAPA DE RUNAS — Idéntico al login
+================================================================ */
+.runes-layer {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Filtro oscuro para atenuar las runas como en el Login */
+.runes-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 9, 7, 0.507);
+  pointer-events: none;
+}
+
+.rune {
+  position: absolute;
+  font-family: monospace;
+  opacity: 0;
+  animation-name: twinkleRune;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+
+/* ================================================================
+   HUD BAR — Barra superior
+================================================================ */
+.hud-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
+
+  height: var(--hud-height);
+  padding: 0 var(--hud-padding-h);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  /* Textura fondotitulo en mosaico */
+  background-image: url('../../assets/images/ui/fondotitulo.png');
+  background-repeat: repeat;
+  background-size: var(--escala-fondotitulo);
+  image-rendering: pixelated;
+
+  border-bottom: var(--hud-border-width) solid var(--hud-border-color);
+  animation: borderGlow var(--hud-glow-duration) ease-in-out infinite;
+  overflow: visible;
+}
+
+/* Overlay de oscurecido sobre la textura */
+.hud-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--hud-bg-overlay);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Todos los hijos del HUD sobre el overlay */
+.hud-left, .hud-right {
+  position: relative;
+  z-index: 10; /* Mayor prioridad para que los menús desplegables no queden detrás del logo */
+}
+
+.hud-center {
+  position: relative;
+  z-index: 1;
+}
+
+.hud-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-width: var(--hud-btn-size);
+}
+
+/* Contador de estrellas en el HUD (sólido, sin transparencia) */
+.stars-display {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--chip-bg-solid-star);
+  border: 1px solid #FFD700;
+  border-radius: var(--chip-radius);
+  padding: 5px 12px;
+}
+
+.star-icon {
+  font-size: 0.95rem;
+  color: #FFD700;
+  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.65));
+}
+
+.star-count {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.82rem;
+  color: #FFD700;
+  letter-spacing: 1px;
+}
+
+/* Centro: Logo (desborda hacia abajo) */
+.hud-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-title {
+  width: var(--title-width);
+  height: auto;
+  object-fit: contain;
+  margin-top: calc(var(--title-overflow) + var(--title-vertical-center));
+  position: relative;
+  z-index: 5;
+  animation: titleGlow var(--hud-glow-duration) ease-in-out infinite;
+  will-change: filter;
+  /* Anulamos la herencia de .hud-bar para que el logo se vea nítido */
+  image-rendering: auto;
+}
+
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  min-width: var(--hud-btn-size);
+}
+
+/* ── BOTONES DEL HUD (Notificaciones y Salir) ── */
+.hud-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width:  var(--hud-btn-size);
+  height: var(--hud-btn-size);
+  border-radius: 4px; /* Ligeramente curvo */
+  cursor: pointer;
+  text-decoration: none;
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.hud-btn:active {
+  transform: translateY(2px);
+}
+
+.hud-btn svg {
+  width: 60%;
+  height: 60%;
+  display: block;
+}
+
+/* Botón Salir */
+.logout-btn {
+  background: var(--hud-btn-bg-logout);
+  border: 2px solid #ff3333;
+  color: var(--hud-icon-logout);
+  box-shadow: 0 0 8px rgba(255, 51, 51, 0.4);
+}
+.logout-btn:hover {
+  box-shadow: 0 0 12px rgba(255, 51, 51, 0.7);
+}
+
+/* Botón Notificaciones */
+.notif-btn {
+  background: var(--hud-btn-bg-notif);
+  border: 2px solid #d4b515;
+  color: var(--hud-icon-notif);
+  box-shadow: 0 0 8px rgba(212, 181, 21, 0.4);
+}
+.notif-btn:hover {
+  box-shadow: 0 0 12px rgba(212, 181, 21, 0.7);
+}
+
+/* Badge rojo para notificaciones (pixelado) */
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  background-color: #ff3333;
+  border: 2px solid #000;
+  border-radius: 0; /* Pixel-art puro para el puntito */
+}
+
+/* ── VENTANA DESPLEGABLE DE NOTIFICACIONES ── */
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: var(--hud-padding-h);
+  width: 320px;
+  background-color: #000;
+  border: 2px solid #d4b515;
+  border-radius: 6px;
+  box-shadow: 0 0 15px rgba(212, 181, 21, 0.3), 0 8px 24px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+  overflow: hidden; /* respeta los bordes curvos */
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1a1500;
+  padding: 10px 14px;
+  border-bottom: 2px solid #d4b515;
+}
+.notif-header h3 {
+  color: #FFD700;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.9rem;
+  margin: 0;
+  letter-spacing: 1px;
+}
+.notif-close {
+  background: transparent;
+  border: none;
+  color: #ff3333;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+}
+.notif-close svg { width: 16px; height: 16px; }
+
+.notif-body {
+  padding: 14px;
+  min-height: 100px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.notif-empty {
+  text-align: center;
+  color: #aaa;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.notif-empty p {
+  color: #FFD700;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.85rem;
+  margin: 0;
+}
+.notif-empty span {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.75rem;
+}
+.notif-list {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.notif-list li {
+  font-family: 'TuFuentePixel', monospace;
+  color: #fff;
+  font-size: 0.85rem;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+}
+.notif-list li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.notif-footer {
+  background-color: #1a1500;
+  padding: 10px;
+  border-top: 2px solid #d4b515;
+  display: flex;
+  justify-content: center;
+}
+.notif-read-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+.notif-read-btn:hover { color: #FFD700; }
+.notif-read-btn svg { width: 14px; height: 14px; }
+
+
+/* ================================================================
+   CONTENIDO PRINCIPAL
+================================================================ */
+.main-content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Margen extra para compensar el logo desbordado + dar respiración */
+  padding: calc(var(--title-overflow) + var(--player-panels-mt)) 20px 36px;
+  gap: 24px;
+}
+
+
+
+/* ================================================================
+   FILA DE LOS PANELES SUPERIORES
+   Contiene: Panel de Perfil (izq) - Saludo (centro) - Tienda (der)
+================================================================ */
+.player-panels-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--player-panels-gap);
+  margin-top: 0; /* el margen ya viene del padding de main-content */
+  width: 100%;
+  /* Ancho máximo ajustado para 3 paneles (Perfil, Saludo, Columna Derecha) + 2 espacios */
+  max-width: calc(var(--profile-panel-w) + var(--greeting-panel-w) + var(--right-column-w) + (var(--player-panels-gap) * 2));
+}
+
+
+/* ================================================================
+   PANEL 1 — PERFIL (izquierdo)
+   Contiene: etiqueta "PERFIL" arriba, avatar al centro, estrellas abajo.
+   Clickeable para futura navegación a /perfil.
+================================================================ */
+.profile-panel {
+  width: var(--profile-panel-w);
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8px * var(--top-panels-scale));
+
+  padding: var(--profile-panel-py) var(--profile-panel-px);
+
+  /* Fondo negro semi-transparente — opacidad controlable */
+  background: rgba(0, 0, 0, var(--profile-panel-opacity));
+  border: 2px solid var(--player-panel-border);
+  border-radius: 0;
+
+  box-shadow: 0 0 0 2px #000, 0 0 14px rgba(130, 244, 224, 0.1);
+
+  cursor: pointer;
+  /* Preparado para navegación futura */
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  /* Necesario para que sea botón */
+  font-family: inherit;
+  text-align: center;
+}
+
+.profile-panel:hover {
+  background: rgba(0, 0, 0, calc(var(--profile-panel-opacity) - 0.1));
+  border-color: rgba(130, 244, 224, 0.75);
+}
+
+.profile-panel:active {
+  transform: translateY(2px);
+}
+
+/* Etiqueta "PERFIL" en la parte superior del panel */
+.profile-label {
+  color: #82F4E0;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: calc(1.05rem * var(--top-panels-scale));
+  letter-spacing: 2px;
+  margin: 0;
+  text-shadow: 2px 2px 0px #000;
+  transition: text-shadow 0.2s ease;
+}
+
+/* Avatar (skin seleccionada) */
+.player-avatar {
+  height: var(--player-avatar-h);
+  width: auto;
+  object-fit: contain;
+  transform: scale(var(--player-avatar-scale, 1));
+  transform-origin: bottom center;
+  /* Interpolación suave activada (se eliminó pixelated) */
+}
+
+/* Estrellas debajo del avatar */
+.stars-under-avatar {
+  display: flex;
+  align-items: center;
+  gap: calc(5px * var(--top-panels-scale));
+  background: var(--chip-bg-solid-star);
+  border: 1px solid #FFD700;
+  border-radius: 4px;
+  padding: calc(4px * var(--top-panels-scale)) calc(10px * var(--top-panels-scale));
+}
+
+.stars-under-avatar .star-icon {
+  font-size: calc(0.85rem * var(--top-panels-scale));
+  color: #FFD700;
+}
+
+.stars-under-avatar .star-count {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: calc(0.78rem * var(--top-panels-scale));
+  color: #FFD700;
+  letter-spacing: 1px;
+}
+
+
+/* ================================================================
+   PANEL 2 — SALUDO (derecho)
+   El fondo es fondodia / fondotarde / fondonoche según la hora.
+   La imagen se recibe como CSS var --greeting-bg desde Angular.
+   Animación: scroll infinito hacia la derecha con step-end.
+================================================================ */
+.greeting-panel {
+  flex: 1;
+  min-width: var(--greeting-panel-w);
+
+  position: relative;
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+
+  border: 2px solid var(--player-panel-border);
+  border-radius: 0;
+
+  box-shadow: 0 0 0 2px #000, 0 0 14px rgba(130, 244, 224, 0.1);
+
+  /* Oscurecido base sobre la imagen de fondo */
+  background-color: rgba(0, 0, 0, 0.55);
+}
+
+/* La imagen de fondo que se mueve hacia la derecha */
+.greeting-panel::before {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  z-index: 0;
+
+  /* La imagen viene de Angular como --greeting-bg: url(...) */
+  background-image: var(--greeting-bg);
+  background-repeat: repeat;
+  background-size: var(--greeting-bg-scale);
+  image-rendering: pixelated;
+
+  opacity: var(--greeting-bg-opacity);
+
+  /* Scroll continuo hacia la derecha con saltos definidos por frames retro */
+  animation: scrollRight var(--greeting-bg-speed) steps(var(--greeting-bg-frames)) infinite;
+  will-change: background-position;
+  pointer-events: none;
+}
+
+/* Contenido del saludo sobre la imagen */
+.greeting-panel-content {
+  position: relative;
+  z-index: 1;
+  padding: var(--greeting-panel-py) var(--greeting-panel-px);
+  display: flex;
+  flex-direction: column;
+  gap: calc(10px * var(--top-panels-scale));
+}
+
+/* Zona nombre + saludo */
+.player-info {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10px * var(--top-panels-scale));
+}
+
+.player-name {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: var(--player-name-size);
+  color: #82F4E0;
+  text-shadow: 0 0 10px rgba(130, 244, 224, 0.5), 2px 2px 0 #000;
+  letter-spacing: 2px;
+  margin: 0;
+}
+
+.greeting-text {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: var(--player-greeting-size);
+  color: #d8d8f0;
+  text-shadow: 2px 2px 0 #000;
+  letter-spacing: 1px;
+  margin: 0;
+  line-height: 1.55;
+}
+
+
+/* ================================================================
+   TEXTO FLOTANTE DE SECCIÓN — "Que deseas hacer hoy?"
+================================================================ */
+.section-title {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: var(--section-title-size);
+  font-weight: bold;
+  color: #e0e0f0;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 #000, 0 0 14px rgba(130, 244, 224, 0.2);
+  margin: 0;
+  text-align: center;
+}
+
+
+/* ================================================================
+   TARJETAS DE MODO
+   Un solo recuadro bordeado: imagen arriba + texto abajo.
+   Efecto gris en reposo, color + zoom ligero en hover.
+   Press (click) que hunde la tarjeta como botón retro.
+================================================================ */
+.mode-cards {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(14px, 2.2vw, 28px);
+  flex-wrap: nowrap; /* Obliga a mantener las 3 en una sola fila en PC */
+  width: 100%;
+  max-width: 1800px; /* Ampliado para tolerar escalas grandes sin desbordar */
+}
+
+.mode-card {
+  width: var(--card-w);
+  height: var(--card-h);
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  border: var(--card-frame-width) solid var(--card-frame-color);
+  border-radius: 0; /* Pixel-art: sin radius */
+
+  /* Marco pulsante de neón puro */
+  animation: cardBorderGlow var(--card-frame-duration) ease-in-out infinite;
+
+  /* Efecto gris en reposo — el color vuelve en hover */
+  filter: grayscale(var(--card-grayscale));
+
+  cursor: pointer;
+  overflow: hidden; /* Evita que el zoom de la imagen se desborde */
+
+  transition: filter 0.2s ease, transform 0.1s ease;
+}
+
+/* Hover: solo recobra el color. El zoom ocurre adentro de la imagen. */
+.mode-card:hover {
+  filter: grayscale(0%);
+}
+
+/* Click: efecto de caída */
+.mode-card:active {
+  transform: translateY(8px);
+  filter: grayscale(0%);
+}
+
+/* Zona imagen (70% superior) */
+.card-image-area {
+  flex: 0 0 var(--card-image-ratio);
+  position: relative;
+  background-size: 0 0; /* Oculta la imagen en el padre para que la maneje el pseudo-elemento */
+}
+
+/* Pseudo-elemento que hereda la imagen para hacer un zoom de máxima calidad (re-render) */
+.card-image-area::before {
+  content: "";
+  position: absolute;
+  /* El zoom base: */
+  top: var(--card-img-zoom-base);
+  bottom: var(--card-img-zoom-base);
+  left: var(--card-img-zoom-base);
+  right: var(--card-img-zoom-base);
+  
+  background-image: inherit; /* Toma la URL del padre (.card-img-aventura, etc.) */
+  background-size: cover;
+  background-position: center;
+  image-rendering: pixelated; /* ¡Mantiene los píxeles nítidos y crujientes! */
+  
+  /* Transicionamos las dimensiones reales, forzando redibujado de alta calidad */
+  transition: top 0.3s ease, bottom 0.3s ease, left 0.3s ease, right 0.3s ease;
+}
+
+/* El zoom se aplica SOLO a la imagen al hacer hover en la tarjeta entera */
+.mode-card:hover .card-image-area::before {
+  top: var(--card-img-zoom-hover);
+  bottom: var(--card-img-zoom-hover);
+  left: var(--card-img-zoom-hover);
+  right: var(--card-img-zoom-hover);
+}
+
+.card-img-aventura { background-image: url('../../assets/images/pantallaprincipal/fondoaventura.png'); }
+.card-img-crear    { background-image: url('../../assets/images/pantallaprincipal/fondocrearula.png'); }
+.card-img-unirse   { background-image: url('../../assets/images/pantallaprincipal/fondounirseaula.png'); }
+.card-img-administrar { background-image: url('../../assets/images/ui/fondotitulo.png'); filter: hue-rotate(180deg); }
+
+/* Zona texto con fondoventanas.png (35% inferior)
+   El borde superior negro une visualmente imagen y texto
+   como si fuera un único recuadro. */
+.card-text-panel {
+  flex: 1;
+  position: relative;
+  z-index: 2; /* Se coloca sobre la imagen para que el zoom no se cuele hacia abajo */
+  background-color: #12101a; /* Fondo sólido oscuro para tapar el desborde de la imagen */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 2px solid #111;
+}
+
+/* Textura fondoventanas como pseudo-capa con opacidad independiente */
+.card-text-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('../../assets/images/ui/fondoventanas.png');
+  background-repeat: repeat;
+  background-size: var(--escala-fondoventanas);
+  image-rendering: pixelated;
+  opacity: var(--fondoventanas-opacity);
+  pointer-events: none;
+}
+
+/* Texto sobre la textura */
+.card-text-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+  padding: 12px 14px;
+}
+
+.card-title {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: var(--card-title-size);
+  font-weight: var(--card-text-weight);
+  color: #ffffff;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.card-desc {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: var(--card-desc-size);
+  font-weight: var(--card-text-weight);
+  color: rgba(225, 225, 240, 0.95);
+  text-shadow: 1px 1px 0 #000;
+  margin: 0;
+  line-height: 1.4;
+}
+
+
+/* ================================================================
+   PANEL 3 — COLUMNA DERECHA (Tienda + Estrellas)
+   Refleja las dimensiones del perfil izquierdo.
+================================================================ */
+.right-panels-column {
+  width: var(--right-column-w);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(8px * var(--top-panels-scale)); /* Espacio entre tienda y estrellas */
+}
+
+/* 70% Superior: Tienda */
+.shop-panel {
+  flex: var(--right-panel-shop-ratio);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(10px * var(--top-panels-scale));
+
+  padding: var(--profile-panel-py) var(--profile-panel-px);
+
+  /* Fondo negro opaco igual al de perfil */
+  background: rgba(0, 0, 0, var(--profile-panel-opacity));
+  border: 2px solid var(--player-panel-border);
+  border-radius: 0;
+
+  /* Sombra base (idéntica a la del perfil base sin el pequeño glow) */
+  box-shadow: 0 0 0 2px #000, 0 0 14px rgba(130, 244, 224, 0.1);
+
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.1s step-end, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  font-family: inherit;
+  text-align: center;
+}
+
+.shop-panel:hover {
+  background: rgba(0, 0, 0, calc(var(--profile-panel-opacity) - 0.1));
+  border-color: #82F4E0; /* Se ilumina intensamente al pasar el cursor */
+  filter: brightness(1.15); /* Efecto original del fab */
+  box-shadow: 0 0 0 2px #000, 0 0 14px rgba(130, 244, 224, 0.5); /* Brillo solo al acercar el mouse */
+}
+
+.shop-panel:hover .shop-label {
+  text-shadow: 0 0 6px rgba(130, 244, 224, 0.7), 2px 2px 0px #000;
+}
+
+.shop-panel:hover .shop-panel-svg {
+  filter: drop-shadow(0 0 6px rgba(130, 244, 224, 0.7));
+}
+
+.shop-panel:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 2px #000, 0 1px 0 0 rgba(0,0,0,0.8);
+}
+
+.shop-label {
+  color: #82F4E0;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: calc(1.05rem * var(--top-panels-scale)); /* Ajustar tamaño al profile-label */
+  letter-spacing: 2px;
+  margin: 0;
+  text-shadow: 2px 2px 0px #000;
+  transition: text-shadow 0.2s ease;
+}
+
+.shop-icon-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-panel-svg {
+  width: calc(clamp(30px, 12vh, 80px) * var(--top-panels-scale));
+  height: auto;
+  color: #82F4E0;
+  display: block;
+  transition: filter 0.2s ease;
+}
+
+/* 30% Inferior: Estrellas */
+.stars-panel {
+  flex: var(--right-panel-stars-ratio);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(22px * var(--top-panels-scale));
+
+  background: var(--chip-bg-solid-star);
+  border: 1px solid #FFD700;
+  border-radius: 4px; /* Bordes curvos clásicos solicitados */
+
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.1s step-end, box-shadow 0.2s ease;
+  font-family: 'TuFuentePixel', monospace;
+}
+
+.stars-panel:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.4); /* Glow amarillo suave */
+}
+
+.stars-panel:active {
+  transform: translateY(2px);
+}
+
+.stars-panel .star-icon {
+  font-size: calc(1.65rem * var(--top-panels-scale));
+  color: #FFD700;
+  transform: translateY(-2px); /* Centra visualmente la estrella con respecto a los números */
+}
+
+.stars-panel .star-count {
+  font-size: calc(1.1rem * var(--top-panels-scale));
+  color: #FFD700;
+  letter-spacing: 3px;
+}
+
+
+/* ================================================================
+   MODALES (Tienda, Salir, Estrellas)
+================================================================ */
+/* ================================================================
+   RESPONSIVE — MODO CELULAR (max-width: 768px)
+================================================================ */
+@media (max-width: 768px) {
+
+  .main-layout {
+    /* ── PANEL DE CONTROL: MODO CELULAR ──────────────────────
+       Ajusta exclusivamente las proporciones de pantallas móviles.
+    ───────────────────────────────────────────────────────── */
+    
+    /* ── BARRA SUPERIOR (HUD) Y LOGO ── */
+    --hud-height:            68px;       /* Altura de la barra superior */
+    --escala-fondotitulo:    320px;      /* Tamaño del patrón de fondo (tierra/pasto) de la barra */
+    --title-width:           clamp(200px, 53vw, 260px); /* Tamaño del logo de DragonCode */
+    --title-vertical-center: 1px;       /* Mueve el logo hacia arriba (menor valor) o hacia abajo (mayor valor) */
+    --title-overflow:        22px;       /* Cuánto sobresale el logo por debajo de la barra */
+    --hud-padding-h:         12px;       /* Espacio a los lados de los botones de la barra */
+    
+    /* ── PANELES SUPERIORES (Perfil, Saludo, Tienda) ── */
+    --player-panels-mt:      5px;       /* Separación vertical entre el logo y los paneles */
+    --player-avatar-h:       60px;       /* Tamaño REAL (caja) del avatar. Mantenlo pequeño para no gastar espacio */
+    --player-avatar-scale:   2.1;        /* Tamaño VISUAL del avatar. Úsalo para que Draco se vea más grande sin empujar los bordes */
+    --player-avatar-y:       15px;       /* Mueve el avatar hacia abajo (positivo) o arriba (negativo) */
+    --profile-label-y:       -20px;        /* Mueve el texto "PERFIL" hacia abajo (positivo) o arriba (negativo) */
+    /* Configuración de Ventana de Saludo */
+    --greeting-panel-w:      100%;       /* Ancho de la ventana de bienvenida (100% = casi toca bordes) */
+    --greeting-panel-h:      150px;      /* Alto (grosor) de la ventana de bienvenida */
+    --greeting-bg-scale:     150px;      /* Escala de la imagen de fondo estrellado */
+    --greeting-panel-px:     14px;
+    --player-name-size:      1.6rem;     /* Tamaño de la palabra "Draco" (Título del saludo) */
+    --player-greeting-size:  0.8rem;     /* Tamaño del texto descriptivo del saludo */
+    
+    /* Configuración de Perfil y Tienda */
+    --profile-panel-w:       100%;       /* Ocupa su mitad de la pantalla */
+    --right-panels-scale:    1;        /* Escala la tienda/estrellas para que cuadren perfecto con el perfil */
+    
+    /* ── TARJETAS Y CONTENIDO PRINCIPAL ── */
+    --section-title-size:    0.85rem;
+    --card-h:                clamp(220px, 55vw, 310px);
+    --card-title-size:       clamp(0.82rem, 4vw, 1rem);
+    --card-desc-size:        clamp(0.68rem, 3vw, 0.82rem);
+    
+    /* ── ELEMENTOS FLOTANTES ── */
+    --avatar-card-img-w:     clamp(80px, 22vw, 120px);
+    --fab-bottom:            72px;
+    --fab-right:             16px;
+  }
+
+  .player-panels-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 14px;
+    width: min(96vw, 440px); /* Ocupar casi toda la pantalla horizontalmente */
+  }
+
+  .greeting-panel {
+    grid-column: 1 / -1; /* Ocupa toda la fila superior */
+    grid-row: 1;
+    width: var(--greeting-panel-w);
+    min-height: var(--greeting-panel-h);
+    min-width: unset;
+  }
+
+  .profile-panel {
+    grid-column: 1; /* Mitad izquierda inferior */
+    grid-row: 2;
+    width: var(--profile-panel-w);
+    flex-direction: column; /* Apila PERFIL sobre el avatar, no a los lados */
+    justify-content: center;
+    gap: 14px;
+  }
+  
+  /* Ajustes de posición fina dentro del panel de perfil */
+  .profile-label {
+    transform: translateY(var(--profile-label-y, 0));
+  }
+  
+  .player-avatar {
+    transform: scale(var(--player-avatar-scale, 1)) translateY(var(--player-avatar-y, 0));
+    transform-origin: bottom center;
+  }
+  
+  .right-panels-column {
+    grid-column: 2; /* Mitad derecha inferior */
+    grid-row: 2;
+    width: 100%;
+    transform: scale(var(--right-panels-scale)); 
+    transform-origin: top center;
+  }
+
+  .mode-cards {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .mode-card {
+    width: min(92vw, 420px);
+  }
+
+}
+
+
+/* ================================================================
+   RESPONSIVE — MODO COMPACTO (Zoom 150% / Poca altura)
+================================================================ */
+@media (max-height: 700px) and (min-width: 769px) {
+
+  .main-layout {
+    /* ── PANEL DE CONTROL: MODO COMPACTO ─────────────────────
+       Ajusta exclusivamente las proporciones de este formato.
+    ───────────────────────────────────────────────────────── */
+    /* ── ESCALAS ── */
+    --top-panels-scale:      0.58;       /* Reduce simétricamente todo el bloque superior (perfil, saludo, tienda, estrellas) */
+    --cards-scale:           1;          /* Escala para las tarjetas (1 = normal) */
+
+    /* ── DISTANCIAS Y TAMAÑOS PRINCIPALES ── */
+    --player-panels-mt:      45px;       /* Controla qué tan ABAJO empieza el bloque superior (para separarlo del HUD/Logo) */
+    --player-avatar-h:       90px;      /* Controla el tamaño del dragón (Draco) dentro de la ventana de Perfil */
+    --greeting-bg-scale:     150px;      /* Controla la escala del fondo estrellado/nubes en la ventana de saludo */
+    
+    /* ── TARJETAS (CARTAS DE MODO) ── */
+    --card-h:                clamp(260px, 45vh, 400px); /* Controla el ALTO de las tarjetas (aumentado para que no se corte texto/imagen) */
+    --card-title-size:       clamp(0.9rem, 1.5vw, 1.15rem);  /* Tamaño de fuente: título de la tarjeta */
+    --card-desc-size:        clamp(0.65rem, 1vw, 0.8rem);    /* Tamaño de fuente: descripción de la tarjeta */
+    
+    --hud-height:            54px;
+    --title-overflow:        16px;
+    --section-title-size:    0.9rem;
+    --greeting-panel-py:     10px;
+  }
+}
+
+/* ================================================================
+   MODAL DE CONFIRMACIÓN DE SALIDA
+================================================================ */
+.logout-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-modal {
+  background-color: #000;
+  border: 4px solid #ff3333;
+  border-radius: 8px; /* Ligeramente curvo */
+  box-shadow: 0 0 20px rgba(255, 51, 51, 0.4), 0 10px 40px rgba(0,0,0,0.8);
+  width: 90%;
+  max-width: 400px;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+}
+
+.logout-title {
+  color: #ff6666;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.4rem;
+  margin: 0;
+  text-shadow: 2px 2px 0px #000;
+}
+
+.logout-message {
+  font-family: 'TuFuentePixel', monospace;
+  color: #fff;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.logout-actions {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.logout-action-btn {
+  flex: 1;
+  max-width: 140px;
+  padding: 12px 10px;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+.logout-action-btn:active { transform: translateY(2px); }
+
+.cancel-btn {
+  background-color: transparent;
+  color: #fff;
+  border: 2px solid #666;
+}
+.cancel-btn:hover { border-color: #fff; }
+
+.confirm-btn {
+  background-color: #ff3333;
+  color: #fff;
+  border: 2px solid #ff6666;
+}
+.confirm-btn:hover { box-shadow: 0 0 12px rgba(255, 51, 51, 0.6); }
+
+
+/* ================================================================
+   MODAL TEMÁTICO (CYBER-MODAL) para Crear Aula y Unirse
+================================================================ */
+.cyber-modal {
+  position: relative;
+  background-color: #0b0f19; /* Fondo oscuro del nivel */
+  border: 4px solid rgba(130, 244, 224, 0.4); /* Borde cian sutil */
+  border-radius: 8px;
+  box-shadow: 
+    0 0 10px rgba(130, 244, 224, 0.1),
+    inset 0 0 20px rgba(0,0,0,0.8);
+  
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.cyber-modal-title {
+  color: #82F4E0; /* Cian brillante */
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.4rem;
+  margin: 0;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 0px #000;
+  text-transform: uppercase;
+}
+
+.cyber-modal-message {
+  font-family: 'TuFuentePixel', monospace;
+  color: #a3bac2;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.cyber-input {
+  background-color: #05070a; /* Muy oscuro */
+  border: 2px solid rgba(130, 244, 224, 0.3);
+  border-radius: 4px;
+  padding: 12px 14px;
+  color: #82F4E0;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.9);
+}
+.cyber-input:focus {
+  border-color: #82F4E0;
+  box-shadow: 0 0 10px rgba(130, 244, 224, 0.2), inset 0 2px 8px rgba(0,0,0,0.9);
+}
+.cyber-input::placeholder {
+  color: #3b5059;
+}
+
+.cyber-action-btn {
+  flex: 1;
+  padding: 12px 10px;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.95rem;
+  border: 2px solid #111;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.1s step-end, filter 0.2s;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.1), 0 4px 0 #000;
+}
+.cyber-action-btn:active {
+  transform: translateY(4px);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.1), 0 0px 0 #000;
+}
+
+.cyber-cancel {
+  background-color: #7b2a26; /* Rojo mate (Botón Borrar) */
+  border: 2px solid #ff3333 !important;
+  box-shadow: 0 0 10px rgba(255,51,51,0.5), inset 0 2px 0 rgba(255,255,255,0.1), 0 4px 0 #111;
+}
+.cyber-cancel:hover { 
+  filter: brightness(1.2); 
+  box-shadow: 0 0 15px rgba(255,51,51,0.8), inset 0 2px 0 rgba(255,255,255,0.1), 0 4px 0 #111; 
+}
+
+.cyber-confirm {
+  background-color: #2b5936; /* Verde musgo (Botón Ejecutar) */
+  border: 2px solid #00ff88 !important;
+  box-shadow: 0 0 10px rgba(0,255,136,0.5), inset 0 2px 0 rgba(255,255,255,0.1), 0 4px 0 #111;
+}
+.cyber-confirm:hover { 
+  filter: brightness(1.2); 
+  box-shadow: 0 0 15px rgba(0,255,136,0.8), inset 0 2px 0 rgba(255,255,255,0.1), 0 4px 0 #111; 
+}
+
+.cyber-modal-aula-name {
+  font-family: 'TuFuentePixel', monospace !important;
+  color: #d946ef;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.cyber-modal-aula-code {
+  font-family: 'TuFuentePixel', monospace !important;
+  font-size: 2.5rem;
+  color: #82F4E0;
+  letter-spacing: 8px;
+  text-shadow: 0 0 10px rgba(130,244,224,0.5);
+  margin: 0;
+}
+.cyber-modal-aula-label {
+  font-family: 'TuFuentePixel', monospace !important;
+  color: #a3bac2;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* ================================================================
+   ESTILOS ANIMADOS PARA AULAS (PETICIÓN USUARIO)
+================================================================ */
+.cyber-glow-card {
+  background-color: #05070a;
+  border: 2px solid #4cfddd;
+  box-shadow: 0 0 10px rgba(76, 253, 221, 0.4), inset 0 0 10px rgba(0,0,0,0.9);
+  padding: 14px;
+  margin-bottom: 12px;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.cyber-glow-card:hover {
+  transform: translateY(-2px);
+  border-color: #82F4E0;
+  box-shadow: 0 0 15px rgba(130, 244, 224, 0.6), inset 0 0 10px rgba(0,0,0,0.9);
+}
+
+.cyber-glow-btn {
+  --btn-color: #4cfddd;
+  --btn-bg: rgba(76, 253, 221, 0.15);
+  --btn-bg-hover: rgba(76, 253, 221, 0.3);
+  --btn-bg-active: rgba(76, 253, 221, 0.1);
+
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.95rem;
+  border: 2px solid var(--btn-color);
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  background-color: var(--btn-bg);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 0 8px var(--btn-bg-hover);
+  transition: all 0.2s;
+}
+.cyber-glow-btn:hover {
+  background-color: var(--btn-bg-hover);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.3), 0 0 12px var(--btn-color);
+  transform: translateY(-2px);
+}
+.cyber-glow-btn:active {
+  transform: translateY(2px);
+  background-color: var(--btn-bg-active);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.1), 0 0 5px var(--btn-bg-hover);
+}
+
+.glow-green {
+  --btn-color: #22c55e;
+  --btn-bg: rgba(34, 197, 94, 0.15);
+  --btn-bg-hover: rgba(34, 197, 94, 0.3);
+  --btn-bg-active: rgba(34, 197, 94, 0.1);
+}
+
+.glow-red {
+  --btn-color: #ff4d4d;
+  --btn-bg: rgba(255, 77, 77, 0.15);
+  --btn-bg-hover: rgba(255, 77, 77, 0.3);
+  --btn-bg-active: rgba(255, 77, 77, 0.1);
+}
+
+.glow-gold {
+  --btn-color: #FFD700;
+  --btn-bg: rgba(255, 215, 0, 0.15);
+  --btn-bg-hover: rgba(255, 215, 0, 0.3);
+  --btn-bg-active: rgba(255, 215, 0, 0.1);
+  color: #FFD700;
+}
+
+.glow-purple {
+  --btn-color: #d946ef;
+  --btn-bg: rgba(217, 70, 239, 0.15);
+  --btn-bg-hover: rgba(217, 70, 239, 0.3);
+  --btn-bg-active: rgba(217, 70, 239, 0.1);
+}
+
+
+/* ================================================================
+   MODAL DE ESTRELLAS
+================================================================ */
+.stars-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInOverlay 0.2s ease;
+}
+
+.stars-modal {
+  position: relative;
+  width: var(--modal-panel-w);
+  max-width: 500px; /* Un poco más angosto que el de avatares */
+  max-height: 80vh;
+  overflow-y: auto;
+  
+  background: #050505;
+  border: 1px solid rgba(255, 215, 0, 0.6);
+  border-radius: 0;
+  box-shadow: 
+    0 0 0 2px #000, 
+    0 0 20px rgba(255, 215, 0, 0.15),
+    inset 0 0 40px rgba(255, 215, 0, 0.05);
+
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stars-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+  padding-bottom: 15px;
+}
+
+.stars-modal-title {
+  color: #FFD700;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.5rem;
+  margin: 0;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 0px #000;
+}
+
+.stars-close-btn {
+  background: transparent;
+  color: #FFD700;
+  border: none;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.1s step-end;
+}
+.stars-close-btn:hover { filter: brightness(1.2); }
+.stars-close-btn:active { transform: translateY(2px); }
+
+.stars-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.worlds-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Más espacio entre niveles */
+}
+
+.world-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px; /* Más espacio interno para que no se vea comprimido */
+  background: rgba(255, 215, 0, 0.03);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  transition: background 0.2s ease;
+}
+
+.world-item:hover {
+  background: rgba(255, 215, 0, 0.08);
+}
+
+.world-name {
+  color: #e0e0e0;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+
+.world-stars {
+  display: flex;
+  gap: 4px;
+}
+
+.world-stars .star {
+  font-size: 1.2rem;
+  color: rgba(255, 215, 0, 0.15); /* Estrella apagada */
+  text-shadow: 1px 1px 0px #000;
+}
+
+.world-stars .star.earned {
+  color: #FFD700; /* Estrella brillante ganada */
+  filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+}
+
+/* Scrollbar sutil para el modal de estrellas */
+.stars-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+.stars-modal-content::-webkit-scrollbar-track {
+  background: rgba(255, 215, 0, 0.03);
+  border-radius: 4px;
+}
+.stars-modal-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.2);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 215, 0, 0.1);
+}
+.stars-modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 215, 0, 0.4);
+}
+
+/* ================================================================
+   NOTIFICACIONES
+================================================================ */
+.notif-overlay-invisible {
+  position: fixed;
+  inset: 0;
+  z-index: 99; /* Justo debajo del dropdown que debería tener z-index 100 */
+}

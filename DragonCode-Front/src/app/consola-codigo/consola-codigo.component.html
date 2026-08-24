@@ -1,0 +1,51 @@
+<div class="console-container">
+  <!-- Pestaña de Consola -->
+  <div class="console-header">
+    <span class="file-name">pergamino.drg</span>
+  </div>
+
+  <!-- Contenedor del Editor -->
+  <div class="editor-lines-container" (click)="enfocarUltimoInput()">
+    @for (linea of lineas; track $index) {
+      <div class="code-line" (click)="$event.stopPropagation()">
+        <span class="line-number">{{ $index + 1 }}</span>
+        
+        <div class="code-line-wrapper" 
+             [class.has-error]="linea.tieneError" 
+             [style.--char-count]="linea.texto.length">
+          <input 
+            #lineaInput
+            type="text" 
+            class="line-input"
+            [class.is-executing]="ejecutando"
+            [style.color]="linea.tieneError ? '#ffffff' : linea.color"
+            [ngModel]="linea.texto"
+            (ngModelChange)="onTextoCambiado($index, $event, linea)"
+            (focus)="lineaActivaIndex = $index"
+            (keydown)="onKeyDown($event, $index, linea)"
+            (keydown.enter)="crearNuevaLinea($index)"
+            (keydown.arrowUp)="moverFoco($index - 1, $event)"
+            (keydown.arrowDown)="moverFoco($index + 1, $event)"
+            (paste)="preventPaste($event)"
+            (contextmenu)="preventPaste($event)"
+            spellcheck="false"
+            autocomplete="off"
+            [disabled]="ejecutando">
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Toolbar Inferior Rediseñada -->
+  <div class="console-toolbar">
+    <div class="toolbar-left">
+      <button class="btn-tool btn-danger" (click)="clickBorrar($event)" [disabled]="ejecutando">Borrar Línea</button>
+      <button class="btn-tool btn-danger" (click)="clickLimpiar($event)" [disabled]="ejecutando">Limpiar Todo</button>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn-tool btn-execute" (click)="clickEjecutar($event)" [disabled]="ejecutando">
+        ▶ Ejecutar
+      </button>
+    </div>
+  </div>
+</div>

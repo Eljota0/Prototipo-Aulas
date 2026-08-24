@@ -1,0 +1,571 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* =========================================
+   PANEL DE CONTROL DE DISEÑO (LEVEL DESIGN)
+   ========================================= */
+$opacidad-fondo-cueva: 0.75; /* Ajusta este valor de 0.0 a 1.0 */
+
+:host {
+  --tamanio-bloque: 64px;
+}
+
+.escenario-container {
+  background-color: #000;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Esto centra el tablero física y visualmente */
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  border-radius: 8px; /* Previene fugas en las esquinas curvas del padre */
+}
+
+/* =========================================
+   CAPA VFX FANTASMA (Destellos de Pociones)
+   ========================================= */
+.fantasma-resplandor {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; 
+  /* Un z-index alto permite que la sombra se proyecte sobre los márgenes exteriores sin ser bloqueada */
+  z-index: 90; 
+  opacity: 0;
+  box-shadow: 0 0 50px 15px transparent; /* Sombra base para que el fade sea suave */
+  transition: opacity 0.8s ease-out, box-shadow 0.8s ease-out; /* Transiciones coordinadas y más largas */
+  
+  &.destello-rojo {
+    /* SIN 'inset': la luz se proyecta hacia el exterior de la caja. Opacidad al 25% (0.25) */
+    box-shadow: 0 0 50px 15px rgba(255, 50, 100, 0.25);
+    opacity: 1;
+  }
+  
+  &.destello-verde {
+    /* SIN 'inset' */
+    box-shadow: 0 0 50px 15px rgba(50, 255, 100, 0.25);
+    opacity: 1;
+  }
+}
+
+.grid-tablero {
+  display: grid;
+  position: relative;
+  /* Sin max-height, sin aspect-ratio. El tamaño en píxeles ya viene del HTML */
+}
+
+.fondo-cueva-capa {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  
+  /* MAGIA: (100% / 7 filas) * 2 filas = Altura exacta milimétrica */
+  height: calc(100% / var(--filas) * 2);
+  
+  background-image: url('/assets/images/aventura/nivel1/terreno/fondo-cueva.png');
+  background-repeat: repeat-x; 
+  
+  /* Ancho = (100% / 5 columnas) * 6 bloques. Alto = 100% de esta misma capa */
+  background-size: calc(100% / var(--columnas) * 6) 100%;
+  background-position: top left;
+  
+  image-rendering: auto; 
+  opacity: $opacidad-fondo-cueva;
+  z-index: 1; 
+  pointer-events: none;
+}
+
+.celda {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* CRÍTICO: Ancla para los elementos hijos con position: absolute */
+  position: relative; 
+}
+
+/* =========================================
+   ANIMACIONES DE CELDA (MÁQUINA DE ESTADOS)
+   ========================================= */
+
+/* ANIMACIÓN DE ADVERTENCIA (Temblor rápido e infinito) */
+@keyframes temblorInfinito {
+  0%   { margin-left: 0; margin-top: 0; }
+  25%  { margin-left: -1px; margin-top: 1px; }
+  50%  { margin-left: 1px; margin-top: -1px; }
+  75%  { margin-left: -1px; margin-top: -1px; }
+  100% { margin-left: 1px; margin-top: 1px; }
+}
+
+.animacion-temblor {
+  animation: temblorInfinito 0.15s infinite;
+}
+
+/* =========================================
+   CAPAS GRÁFICAS
+   ========================================= */
+/* COMPORTAMIENTO BASE DE TODAS LAS IMÁGENES DEL GRID */
+.capa-terreno, .capa-objeto, .capa-filo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* image-rendering: auto para mantener la calidad de alta resolución al encoger */
+  image-rendering: auto; 
+  pointer-events: none; /* Evita que las imágenes bloqueen los clicks en la celda */
+}
+
+/* CAPA 2: TERRENO (Suelo, Suelo-Ogro, etc.) */
+.capa-terreno {
+  object-fit: cover; /* Llena el cuadrado perfecto */
+  z-index: 2;
+  --opacidad-base: 1; /* NUEVO: Define su opacidad para la animación */
+}
+
+/* CAPA 3: FILO (Borde 3D del acantilado) */
+.capa-filo {
+  top: 100%; /* Comienza exactamente donde termina la celda */
+  height: 50%; /* Cuelga hacia abajo dando efecto de profundidad */
+  opacity: 0.4;
+  z-index: 3;
+  --opacidad-base: 0.4; /* NUEVO: El filo recuerda que es semi-transparente */
+}
+
+/* CAPA 4: OBJETOS (Rocas, Cofres) */
+.capa-objeto {
+  object-fit: contain; /* Contain evita que el objeto se ampute si tiene bordes transparentes */
+  z-index: 4;
+}
+
+.zona-superior { border: 1px dashed rgba(255, 100, 100, 0.4); } 
+.zona-editable { border: 1px dashed rgba(119, 221, 202, 0.4); } 
+.zona-inferior { border: 1px dashed rgba(100, 150, 255, 0.4); }
+
+/* =========================================
+   DEV TOOLS FLOTANTE
+   ========================================= */
+.dev-toolbar {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #77DDCA;
+  padding: 10px;
+  z-index: 9999;
+  color: white;
+  border-radius: 8px;
+  
+  h4 { margin: 0 0 10px 0; font-size: 14px; text-align: center; }
+  
+  .herramientas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    
+    button {
+      background: #333; color: white; border: 1px solid #555; padding: 5px; cursor: pointer;
+      &.activo { background: #77DDCA; color: black; font-weight: bold; }
+    }
+  }
+}
+
+.modo-creador-wrapper.es-creador {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  width: 100%;
+  height: 100dvh;
+  padding: 10px;
+  box-sizing: border-box;
+
+  .juego-area {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dev-toolbar {
+    position: relative; /* Ya no flota */
+    top: auto;
+    right: auto;
+    width: 300px;
+    height: 100%;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    align-items: center;
+    height: auto;
+    
+    .juego-area, .dev-toolbar {
+      width: 100%;
+      max-width: 600px;
+      height: auto;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .dev-toolbar {
+    display: none !important;
+  }
+}
+
+/* ANIMACIÓN DE COLAPSO SEGURA (Usa Márgenes y Variables) */
+@keyframes colapsoRetro {
+  0%   { margin-top: 0; margin-left: 0; opacity: var(--opacidad-base); }
+  10%  { margin-top: -2px; margin-left: 2px; }
+  20%  { margin-top: 2px; margin-left: -2px; }
+  30%  { margin-top: -2px; margin-left: -2px; }
+  40%  { margin-top: 2px; margin-left: 2px; }
+  50%  { margin-top: 0; margin-left: 0; opacity: var(--opacidad-base); }
+  /* Parpadeo usando la variable base */
+  60%  { opacity: 0; }
+  70%  { opacity: var(--opacidad-base); }
+  80%  { opacity: 0; }
+  90%  { opacity: var(--opacidad-base); }
+  100% { opacity: 0; }
+}
+
+.animacion-colapso {
+  animation: colapsoRetro 1.2s forwards;
+}
+
+/* ANIMACIÓN DE CHOQUE (Golpe seco horizontal) */
+@keyframes impactoColision {
+  0%   { margin-left: 0; }
+  20%  { margin-left: -5px; }
+  40%  { margin-left: 5px; }
+  60%  { margin-left: -3px; }
+  80%  { margin-left: 2px; }
+  100% { margin-left: 0; }
+}
+
+.animacion-colision {
+  animation: impactoColision 0.3s ease-out forwards;
+}
+
+/* MODIFICADORES DE OBJETOS */
+.objeto-cofre {
+  transform: scale(0.5); /* Reduce el tamaño al 50% por hardware */
+}
+
+/* VFX: Aura del Tesoro (Luz dorada rotatoria y pulsante) */
+.aura-tesoro {
+  position: absolute;
+  top: 0; left: 0; 
+  width: 100%; height: 100%;
+  /* Gradiente retro: Centro sólido que se difumina rápidamente */
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 10%, transparent 60%);
+  z-index: 3; /* Sobre el suelo (2) y el filo, debajo del objeto (4) */
+  pointer-events: none;
+  animation: auraGiro 4s linear infinite, auraPulso 2s ease-in-out infinite alternate;
+}
+
+@keyframes auraGiro {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes auraPulso {
+  0%   { opacity: 0.3; scale: 0.8; }
+  100% { opacity: 1; scale: 1.1; }
+}
+
+/* =========================================
+   HUD (Heads-Up Display)
+   ========================================= */
+.hud-container {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  width: 100%;
+  padding: 0 4vw; 
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; 
+  align-items: center;
+  z-index: 50;
+  pointer-events: none;
+  
+  /* Tipografía 8-bit real */
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  text-shadow: 2px 2px 0px #000; /* Sombra sólida simplificada */
+}
+
+.hud-vidas {
+  justify-self: start; /* Ancla a la izquierda de su fracción */
+  display: flex;
+  gap: 5px;
+  pointer-events: auto; 
+  cursor: pointer;
+  
+  .icono-vida {
+    /* clamp(MIN, VALOR_FLUIDO, MAX) */
+    width: clamp(18px, 4vw, 24px); 
+    height: clamp(18px, 4vw, 24px);
+    image-rendering: auto;
+    transition: filter 0.3s;
+    
+    &.vida-perdida { filter: brightness(0); }
+  }
+}
+
+.hud-centro {
+  justify-self: center; 
+  
+  .contador-cofres {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #FFD700;
+    /* Ajustamos el tamaño porque Press Start 2P es una fuente ancha */
+    font-size: clamp(10px, 2.5vw, 14px);
+    
+    /* NUEVO: Panel contenedor retro */
+    background-color: #000;
+    border: 3px solid #FFD700;
+    padding: 6px 12px;
+    /* Sombra interna y externa para dar relieve de 16-bits */
+    box-shadow: inset -2px -2px 0px rgba(255, 215, 0, 0.4), 4px 4px 0px rgba(0,0,0,0.8);
+    
+    img { 
+      width: clamp(16px, 4vw, 20px); 
+      height: clamp(16px, 4vw, 20px); 
+      image-rendering: auto; 
+    }
+
+    &.alerta-perdida {
+      animation: parpadeoPerdidaCofres 0.3s infinite;
+    }
+  }
+}
+
+@keyframes parpadeoPerdidaCofres {
+  0%   { border-color: #FF0000; color: #FF0000; box-shadow: inset -2px -2px 0px rgba(255, 0, 0, 0.4), 4px 4px 0px rgba(0,0,0,0.8); }
+  100% { border-color: #FFD700; color: #FFD700; box-shadow: inset -2px -2px 0px rgba(255, 215, 0, 0.4), 4px 4px 0px rgba(0,0,0,0.8); }
+}
+
+.hud-derecha {
+  justify-self: end; 
+  
+  .indicador-nivel {
+    color: #FFFFFF;
+    font-size: clamp(10px, 2.5vw, 14px); /* Escala ajustada */
+    letter-spacing: 0; /* Press Start 2P ya tiene suficiente espaciado */
+    text-align: right;
+    white-space: nowrap; 
+  }
+}
+
+/* =========================================
+   SOMBRAS RETRO (Blob Shadows)
+   ========================================= */
+.sombra-retro {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3; /* Debajo de los objetos (4), encima del suelo y auras */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Tamaños específicos por entidad */
+.sombra-roca { width: 65%; height: 20%; bottom: 15%; }
+.sombra-cofre { width: 35%; height: 12%; bottom: 25%; }
+
+/* =========================================
+   ENTIDAD: OGRO (Refactorizado con Contenedor)
+   ========================================= */
+.ogro-contenedor {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  /* El contenedor se desliza suavemente, llevando a su sombra con él */
+  transition: top 0.6s ease-in-out, left 0.6s ease-in-out;
+  
+  &.is-resizing { transition: none !important; }
+
+  .sombra-ogro {
+    width: 60%; height: 20%; bottom: 15%;
+    z-index: 1; /* Debajo del sprite del ogro */
+  }
+
+  .ogro-sprite {
+    position: absolute;
+    width: 80%; height: 80%;
+    left: 10%; top: 10%;
+    display: block;
+    object-fit: contain;
+    object-position: center bottom;
+    image-rendering: auto;
+    z-index: 2;
+    transition: transform 0.1s; /* Solo para la inversión de mirada */
+
+    &.mirar-izquierda { 
+      /* El Ogro solo se voltea si mira a la izquierda y NO está cayendo ni aturdido */
+      transform: scaleX(-1); 
+    }
+  }
+}
+
+/* EFECTO LATIDO (Curación de Pantalla) */
+.overlay-latido {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(255, 105, 180, 0.4); /* Rosado-Rojo translúcido */
+  box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.5);
+  z-index: 40; /* Debajo del HUD, encima del juego */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+  
+  &.latido-activo {
+    animation: animacionLatido 0.8s ease-in-out;
+  }
+}
+
+@keyframes animacionLatido {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  50%  { opacity: 0.3; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* =========================================
+   MODO INMERSIVO (Ocultar Grid)
+   ========================================= */
+.grid-tablero.modo-inmersivo {
+  .celda {
+    /* Vuelve los bordes invisibles pero mantiene el tamaño matemático (1px) intacto */
+    border-color: transparent !important;
+  }
+}
+
+/* =========================================
+   EFECTOS DE ESTADO DEL OGRO
+   ========================================= */
+.ogro-contenedor {
+  /* CAÍDA AL VACÍO: Escala hacia adentro y se oscurece */
+  &.estado-cayendo .ogro-sprite {
+    transform: scale(0.1);
+    filter: brightness(0);
+    opacity: 0;
+    transition: all 1s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+  }
+  /* Desaparece la sombra instantáneamente al caer */
+  &.estado-cayendo .sombra-ogro { display: none; }
+  
+  /* RESPAWN: Efecto retro parpadeante */
+  &.efecto-parpadeo {
+    animation: framesInvulnerabilidad 0.2s infinite alternate;
+  }
+}
+
+@keyframes framesInvulnerabilidad {
+  from { opacity: 1; }
+  to { opacity: 0.2; }
+}
+
+/* =========================================
+   OVERLAYS GLOBALES Y ANIMACIONES
+   ========================================= */
+
+/* ANIMACIÓN DE NEGACIÓN (Poción al máximo de vida) */
+.animacion-negacion {
+  animation: sacudidaNegacion 0.4s ease-in-out;
+}
+
+@keyframes sacudidaNegacion {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+/* =========================================
+   TRANSICIÓN DE METAS
+   ========================================= */
+.overlay-transicion {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: #000;
+  z-index: 60; /* Cubre el HUD y todo el juego */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  
+  &.transicion-activa { opacity: 1; }
+}
+
+/* =========================================
+   MODAL: GAME OVER
+   ========================================= */
+.modal-game-over {
+  /* FIX: Cambiado de absolute a fixed para cubrir toda la pantalla */
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.85); /* Fondo oscuro inmersivo */
+  z-index: 9999; /* Por encima del editor, inventario y menú superior */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Press Start 2P', monospace;
+  
+  /* --- PANEL DE CONTROL: MASCOTA DRACO --- */
+  .draco-llorando {
+    width: 250px; /* <--- AJUSTA EL TAMAÑO AQUÍ (antes estaba en 150px) */
+    margin-bottom: 40px; /* <--- AJUSTA LA SEPARACIÓN CON EL TEXTO "GAME OVER" AQUÍ */
+    image-rendering: pixelated; /* Mantiene la estética retro */
+    filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));
+  }
+  /* --------------------------------------- */
+
+  h1 {
+    color: #ff4444;
+    font-size: clamp(30px, 5vw, 60px);
+    margin-bottom: 10px; /* Reducido para acercar el subtítulo */
+    text-shadow: 4px 4px 0px #000;
+    text-align: center;
+  }
+  
+  .subtitulo-derrota {
+    color: #ccc;
+    font-size: clamp(10px, 1.5vw, 16px);
+    margin-bottom: 40px;
+    text-align: center;
+    text-shadow: 2px 2px 0px #000;
+    max-width: 80%;
+    line-height: 1.5;
+  }
+  
+  .botones-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    
+    button {
+      font-family: 'Press Start 2P', monospace;
+      padding: 15px 20px;
+      font-size: clamp(10px, 2vw, 16px);
+      background: #222;
+      border: 3px solid white;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+      
+      &:hover {
+        transform: scale(1.05);
+        background: #444;
+      }
+      
+      &.btn-verde { border-color: #4CAF50; color: #4CAF50; }
+      &.btn-amarillo { border-color: #FFD700; color: #FFD700; }
+      &.btn-rojo { border-color: #ff4444; color: #ff4444; }
+    }
+  }
+}

@@ -1,0 +1,209 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.console-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #0F0F0F; /* Ultra-Dark theme */
+  border: 4px solid #444; 
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+.console-header {
+  background-color: #252526;
+  padding: 5px 15px;
+  border-bottom: 2px solid #333;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.9rem;
+  color: #a9b2c3;
+  display: flex;
+  align-items: center;
+}
+
+.file-name {
+  color: #f7d959; 
+}
+
+.editor-lines-container {
+  flex-grow: 1;
+  min-height: 0; /* CRÍTICO: Evita que el contenido desborde y empuje la toolbar */
+  padding: 10px;
+  overflow-x: auto;
+  overflow-y: auto;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  cursor: text;
+}
+
+.code-line {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.line-number {
+  color: #858585;
+  width: 30px;
+  text-align: right;
+  margin-right: 15px;
+  user-select: none;
+}
+
+.line-input {
+  flex-grow: 1;
+  background-color: transparent; 
+  border: none;
+  outline: none;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+  caret-color: white;
+  min-width: calc(var(--char-count) * 1ch + 1rem);
+}
+
+.line-input.is-executing {
+  caret-color: transparent;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   SQUIGGLY LINE (Hack Visual con pseudo-elemento SVG)
+   Reemplaza text-decoration en <input>, que los navegadores ignoran.
+   ========================================================================== */
+.code-line-wrapper {
+  position: relative;
+  flex-grow: 1;
+}
+
+/* Forzar texto blanco cuando hay error */
+.code-line-wrapper.has-error input {
+  color: white !important;
+}
+
+
+/* ==========================================================================
+   3. Rediseño de la Barra de Herramientas (Toolbar)
+   ========================================================================== */
+.console-toolbar {
+  background-color: #2d2d2d; /* Fondo gris oscuro */
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-top: 2px solid #111;
+  box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.3);
+  z-index: 10;
+  flex-shrink: 0; /* Prohíbe que la toolbar se encoja o desaparezca */
+}
+
+.toolbar-left, .toolbar-right {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-tool {
+  background: transparent;
+  border: 2px solid transparent;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: all 0.1s step-end;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  image-rendering: pixelated;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+}
+
+.btn-tool:hover:not(:disabled) {
+  filter: brightness(1.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(0,0,0,0.4);
+}
+
+.btn-tool:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 transparent;
+}
+
+.btn-tool:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: translateY(4px);
+  box-shadow: 0 0 0 transparent;
+}
+
+/* Colores Temáticos Sólidos para Botones */
+.btn-danger {
+  background-color: #5a2d2d; /* Rojo oscuro sólido */
+  color: white;
+  border: 2px solid #7a3e3e;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #7a3e3e; /* Aclara un poco en hover */
+  /* Removemos el filter brightness para que sea un cambio sólido de color */
+  filter: none;
+}
+
+.btn-execute {
+  background-color: #2d5a27; /* Verde sólido */
+  color: white; 
+  border: 2px solid #3e7a36;
+}
+
+.btn-execute:hover:not(:disabled) {
+  background-color: #3e7a36; /* Aclara en hover */
+  filter: none;
+}
+
+/* ==========================================================================
+   AJUSTES RESPONSIVOS (Mobile)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Escalamiento del editor */
+  .editor-lines-container {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+
+  .line-input {
+    font-size: 0.85rem;
+  }
+
+  .line-number {
+    width: 20px; /* Menos espacio en móvil */
+    margin-right: 8px;
+    font-size: 0.85rem;
+  }
+
+  /* Prevención de colisión en Toolbar: Todo en una línea */
+  .console-toolbar {
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding: 6px 4px;
+    overflow-x: auto; /* Permite scroll si la pantalla es ridículamente estrecha */
+  }
+
+  .toolbar-left, .toolbar-right {
+    flex-wrap: nowrap;
+    gap: 4px;
+    width: auto;
+  }
+
+  /* Botones miniatura */
+  .btn-tool {
+    padding: 4px 6px;
+    font-size: 0.70rem;
+    white-space: nowrap; /* Evita que el texto de los botones salte de línea */
+  }
+}

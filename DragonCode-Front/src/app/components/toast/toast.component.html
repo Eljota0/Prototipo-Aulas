@@ -1,0 +1,12 @@
+<div class="toast-container" [class.visible]="isVisible" [ngClass]="type">
+  <div class="toast-content">
+    <span class="toast-icon">
+      @if (type === 'success') {
+        ✔
+      } @else {
+        ✖
+      }
+    </span>
+    <span class="toast-message">{{ message }}</span>
+  </div>
+</div>

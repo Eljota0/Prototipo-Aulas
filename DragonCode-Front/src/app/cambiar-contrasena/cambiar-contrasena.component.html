@@ -1,0 +1,44 @@
+<app-cyber-layout>
+
+  <form class="cyber-form" (submit)="submitForm($event)">
+
+    <!-- Encabezado -->
+    <h2 class="cyber-title">CAMBIO DE CONTRASEÑA</h2>
+    <p class="cyber-text">
+      Ingresa y confirma tu nueva contraseña.
+    </p>
+
+    <!-- Nueva Contraseña -->
+    <div class="cyber-input-group">
+      <label for="new-password">Nueva Contraseña</label>
+      <input
+        type="password"
+        id="new-password"
+        name="nuevaPass"
+        [(ngModel)]="nuevaPass"
+        placeholder="••••••••"
+        required
+      >
+    </div>
+
+    <!-- Confirmar Contraseña -->
+    <div class="cyber-input-group">
+      <label for="confirm-password">Confirmar Contraseña</label>
+      <input
+        type="password"
+        id="confirm-password"
+        name="confirmarPass"
+        [(ngModel)]="confirmarPass"
+        placeholder="••••••••"
+        required
+      >
+    </div>
+
+    <!-- Acción Principal -->
+    <button type="submit" class="cyber-btn" [disabled]="cargando">
+      {{ cargando ? 'ACTUALIZANDO...' : 'CONFIRMAR CAMBIO' }}
+    </button>
+
+  </form>
+
+</app-cyber-layout>

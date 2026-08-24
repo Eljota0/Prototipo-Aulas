@@ -1,0 +1,229 @@
+/* ==========================================================================
+   ARQUITECTURA DE ESTILOS: LOBBY DE SELECCIÓN DE NIVELES (AVENTURA)
+   ==========================================================================
+   Propósito: Pantalla de cuadrícula responsiva para la navegación de niveles.
+   Estética "Tecno-Mágica" Retro 16-bits.
+========================================================================== */
+
+/* === CONTENEDOR PRINCIPAL === */
+.lobby-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  background-color: #0b0f19;
+  background-image: 
+    linear-gradient(rgba(11, 15, 25, 0.9), rgba(11, 15, 25, 0.9)),
+    url('/assets/images/fondo/aguafondo.png');
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  image-rendering: pixelated; /* Mantiene la nitidez de la textura pixel art */
+}
+
+/* === CABECERA === */
+.lobby-header {
+  text-align: center;
+  margin-bottom: 50px;
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.lobby-title {
+  color: #f7d959;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 3rem;
+  letter-spacing: 4px;
+  margin-bottom: 10px;
+  /* Sub-outlining 16-bits para profundidad */
+  text-shadow: 4px 4px 0 #000, -2px -2px 0 #000;
+}
+
+.lobby-subtitle {
+  color: #77ddca;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.2rem;
+  text-shadow: 2px 2px 0 #000;
+}
+
+/* Botón Volver */
+.btn-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: transparent;
+  color: #fff;
+  border: 2px solid #fff;
+  padding: 8px 16px;
+  font-family: 'TuFuentePixel', monospace;
+  text-decoration: none;
+  font-size: 1rem;
+  box-shadow: 2px 2px 0 #000;
+  transition: all 0.1s step-end; /* Animación mecánica tipo consola antigua */
+}
+
+.btn-back:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-back:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 #000;
+}
+
+.back-icon {
+  margin-right: 5px;
+}
+
+/* === CUADRÍCULA DE NIVELES === */
+.levels-grid {
+  display: grid;
+  /* CSS Grid Responsivo: adapta tantos niveles como quepan, con un mínimo de 150px */
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 30px;
+  width: 100%;
+  max-width: 1000px;
+}
+
+/* === TARJETA DE NIVEL (BASE) === */
+.level-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 10px;
+  border: 4px solid #333;
+  background-color: #1a2233;
+  text-decoration: none;
+  font-family: 'TuFuentePixel', monospace;
+  /* Sombra base profunda tipo relieve */
+  box-shadow: 0 8px 0 #000;
+  transition: all 0.1s ease-out;
+  position: relative;
+  min-height: 180px;
+}
+
+.level-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  background-color: rgba(0,0,0,0.5);
+  border: 2px solid #555;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.level-number {
+  font-size: 2rem;
+  color: #fff;
+  margin: 0 0 5px 0;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.level-title {
+  font-size: 0.9rem;
+  color: #a9b2c3;
+  margin: 0;
+  text-align: center;
+}
+
+/* === ESTADOS DINÁMICOS === */
+
+/* 1. Nivel Desbloqueado */
+.unlocked-level {
+  border-color: #77ddca;
+  background-color: rgba(26, 34, 51, 0.9);
+}
+
+.unlocked-level .level-icon-wrapper {
+  border-color: #77ddca;
+  /* Resplandor neón (Tecno-Mágico) encapsulado */
+  box-shadow: inset 0 0 10px rgba(119, 221, 202, 0.3), 0 0 5px rgba(119, 221, 202, 0.5);
+}
+
+.dragon-icon {
+  /* Placeholder para el icono del dragón 16-bits */
+  width: 32px;
+  height: 32px;
+  background-color: #77ddca;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.unlocked-level:hover {
+  background-color: #232d42;
+  border-color: #f7d959;
+  /* Efecto de luminosidad hover */
+  box-shadow: 0 8px 0 #000, 0 0 15px rgba(247, 217, 89, 0.4);
+  transform: translateY(-2px);
+}
+
+.unlocked-level:hover .level-number {
+  color: #f7d959;
+}
+
+.unlocked-level:active {
+  /* Mecánica arcade: al presionar, la carta baja físicamente y la sombra gruesa desaparece (se aplasta) */
+  transform: translateY(8px);
+  box-shadow: 0 0 0 #000;
+}
+
+/* 2. Nivel Bloqueado */
+.locked-level {
+  border-color: #444;
+  /* Aplicar filtro de escala de grises y opacidad baja */
+  filter: grayscale(100%);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.locked-level .level-title {
+  color: #666;
+}
+
+.locked-level .level-number {
+  color: #666;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.padlock-icon {
+  width: 24px;
+  height: 24px;
+  border: 4px solid #666;
+  border-radius: 50% 50% 0 0;
+  position: relative;
+}
+.padlock-icon::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: -4px;
+  width: 24px;
+  height: 16px;
+  background-color: #666;
+}
+
+/* ==========================================================================
+   MEDIA QUERIES MÓVILES
+   ========================================================================== */
+@media (max-width: 768px) {
+  .lobby-title {
+    font-size: 2rem;
+  }
+  .lobby-subtitle {
+    font-size: 1rem;
+    margin-top: 40px; /* Evita chocar con el botón de volver */
+  }
+  .btn-back {
+    position: static;
+    display: inline-block;
+    margin-top: 15px;
+  }
+  .levels-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+}

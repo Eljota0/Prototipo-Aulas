@@ -1,0 +1,211 @@
+<div class="modo-creador-wrapper" [class.es-creador]="esModoProfesor">
+  <app-layout-juego class="juego-area" [configuracionTarjetas]="configTarjetasOgro" [antiCopiaActivo]="antiCopiaActivo" (ejecutarJuego)="compilarYEjecutar($event)" (onUsarItem)="manejarUsoPocion($event)">
+  
+  <!-- Contenido Inyectado en ng-content (El Tablero) -->
+  <div class="escenario-container" #contenedor>
+    
+    <!-- CAPA VFX FANTASMA -->
+    <div class="fantasma-resplandor" 
+         [class.destello-rojo]="efectoCuracionActivo" 
+         [class.destello-verde]="efectoTiempoActivo">
+    </div>
+
+    <!-- OVERLAYS GLOBALES -->
+    <div class="overlay-transicion" [class.transicion-activa]="transicionPantallaNegra"></div>
+
+    <!-- PANTALLA GAME OVER -->
+    <div class="modal-game-over" *ngIf="pantallaGameOver">
+      <img src="/assets/images/exprecionsedraco/lloro.png" class="draco-llorando" alt="Draco triste">
+      <h1>GAME OVER</h1>
+      <p class="subtitulo-derrota">El ogro no pudo recuperar su tesoro perdido.</p>
+      <div class="botones-modal">
+        <button class="btn-verde" (click)="reiniciarNivelGameOver()">INTENTAR DE NUEVO</button>
+        <!-- Botón del editor eliminado por seguridad de roles -->
+        <button class="btn-rojo" (click)="salirMenuPrincipal()">SALIR</button>
+      </div>
+    </div>
+
+    <!-- PANTALLA NIVEL COMPLETADO -->
+    <div class="modal-game-over" *ngIf="pantallaNivelCompletado">
+      <img src="/assets/images/exprecionsedraco/feliz.png" class="draco-llorando" alt="Draco feliz" style="filter: drop-shadow(0 0 15px rgba(255,215,0,0.8));">
+      
+      <!-- TÍTULO DINÁMICO -->
+      <h1 *ngIf="esAulaActiva" style="color: #FFD700; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(255,215,0,0.5);">¡ACTIVIDAD COMPLETADA!</h1>
+      <h1 *ngIf="!esAulaActiva" style="color: #FFD700; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(255,215,0,0.5);">¡MISIÓN COMPLETADA!</h1>
+      
+      <p class="subtitulo-derrota" style="color: #82F4E0; margin-top: 10px; font-size: 0.95rem;">{{ mensajePuntaje }}</p>
+      
+      <div style="font-size: 3rem; margin: 20px 0; text-shadow: 2px 2px 0 #000, 0 0 20px rgba(255,215,0,0.8);">
+        {{ estrellasObtenidasEmoji }}
+      </div>
+      
+      <div class="botones-modal">
+        <!-- BOTÓN DINÁMICO -->
+        <button *ngIf="esAulaActiva" class="btn-verde" style="width: 100%; font-size: 1.1rem; padding: 15px;" (click)="volverAlAula()">VOLVER AL AULA</button>
+        <button *ngIf="!esAulaActiva" class="btn-verde" style="width: 100%; font-size: 1.1rem; padding: 15px;" (click)="salirMenuPrincipal()">SALIR DE LA MISIÓN</button>
+      </div>
+    </div>
+
+    <!-- CAPA HUD -->
+    <div class="hud-container">
+      <!-- COLUMNA 1: Izquierda (Vidas) -->
+      <div class="hud-vidas" title="Salud del Ogro">
+        <img *ngFor="let v of arrayVidas; let i = index" 
+             src="/assets/images/aventura/nivel1/terreno/vidas.png" 
+             class="icono-vida" 
+             [class.vida-perdida]="i >= vidasActuales">
+      </div>
+
+      <!-- COLUMNA 2: Centro Absoluto (Cofres) -->
+      <div class="hud-centro">
+        <div class="contador-cofres" *ngIf="totalCofresAventura > 0" [class.alerta-perdida]="perdidaCofresEfecto">
+          <img src="/assets/images/aventura/nivel1/terreno/cofre-tesoro.png">
+          <span>{{cofresRecolectados}} / {{totalCofresAventura}}</span>
+        </div>
+      </div>
+
+      <!-- COLUMNA 3: Derecha (Nivel) -->
+      <div class="hud-derecha">
+        <div class="indicador-nivel">
+          {{nivelActual}} - {{totalNiveles}}
+        </div>
+      </div>
+    </div>
+
+    <!-- Le inyectamos los píxeles exactos calculados por TS -->
+    <div class="grid-tablero" [class.modo-inmersivo]="jugando"
+         [style.width.px]="anchoTableroPx" 
+         [style.height.px]="altoTableroPx"
+         [style.--columnas]="columnas" 
+         [style.--filas]="filas"
+         [style.grid-template-columns]="'repeat(' + columnas + ', 1fr)'"
+         [style.grid-template-rows]="'repeat(' + filas + ', 1fr)'">
+         
+      <!-- CAPA DE FONDO ANCLADA -->
+      <div class="fondo-cueva-capa"></div>
+      <ng-container *ngFor="let fila of tablero">
+        <!-- Evento de Clic Derecho (contextmenu) para probar mecánicas -->
+        <div *ngFor="let celda of fila" class="celda" [ngClass]="'zona-' + celda.zona"
+             (click)="pintarCelda(celda)"
+             (contextmenu)="probarInteraccion($event, celda)">
+          
+          <!-- Capa Terreno: Se le añade la clase animacion-colapso si el estado cambia -->
+          <img *ngIf="celda.terreno !== 'vacio'" 
+               [src]="'/assets/images/aventura/nivel1/terreno/' + celda.terreno + '.png'" 
+               class="capa-terreno"
+               [class.animacion-colapso]="celda.estadoAnimacion === 'colapsando'"
+               [class.animacion-temblor]="celda.estadoAnimacion === 'temblando'"
+               [style.transform]="'rotate(' + celda.rotacionTerreno + 'deg)'">
+               
+          <!-- Capa Filo: También desaparece parpadeando con el suelo -->
+          <img *ngIf="celda.tieneFilo" 
+               src="/assets/images/aventura/nivel1/terreno/filo.png" 
+               class="capa-filo"
+               [class.animacion-colapso]="celda.estadoAnimacion === 'colapsando'">
+               
+          <!-- VFX: Aura dorada exclusiva del cofre -->
+          <div *ngIf="celda.objeto === 'cofre'" class="aura-tesoro"></div>
+
+          <!-- SOMBRAS ESTÁTICAS -->
+          <div *ngIf="celda.objeto === 'roca'" class="sombra-retro sombra-roca" [class.animacion-colision]="celda.estadoAnimacion === 'colision'"></div>
+          <div *ngIf="celda.objeto === 'cofre'" class="sombra-retro sombra-cofre"></div>
+
+          <!-- Capa Objeto -->
+          <img *ngIf="celda.objeto !== 'ninguno'" 
+               [src]="'/assets/images/aventura/nivel1/terreno/' + celda.objeto + (celda.objeto === 'roca' ? '-obstaculo' : '-tesoro') + '.png'" 
+               class="capa-objeto"
+               [class.objeto-cofre]="celda.objeto === 'cofre'"
+               [class.animacion-colision]="celda.estadoAnimacion === 'colision'">
+        </div>
+      </ng-container>
+
+      <!-- CAPA DE ENTIDADES ABSOLUTAS (OGRO) -->
+      <div *ngIf="jugando && ogro"
+           class="ogro-contenedor"
+           [class.is-resizing]="isResizing"
+           [class.estado-cayendo]="ogro.estado === 'cayendo'"
+           [class.efecto-parpadeo]="ogroParpadeando"
+           [style.width.px]="tamanioCelda"
+           [style.height.px]="tamanioCelda"
+           [style.left.px]="ogro.x * tamanioCelda"
+           [style.top.px]="ogro.y * tamanioCelda">
+           
+        <!-- Sombra del Ogro (Desaparece lógicamente si cae al vacío) -->
+        <div *ngIf="ogro.estado !== 'cayendo'" class="sombra-retro sombra-ogro"></div>
+
+        <!-- Sprite del Ogro -->
+        <img [src]="getImagenOgro()"
+             class="ogro-sprite"
+             [class.mirar-izquierda]="ogro.direccion === 'izquierda' && ogro.estado !== 'cayendo' && ogro.estado !== 'aturdido'">
+      </div>
+    </div>
+  </div>
+</app-layout-juego>
+
+<!-- DEV TOOLS FLOTANTE -->
+<div class="dev-toolbar" *ngIf="esModoProfesor && modoEditor">
+  <h4>Constructor de Aulas</h4>
+  
+  <!-- FASE 1: CONFIGURACIÓN INICIAL (WIZARD) -->
+  <div *ngIf="!editorInicializado" style="padding-top: 10px; border-top: 1px solid #77DDCA;">
+    <label style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+      Cant. de Niveles (1-10): 
+      <input type="number" min="1" max="10" [value]="inputTotalNiveles" (change)="inputTotalNiveles = +$any($event.target).value" style="width: 50px; color: black;">
+    </label>
+    <button (click)="inicializarEditor()" style="width: 100%; background: #77DDCA; color: black; font-weight: bold; padding: 5px;">Crear Set de Niveles</button>
+  </div>
+
+  <!-- FASE 2: EDITOR Y NAVEGACIÓN -->
+  <div *ngIf="editorInicializado">
+    <!-- Navegador de Paginación -->
+    <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 5px; border-radius: 4px; margin-bottom: 10px;">
+      <button (click)="navegarNivel(-1)" [disabled]="nivelActual === 1" style="padding: 2px 10px; cursor: pointer; color: black;">◀</button>
+      <span style="font-weight: bold; font-size: 13px;">Nivel {{nivelActual}} de {{totalNiveles}}</span>
+      <button (click)="navegarNivel(1)" [disabled]="nivelActual === totalNiveles" style="padding: 2px 10px; cursor: pointer; color: black;">▶</button>
+    </div>
+
+    <!-- Controles de Dimensiones -->
+    <div class="controles-dimensiones" style="margin-bottom: 10px; display: grid; gap: 5px; font-size: 12px;">
+      <label style="display: flex; justify-content: space-between;">Columnas: <input type="number" min="2" max="10" [value]="inputColumnas" (change)="inputColumnas = +$any($event.target).value" style="width: 50px; color: black;"></label>
+      <label style="display: flex; justify-content: space-between;">Filas: <input type="number" min="2" max="5" [value]="inputFilas" (change)="inputFilas = +$any($event.target).value" style="width: 50px; color: black;"></label>
+      <label style="display: flex; justify-content: space-between; border-top: 1px solid #444; padding-top: 5px; margin-top: 5px;">
+        Vidas Máx: <input type="number" min="1" max="10" [value]="maxVidas" (change)="maxVidas = +$any($event.target).value; vidasActuales = maxVidas;" style="width: 50px; color: black;">
+      </label>
+      <button (click)="aplicarDimensiones()" style="background: #e6a822; color: black; font-weight: bold; margin-top: 5px;">Aplicar Nuevo Tamaño</button>
+    </div>
+
+    <!-- Pinceles de Edición -->
+    <div class="herramientas">
+      <button (click)="seleccionarPincel('suelo-ogro', 'terreno')" [class.activo]="pincelActual === 'suelo-ogro'">Spawn Ogro</button>
+      
+      <!-- BOTÓN META DINÁMICO -->
+      <button (click)="seleccionarPincel('meta-dinamica', 'terreno')" [class.activo]="pincelActual === 'meta-dinamica'">Meta</button>
+      
+      <!-- TERRENO BASICO -->
+      <div class="grupo-herramientas" style="border: 2px solid #555; padding: 10px; margin-top: 10px;">
+        <h3 style="margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase;">Terreno Base</h3>
+        <button (click)="seleccionarPincel('suelo', 'terreno')" [class.activo]="pincelActual === 'suelo'" style="background-color: #8B4513;">Suelo</button>
+        <button (click)="seleccionarPincel('sueloroto', 'terreno')" [class.activo]="pincelActual === 'sueloroto'" style="background-color: #d35400;">Suelo Roto</button>
+        <button (click)="seleccionarPincel('vacio', 'terreno')" [class.activo]="pincelActual === 'vacio'" style="background-color: #ff4444;">Borrar</button>
+      </div>
+
+      <button (click)="seleccionarPincel('roca', 'objeto')" [class.activo]="pincelActual === 'roca'">Roca</button>
+      <button (click)="seleccionarPincel('cofre', 'objeto')" [class.activo]="pincelActual === 'cofre'">Cofre</button>
+    </div>
+
+    <button (click)="alternarModoJuego()" style="width: 100%; margin-top: 10px; background: #9b59b6; color: white; font-weight: bold; padding: 8px;">
+      ▶ PROBAR NIVEL
+    </button>
+
+    <button (click)="guardarNivelOficial()" style="width: 100%; margin-top: 10px; background: #4CAF50; color: white; font-weight: bold; padding: 8px;">
+      💾 EXPORTAR AVENTURA COMPLETA
+    </button>
+  </div>
+</div>
+
+<!-- BOTÓN PARA SALIR DEL MODO JUEGO -->
+<button *ngIf="esModoProfesor && jugando" (click)="alternarModoJuego()" 
+        style="position: absolute; top: 15px; right: 20px; z-index: 100; background: #ff4444; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px; cursor: pointer; border: 2px solid white;">
+  ⏹ DETENER PRUEBA
+</button>
+</div>

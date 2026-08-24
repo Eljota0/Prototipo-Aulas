@@ -1,0 +1,168 @@
+<div class="profile-overlay" (click)="onClose()">
+  <div class="profile-modal" (click)="$event.stopPropagation()">
+    
+    <!-- Botón de Cerrar (X) siempre visible -->
+    <button type="button" class="close-btn" (click)="onClose()">X</button>
+
+    <!-- ==============================================
+         VISTA 1: FICHA DE PERSONAJE
+         ============================================== -->
+    @if (currentView === 'perfil') {
+      <div class="view-container">
+        <!-- Título principal (ancho completo) -->
+        <h2 class="profile-title">FICHA DE PERSONAJE</h2>
+        <div class="title-divider"></div>
+
+        <div class="profile-content">
+          <!-- Columna Izquierda: Avatar y Rango -->
+          <div class="profile-left">
+            <div class="avatar-frame">
+              <!-- Avatar nítido usando sus dimensiones base como lo hicimos antes -->
+              <img [src]="avatarActual" alt="Tu Avatar" 
+                   class="profile-avatar-img"
+                   width="2784" height="1536"
+                   fetchpriority="high">
+            </div>
+            <p class="join-date">Forjado en: {{ (userProfile$ | async)?.fecha_registro | date:'mediumDate' }}</p>
+          </div>
+
+          <!-- Columna Derecha: Datos del Usuario (Edición en línea) -->
+          <div class="profile-right">
+            <form class="profile-form">
+              
+              <!-- Campo: Nombre -->
+              <div class="form-group inline-edit-group">
+                <label>Nombre</label>
+                <div class="input-row">
+                  @if (editingField !== 'nombre') {
+                    <p class="static-value">{{ (userProfile$ | async)?.nombre }}</p>
+                    <button type="button" class="edit-icon-btn" (click)="toggleEdit('nombre')" title="Editar Nombre">✎</button>
+                  } @else {
+                    <input type="text" name="nombre" [(ngModel)]="editingValue" class="retro-input" autofocus>
+                    <button type="button" class="save-icon-btn" (click)="saveField('nombre')" title="Guardar">✔</button>
+                    <button type="button" class="cancel-icon-btn" (click)="cancelEdit()" title="Cancelar">✖</button>
+                  }
+                </div>
+              </div>
+
+              <!-- Campo: Apellido -->
+              <div class="form-group inline-edit-group">
+                <label>Apellido</label>
+                <div class="input-row">
+                  @if (editingField !== 'apellido') {
+                    <p class="static-value">{{ (userProfile$ | async)?.apellido }}</p>
+                    <button type="button" class="edit-icon-btn" (click)="toggleEdit('apellido')" title="Editar Apellido">✎</button>
+                  } @else {
+                    <input type="text" name="apellido" [(ngModel)]="editingValue" class="retro-input" autofocus>
+                    <button type="button" class="save-icon-btn" (click)="saveField('apellido')" title="Guardar">✔</button>
+                    <button type="button" class="cancel-icon-btn" (click)="cancelEdit()" title="Cancelar">✖</button>
+                  }
+                </div>
+              </div>
+
+              <!-- Campo: Correo -->
+              <div class="form-group inline-edit-group">
+                <label>Correo Electrónico</label>
+                <div class="input-row">
+                  @if (editingField !== 'email') {
+                    <p class="static-value">{{ (userProfile$ | async)?.email }}</p>
+                    <button type="button" class="edit-icon-btn" (click)="toggleEdit('email')" title="Editar Correo">✎</button>
+                  } @else {
+                    <input type="email" name="email" [(ngModel)]="editingValue" class="retro-input" autofocus>
+                    <button type="button" class="save-icon-btn" (click)="saveField('email')" title="Guardar">✔</button>
+                    <button type="button" class="cancel-icon-btn" (click)="cancelEdit()" title="Cancelar">✖</button>
+                  }
+                </div>
+              </div>
+
+              <!-- Sección de Contraseña -->
+              <div class="password-section">
+                <button type="button" class="change-password-btn" (click)="goToPasswordView()">
+                  Cambiar Contraseña
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ==============================================
+         VISTA 2: CAMBIAR CONTRASEÑA
+         ============================================== -->
+    @if (currentView === 'password') {
+      <div class="view-container password-view">
+        <h2 class="profile-title">CAMBIAR CONTRASEÑA</h2>
+        <div class="title-divider"></div>
+
+        <form class="password-form">
+          <div class="form-group">
+            <label>Contraseña Actual</label>
+            <input type="password" name="oldPass" [(ngModel)]="passwordData.oldPass" class="retro-input">
+          </div>
+          
+          <div class="form-group">
+            <label>Nueva Contraseña</label>
+            <input type="password" name="newPass" [(ngModel)]="passwordData.newPass" class="retro-input" (ngModelChange)="passwordError = false">
+            @if (passwordData.newPass || passwordError) {
+              <span class="password-hint" [class.error-hint]="passwordError">
+                * Mínimo: 1 mayúscula, 1 minúscula, 1 número y 1 signo.
+              </span>
+            }
+          </div>
+          
+          <div class="form-group">
+            <label>Confirmar Nueva Contraseña</label>
+            <input type="password" name="confirmPass" [(ngModel)]="passwordData.confirmPass" class="retro-input">
+          </div>
+
+          <div class="password-actions">
+            <!-- Botón de olvido (se deshabilita si ya se envió) -->
+            <button type="button" class="forgot-pass-btn" 
+                    [disabled]="recoverySent" 
+                    (click)="sendRecoveryEmail()">
+              {{ recoverySent ? 'Correo enviado...' : '¿Olvidó su contraseña?' }}
+            </button>
+            
+            <button type="button" class="retro-btn save-btn" (click)="confirmPasswordChange()">
+              CONFIRMAR
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- ==============================================
+         VISTA 3: CONFIRMAR CAMBIO DE CORREO
+         ============================================== -->
+    @if (currentView === 'confirmEmail') {
+      <div class="view-container password-view">
+        <h2 class="profile-title" style="font-size: 1.3rem;">CONFIRMAR CAMBIO DE CORREO</h2>
+        <div class="title-divider"></div>
+
+        <form class="password-form">
+          <p style="color: var(--text-color-secondary); font-family: 'TuFuentePixel', monospace; font-size: 0.9rem; text-align: center; margin-bottom: 20px;">
+            Ingresa tu contraseña para autorizar el cambio de correo electrónico a: <br>
+            <strong style="color: #fff;">{{ pendingEmail }}</strong>
+          </p>
+
+          <div class="form-group">
+            <label>Contraseña Actual</label>
+            <input type="password" name="confirmEmailPass" [(ngModel)]="confirmEmailPass" class="retro-input" autofocus>
+          </div>
+          
+          <div style="display: flex; justify-content: center; flex-direction: row; gap: 20px; margin-top: 30px;">
+            <button type="button" class="retro-btn" style="color: var(--btn-danger-color); border-color: var(--btn-danger-color);" (click)="cancelEmailChange()">
+              CANCELAR
+            </button>
+            <button type="button" class="retro-btn save-btn" [disabled]="!confirmEmailPass" (click)="confirmEmailChange()">
+              ACEPTAR
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+  </div>
+</div>

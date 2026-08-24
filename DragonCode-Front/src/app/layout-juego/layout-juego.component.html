@@ -1,0 +1,31 @@
+<app-game-header (salir)="abandonarPartida()"></app-game-header>
+
+<main class="game-layout-wrapper">
+  <div class="game-content-wrapper">
+    <section class="game-board">
+      <ng-content></ng-content>
+    </section>
+
+    <div class="mobile-divider"></div>
+
+    <aside class="game-controls">
+      <app-consola-codigo 
+        class="console-section"
+        [lineas]="lineasCodigo" 
+        [ejecutando]="ejecutando"
+        [antiCopiaActivo]="antiCopiaActivo"
+        (lineaBorrada)="eliminarLinea($event)"
+        (onEjecutar)="ejecutarCodigo()"
+        (onBorrarLinea)="borrarUltimaLinea()"
+        (onLimpiar)="limpiarTodo()">
+      </app-consola-codigo>
+
+      <app-baraja-tarjetas 
+        class="cards-section"
+        [configuracion]="configuracionTarjetas" 
+        (instruccionSeleccionada)="agregarCodigo($event)"
+        (onUsarItem)="onUsarItem.emit($event)">
+      </app-baraja-tarjetas>
+    </aside>
+  </div>
+</main>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>DragonCode Beta</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  
+  <!-- EL PATRÓN CORRECTO: Preconexión y carga de la fuente -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- PRECARGA DE ASSETS PESADOS (Para evitar FOUC y pestañeos en animaciones) -->
+  <link rel="preload" href="assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero1.png" as="image">
+  <link rel="preload" href="assets/images/draco/dracoanimaciones/dracohaker/dracohaker1.png" as="image">
+  
+  <!-- Precarga de los 3 frames de la animación de respiración del Login -->
+  <link rel="preload" href="assets/images/draco/dracobase1.png" as="image">
+  <link rel="preload" href="assets/images/draco/dracobase2.png" as="image">
+  <link rel="preload" href="assets/images/draco/dracobase3.png" as="image">
+  
+  <!-- FIX CRÍTICO: Precarga de la imagen de carga -->
+  <link rel="preload" as="image" href="/assets/images/pantallacarga/spritecarga.png">
+</head>
+<body>
+  <!-- APP SHELL LOADER -->
+  <div id="global-loader" class="pantalla-carga-global">
+    <div class="draco-sprite"></div>
+    <p class="texto-carga"><span id="texto-carga-dinamico">CARGANDO</span><span class="puntos-animados"></span></p>
+  </div>
+
+  <app-root></app-root>
+</body>
+</html>

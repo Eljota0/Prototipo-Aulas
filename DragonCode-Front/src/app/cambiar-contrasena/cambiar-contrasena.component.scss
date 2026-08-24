@@ -1,0 +1,206 @@
+/* ==========================================================================
+   ARQUITECTURA DE ESTILOS: MÓDULO DE CAMBIO DE CONTRASEÑA
+   ==========================================================================
+   Propósito: Define la estructura visual y las interacciones de estado para 
+   la pantalla de cambio de contraseña, adhiriéndose a la temática "Tecno-Mágica"
+   (Retro 16-bits cibernético).
+   
+   Técnicas Clave Empleadas:
+   - Flexbox Estructural: Distribución fluida para adaptación responsiva.
+   - Sub-outlining y Encapsulación de Luz: Uso estratégico de `text-shadow` 
+     y `box-shadow` para simular relieves retro y el resplandor neón característico.
+   - Retroalimentación Visual Reactiva: Uso avanzado de pseudo-clases CSS 
+     (`:invalid`, `:placeholder-shown`) para validación de formularios sin JS.
+========================================================================== */
+
+:host {
+  display: flex;
+  flex: 1;
+}
+
+.cyber-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 90%;
+  max-width: 900px;
+  flex: 1;
+  text-align: center;
+}
+
+/* ==========================================================================
+   TIPOGRAFÍA Y JERARQUÍA VISUAL
+   ========================================================================== */
+.cyber-title {
+  color: #ffffff;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 2.2rem;
+  letter-spacing: 2px;
+  margin-bottom: 15px;
+  /* Técnica de "Sub-outlining": Genera un falso borde extrusionado 
+     típico de las interfaces de 16-bits para dar profundidad al texto */
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+}
+
+.cyber-text {
+  color: #e0e0e0;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.95rem;
+  font-weight: bold;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 0 #000, 1px 1px 0 #000;
+}
+
+/* ==========================================================================
+   FORMULARIO Y CONTROLES DE ENTRADA
+   ========================================================================== */
+.cyber-input-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.cyber-input-group label {
+  color: #77ddca;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.95rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.cyber-input-group input {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(130, 244, 224, 0.5);
+  border-radius: 6px;
+  padding: 14px 18px;
+  color: #fff;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.1rem;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.cyber-input-group input:focus {
+  border-color: #77ddca;
+  /* Encapsulación de Luz: Combina un resplandor exterior suave con un
+     sombreado interior intenso (inset) para crear un efecto de "pantalla hundida" */
+  box-shadow: 0 0 10px rgba(130, 244, 224, 0.2), inset 0 0 8px rgba(0,0,0,0.8);
+}
+
+/* ==========================================================================
+   VALIDACIÓN REACTIVA CSS PURE
+   ========================================================================== */
+.error-text {
+  color: #ff4444;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.78rem;
+  text-shadow: 1px 1px 0 #000;
+  margin-top: 8px;
+  text-align: left;
+  display: none;
+}
+
+/* Activación condicional del error basándose en el estado de validación HTML nativo,
+   asegurando que solo se muestre si el usuario ya ha empezado a interactuar (not placeholder-shown) */
+.cyber-input-group input[type="password"]:not(:placeholder-shown):invalid ~ .error-text {
+  display: block;
+}
+
+.cyber-input-group input[type="password"]:not(:placeholder-shown):invalid {
+  border-color: #ff4444;
+  /* Efecto de advertencia incandescente */
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.25);
+}
+
+/* ==========================================================================
+   SISTEMA DE BOTONES (ESTÉTICA ARCADE)
+   ========================================================================== */
+.cyber-btn {
+  margin-top: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.2rem;
+  padding: 14px 40px;
+  border: 2px solid #77ddca;
+  border-radius: 6px;
+  cursor: pointer;
+  text-shadow: 1px 1px 0 #000;
+  /* Simulación de relieve físico de botón arcade */
+  box-shadow: 0 4px 0 #000;
+  transition: all 0.2s ease;
+  width: 50%;
+  min-width: 220px;
+}
+
+.cyber-btn:hover {
+  background-color: rgba(130, 244, 224, 0.1);
+  /* Doble sombra: Mantiene el relieve físico y añade radiación de neón externa */
+  box-shadow: 0 4px 0 #000, 0 0 15px rgba(130, 244, 224, 0.4);
+}
+
+.cyber-btn:active {
+  /* Emula la presión mecánica eliminando el relieve y desplazando el eje Y */
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #000;
+}
+
+/* ==========================================================================
+   MEDIA QUERIES Y ADAPTABILIDAD RESPONSIVA
+   ========================================================================== */
+@media (max-width: 768px) {
+  .cyber-form {
+    width: 100%;
+  }
+
+  .cyber-title {
+    font-size: 1.6rem;
+    margin-bottom: 10px;
+  }
+
+  .cyber-text {
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
+
+  .cyber-input-group {
+    margin-bottom: 16px;
+  }
+
+  .cyber-input-group input {
+    padding: 12px 15px;
+    font-size: 1rem;
+  }
+
+  .cyber-btn {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-height: 700px) and (min-width: 769px) {
+  .cyber-title {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+
+  .cyber-text {
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+  }
+
+  .cyber-input-group {
+    margin-bottom: 14px;
+  }
+
+  .cyber-btn {
+    padding: 10px 30px;
+    font-size: 1.1rem;
+  }
+}
