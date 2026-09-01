@@ -4,7 +4,7 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   // Ruta por defecto que redirige al login
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  
+
   {
     path: 'login',
     loadComponent: () => import('./login/login.component').then(m => m.LoginComponent)
@@ -32,13 +32,22 @@ export const routes: Routes = [
     loadComponent: () => import('./mapa-aventura/mapa-aventura.component').then(m => m.MapaAventuraComponent)
   },
   {
-    path: 'aventura/nivel/:id',
+    path: 'aventura/nivel/1',
     canActivate: [authGuard],
     loadComponent: () => import('./nivel-ogro/nivel-ogro.component').then(m => m.NivelOgroComponent)
+  },
+  {
+    path: 'aventura/nivel/2',
+    canActivate: [authGuard],
+    loadComponent: () => import('./nivel-dos-prototipo/nivel-dos-prototipo.component').then(m => m.NivelDosPrototipoComponent)
+  },
+  {
+    path: 'prototipo/nivel-2',
+    loadComponent: () => import('./nivel-dos-prototipo/nivel-dos-prototipo.component').then(m => m.NivelDosPrototipoComponent)
   },
   {
     path: 'crear-aula/ogro',
     canActivate: [authGuard],
     loadComponent: () => import('./nivel-ogro/nivel-ogro.component').then(m => m.NivelOgroComponent)
   }
-];
+];

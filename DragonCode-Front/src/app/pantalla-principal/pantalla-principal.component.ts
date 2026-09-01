@@ -7,7 +7,13 @@ import { TiendaComponent } from '../tienda/tienda.component';
 import { NotificationService } from '../services/notification.service';
 import { UserService, UserProfile } from '../services/user.service';
 import { AuthService } from '../services/auth.service';
-import { AulasService, AulaResponse, RetoPersonalizadoCreate, ParametrosEvaluacion } from '../services/aulas.service';
+import {
+  AulasService,
+  AulaResponse,
+  RetoPersonalizadoCreate,
+  RetoPersonalizadoResponse,
+  ParametrosEvaluacion
+} from '../services/aulas.service';
 import { ProgresoService } from '../services/progreso.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -96,7 +102,8 @@ export class PantallaPrincipalComponent implements OnInit {
 
   // Catálogo de niveles disponibles para reutilizar
   nivelesDisponibles = [
-    { id: 1, nombre: 'Nivel 1: El Ogro', descripcion: 'Programación secuencial con movimiento' }
+    { id: 1, nombre: 'Nivel 1: El Ogro', descripcion: 'Programación secuencial con movimiento' },
+    { id: 2, nombre: 'Nivel 2: Taladro a Vapor', descripcion: 'Eventos y condicionales básicos' }
   ];
 
   // ── ESTADO: Modal Unirse a Aula ──────────────────────────────────
@@ -315,7 +322,7 @@ export class PantallaPrincipalComponent implements OnInit {
 
   /** Paso 2 → 3: Nivel seleccionado, ir a parámetros */
   siguientePaso2(): void {
-    if (this.nivelSeleccionado === 1 && this.parametrosReto.fases_seleccionadas!.length === 0) {
+    if (this.parametrosReto.fases_seleccionadas!.length === 0) {
       this.notificationService.show('Debes seleccionar al menos una fase.', 'error');
       return;
     }
@@ -400,7 +407,7 @@ export class PantallaPrincipalComponent implements OnInit {
 
   // 🌟🌟 ESTADO: Actividades (Estudiante)
   aulaActividadesSeleccionada: AulaResponse | null = null;
-  actividadesAulaEstudiante: any[] = [];
+  actividadesAulaEstudiante: RetoPersonalizadoResponse[] = [];
   cargandoActividadesAula = false;
 
   /** Entrar a un aula en la que el usuario ya está inscrito (o que él mismo creó) */
@@ -429,13 +436,13 @@ export class PantallaPrincipalComponent implements OnInit {
     this.aulaActividadesSeleccionada = null;
   }
 
-  jugarReto(actividad: any): void {
+  jugarReto(actividad: RetoPersonalizadoResponse): void {
     if (!this.aulaActividadesSeleccionada) return;
     localStorage.setItem('aulaActiva', this.aulaActividadesSeleccionada.id);
-    localStorage.setItem('retoActivo', actividad.id.toString());
+    localStorage.setItem('retoActivo', actividad.id);
     this.isUnirseAulaOpen = false;
     this.isAdminAulasOpen = false;
-    this.router.navigate(['/aventura/nivel/1']);
+    this.router.navigate(['/aventura/nivel', actividad.reto_nivel_id]);
   }
 
   // 🚪🚪 MODAL: Unirse a Aula 🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪
@@ -463,12 +470,19 @@ export class PantallaPrincipalComponent implements OnInit {
     }
     this.cargandoUnirse = true;
     this.aulasService.unirseAula(this.codigoAulaInput).subscribe({
-      next: (resp) => {
+      next: () => {
         this.cargandoUnirse = false;
-        localStorage.setItem('aulaActiva', resp.aula_id);
         this.notificationService.show('¡Te has unido al aula!', 'success');
-        this.closeUnirseAula();
-        this.router.navigate(['/aventura/nivel/1']);
+        this.codigoAulaInput = '';
+        this.mostrarFormularioUnirse = false;
+        this.cargandoAulasInscritas = true;
+        this.aulasService.misAulas().subscribe({
+          next: aulas => {
+            this.aulasInscritas = aulas;
+            this.cargandoAulasInscritas = false;
+          },
+          error: () => { this.cargandoAulasInscritas = false; }
+        });
       },
       error: () => { this.cargandoUnirse = false; }
     });
@@ -577,6 +591,10 @@ export class PantallaPrincipalComponent implements OnInit {
 
   confirmarAgregarActividad(): void {
     if (!this.aulaParaActividad) return;
+    if (!this.parametrosReto.fases_seleccionadas?.length) {
+      this.notificationService.show('Debes seleccionar al menos una fase.', 'error');
+      return;
+    }
     if (this.parametrosReto.tiempo_3_estrellas >= this.parametrosReto.tiempo_2_estrellas) {
       this.notificationService.show('El tiempo para 3⭐ debe ser menor al de 2⭐.', 'error');
       return;

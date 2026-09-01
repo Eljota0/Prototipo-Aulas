@@ -308,7 +308,7 @@
                            [style.background]="nivelSeleccionado === nivel.id ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.02)'">
                         <p style="margin:0; color:#FFD700; font-size:0.78rem; font-weight:bold;">{{ nivel.nombre }}</p>
                       </div>
-                      @if (nivelSeleccionado === nivel.id && nivel.id === 1) {
+                      @if (nivelSeleccionado === nivel.id && nivel.id <= 2) {
                         <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; margin-bottom:8px; border:1px solid rgba(130,244,224,0.2);">
                           <span style="color:#82F4E0; font-family: 'TuFuentePixel', monospace; font-size: 0.75rem;">Fases a impartir:</span>
                           <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
@@ -400,7 +400,7 @@
                 <p style="margin:6px 0 0; font-family:'TuFuentePixel',monospace; font-size:0.85rem; color:#a3bac2;">{{ nivel.descripcion }}</p>
               </div>
               
-              @if (nivelSeleccionado === nivel.id && nivel.id === 1) {
+              @if (nivelSeleccionado === nivel.id && nivel.id <= 2) {
                 <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px;
                             margin-top: -4px; margin-bottom: 8px; border: 1px solid rgba(130,244,224,0.2);
                             display: flex; flex-direction: column; gap: 8px; text-align: left;">
@@ -530,7 +530,7 @@
                 @for (actividad of actividadesAulaEstudiante; track actividad.id) {
                   <div class="cyber-glow-card" style="display:flex; align-items:center; justify-content:space-between; padding:14px; border-color: {{ actividad.completado ? '#4ade80' : '#82F4E0' }}; box-shadow: inset 0 0 10px {{ actividad.completado ? 'rgba(74, 222, 128, 0.2)' : 'rgba(130, 244, 224, 0.1)' }};">
                     <div>
-                      <p style="color:#ffffff; font-family:'TuFuentePixel',monospace; font-size:1.1rem; text-shadow: 2px 2px 0 #000; margin:0 0 6px 0;">Reto Nivel {{ actividad.nivel_id }}</p>
+                      <p style="color:#ffffff; font-family:'TuFuentePixel',monospace; font-size:1.1rem; text-shadow: 2px 2px 0 #000; margin:0 0 6px 0;">Reto Nivel {{ actividad.reto_nivel_id }}</p>
                       @if (actividad.completado) {
                         <span style="color:#4ade80; font-size:0.8rem; font-family:'TuFuentePixel',monospace; text-shadow: 0 0 5px rgba(74, 222, 128, 0.4);">✔️ COMPLETADO</span>
                       } @else {

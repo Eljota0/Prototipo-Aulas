@@ -38,20 +38,26 @@ export interface ParametrosEvaluacion {
 }
 
 export interface RetoPersonalizadoCreate {
-  reto_nivel_id: number;            // ID del nivel oficial reutilizado (1 = El Ogro)
+  reto_nivel_id: number;            // ID del nivel oficial reutilizado
   titulo: string;                   // Ej: "Evaluación Semana 3"
   recompensa_estrellas: number;
   parametros: ParametrosEvaluacion;
+  fecha_limite?: string | null;
 }
 
 export interface RetoPersonalizadoResponse {
   id: string;
   aula_id: string;
+  reto_nivel_id: number;
   titulo: string;
+  estado: 'borrador' | 'publicado';
   tipo_reto: string;
   recompensa_estrellas: number;
   parametros_evaluacion: ParametrosEvaluacion;
   fecha_creacion: string;
+  fecha_limite?: string | null;
+  fecha_cierre?: string | null;
+  completado: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────

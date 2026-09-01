@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { ProgresoService } from '../services/progreso.service';
 
 export interface LevelDescriptor {
   id: number;
@@ -19,15 +20,37 @@ export interface LevelDescriptor {
 export class MapaAventuraComponent implements OnInit {
   niveles: LevelDescriptor[] = [];
 
+  constructor(private progresoService: ProgresoService) {}
+
   ngOnInit(): void {
-    // Generar 10 niveles mockeados
+    this.construirMapa(new Set<number>());
+    this.progresoService.miProgreso().subscribe({
+      next: progresos => {
+        const completados = new Set(
+          progresos
+            .filter(progreso => progreso.completado)
+            .map(progreso => progreso.reto_nivel_id)
+        );
+        this.construirMapa(completados);
+      },
+      error: () => this.construirMapa(new Set<number>())
+    });
+  }
+
+  private construirMapa(completados: Set<number>): void {
+    const titulos: Record<number, string> = {
+      1: 'El Ogro',
+      2: 'Taladro a Vapor'
+    };
+    const ultimoNivelImplementado = 2;
+
     this.niveles = Array.from({ length: 10 }, (_, i) => {
       const id = i + 1;
       return {
-        id: id,
-        titulo: `Nivel ${id}`,
-        completado: false, // Por ahora, nada está completado
-        bloqueado: id !== 1 // El Nivel 1 está desbloqueado, los demás bloqueados
+        id,
+        titulo: titulos[id] ?? `Nivel ${id}`,
+        completado: completados.has(id),
+        bloqueado: id > ultimoNivelImplementado || (id > 1 && !completados.has(id - 1))
       };
     });
   }

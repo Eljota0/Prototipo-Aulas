@@ -1,0 +1,236 @@
+<div class="nivel-dos-shell">
+  <app-game-header (salir)="salir()"></app-game-header>
+
+  <main class="juego-layout">
+    <section class="tablero-juego" aria-label="Taladro a Vapor">
+      <div class="hud-juego">
+        <div class="vidas" aria-label="Vidas disponibles">
+          <span *ngFor="let vida of [1, 2, 3]" [class.perdida]="vida > vidas">♥</span>
+        </div>
+
+        <div class="contador-reparacion" aria-label="Fases superadas">
+          <span class="icono-herramienta">◆</span>
+          <strong>{{ faseActualIndice + (faseCompletada ? 1 : 0) }} / {{ fases.length }}</strong>
+        </div>
+
+        <div class="contador-fase">{{ faseActual.numero }} — {{ fases.length }}</div>
+      </div>
+
+      <div class="escena-maquina"
+           [class.perforando]="estadoTaladro === 'perforando'"
+           [class.liberando-vapor]="estadoTaladro === 'liberando-vapor'"
+           [class.empacando]="estadoTaladro === 'empacando'"
+           [class.recargando]="estadoTaladro === 'recargando'"
+           [class.explosion]="estadoTaladro === 'explosion'"
+           [class.banda-rota]="estadoTaladro === 'banda-rota'"
+           [class.sin-combustible]="estadoTaladro === 'sin-combustible'"
+           [class.estable]="estadoTaladro === 'estable'">
+        <div class="caverna-luz"></div>
+        <div class="plataforma">
+          <span *ngFor="let baldosa of [1, 2, 3, 4, 5, 6]"></span>
+        </div>
+
+        <div class="taladro-wrap">
+          <img src="assets/images/aventura/nivel2/taladro-vapor.png"
+               alt="Taladro a vapor mágico funcionando en la mina">
+          <span class="vapor vapor-a"></span>
+          <span class="vapor vapor-b"></span>
+          <span class="cristales-empacados">◆ ◆ ◆</span>
+          <span class="brillo-carbon"></span>
+          <span class="onda-explosion"></span>
+        </div>
+
+        <aside class="medidores" aria-label="Medidores del taladro">
+          <div class="medidor temperatura-medidor">
+            <div class="medidor-titulo"><span>TEMPERATURA</span><strong>{{ temperatura }}°</strong></div>
+            <div class="medidor-barra"><i [style.width.%]="temperaturaPorcentaje"></i></div>
+          </div>
+          <div class="medidor" [class.bloqueado]="faseActual.numero < 2">
+            <div class="medidor-titulo"><span>PESO</span><strong>{{ pesoCristales }}/50</strong></div>
+            <div class="medidor-barra peso"><i [style.width.%]="pesoPorcentaje"></i></div>
+            <small *ngIf="faseActual.numero < 2">FASE 2</small>
+          </div>
+          <div class="medidor" [class.bloqueado]="faseActual.numero < 3">
+            <div class="medidor-titulo"><span>CARBÓN</span><strong>{{ combustible }}%</strong></div>
+            <div class="medidor-barra combustible"><i [style.width.%]="combustible"></i></div>
+            <small *ngIf="faseActual.numero < 3">FASE 3</small>
+          </div>
+        </aside>
+
+        <div class="diagnostico">
+          <span>ESTADO DEL TALADRO</span>
+          <strong>{{ estadoTaladroTexto }}</strong>
+          <p>{{ bitacora }}</p>
+        </div>
+
+        <div class="mision-flotante">
+          <span>FASE {{ faseActual.numero }} · {{ faseActual.concepto | uppercase }}</span>
+          <strong>{{ faseActual.titulo }}</strong>
+          <p>{{ faseActual.objetivo }}</p>
+          <button type="button" (click)="pistaVisible = !pistaVisible">
+            {{ pistaVisible ? 'OCULTAR PISTA' : 'MOSTRAR PISTA' }}
+          </button>
+          <small *ngIf="pistaVisible">{{ faseActual.pista }}</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-derecho">
+      <article class="consola-codigo">
+        <div class="titulo-archivo">pergamino.drg</div>
+
+        <div class="editor-codigo">
+          <div class="numeros-linea" aria-hidden="true">
+            <span>1</span>
+            <span *ngFor="let numero of lineasInteriores">{{ numero }}</span>
+            <span>{{ lineasInteriores.length + 2 }}</span>
+          </div>
+
+          <div class="codigo-estructurado">
+            <code class="linea-fija">{{ plantillaInicio }}</code>
+            <textarea
+              [(ngModel)]="codigoUsuario"
+              [rows]="filasCodigoUsuario"
+              [disabled]="ejecutando || faseCompletada || falloFase || gameOver"
+              [readOnly]="antiCopiaActivo"
+              spellcheck="false"
+              autocomplete="off"
+              aria-label="Código dentro del evento"
+              placeholder="  // Inserta aquí la condición y la acción"></textarea>
+            <code class="linea-fija">&#125;</code>
+          </div>
+
+          <div class="errores-panel" *ngIf="errores.length > 0">
+            <p *ngFor="let error of errores">⚠ {{ error }}</p>
+          </div>
+        </div>
+
+        <div class="acciones-editor">
+          <div class="acciones-limpieza">
+            <button type="button" class="btn-borrar" (click)="borrarLinea()"
+                    [disabled]="ejecutando || faseCompletada || falloFase || gameOver">Borrar Línea</button>
+            <button type="button" class="btn-borrar" (click)="limpiarPergamino()"
+                    [disabled]="ejecutando || faseCompletada || falloFase || gameOver">Limpiar Todo</button>
+          </div>
+
+          <button type="button" class="btn-ejecutar" (click)="ejecutarCodigo()"
+                  [disabled]="ejecutando || faseCompletada || falloFase || gameOver || cargandoContextoAula">
+            {{ ejecutando ? '◆ TALADRANDO...' : '▶ Ejecutar' }}
+          </button>
+        </div>
+      </article>
+
+      <article class="inventario">
+        <div class="titulo-inventario">INVENTARIO</div>
+
+        <div class="tabs-inventario">
+          <button type="button" [class.activa]="pestanaInventario === 'acciones'"
+                  (click)="pestanaInventario = 'acciones'">ACCIONES</button>
+          <button type="button" [class.activa]="pestanaInventario === 'objetos'"
+                  (click)="pestanaInventario = 'objetos'">OBJETOS</button>
+        </div>
+
+        <div class="contenido-inventario" [class.fase-final]="faseActual.numero === 4"
+             *ngIf="pestanaInventario === 'acciones'; else objetos">
+          <aside class="memoria-protocolos" *ngIf="faseActual.numero === 4" aria-label="Protocolos aprendidos">
+            <div class="memoria-titulo">
+              <strong>MEMORIA DE PROTOCOLOS</strong>
+              <span>Recuerda y programa en este orden</span>
+            </div>
+            <div class="protocolo-recordado" *ngFor="let protocolo of protocolosAprendidos"
+                 [class.insertado]="protocoloInsertado(protocolo)">
+              <b>{{ protocolo.numero }}</b>
+              <span><strong>{{ protocolo.nombre }}</strong>{{ protocolo.condicion }} → {{ protocolo.accion }}</span>
+              <i>{{ protocoloInsertado(protocolo) ? 'LISTO' : 'PENDIENTE' }}</i>
+            </div>
+          </aside>
+
+          <button type="button" *ngFor="let tarjeta of faseActual.tarjetas"
+                  class="tarjeta-codigo" [attr.data-tono]="tarjeta.tono"
+                  (click)="insertarTarjeta(tarjeta)"
+                  [disabled]="ejecutando || faseCompletada || falloFase || gameOver">
+            <span class="orden-tarjeta" *ngIf="faseActual.numero === 4">PASO {{ numeroProtocolo(tarjeta.protocolo) }}</span>
+            <strong>{{ tarjeta.etiqueta }}</strong>
+            <code>{{ tarjeta.codigo.replace('\n', ' ') }}</code>
+          </button>
+        </div>
+
+        <ng-template #objetos>
+          <div class="contenido-objetos">
+            <button type="button" class="objeto objeto-boton" (click)="ayudaVisible = true">
+              <img src="assets/images/aventura/objetos/libro-ayuda.png" alt="Grimorio de ayuda">
+              <span>Grimorio</span>
+            </button>
+            <div class="objeto">
+              <img src="assets/images/aventura/objetos/pocion-clarividencia.png" alt="Poción de clarividencia">
+              <span>Clarividencia</span>
+            </div>
+            <div class="objeto">
+              <img src="assets/images/aventura/objetos/pocion-tiempo.png" alt="Poción de tiempo">
+              <span>Tiempo</span>
+            </div>
+            <div class="objeto">
+              <img src="assets/images/aventura/objetos/pocion-vida.png" alt="Poción de vida">
+              <span>Vida</span>
+            </div>
+          </div>
+        </ng-template>
+      </article>
+    </section>
+  </main>
+
+  <div class="modal-overlay" *ngIf="falloFase || gameOver">
+    <section class="modal-resultado">
+      <span class="modal-icono">!</span>
+      <h2>{{ tituloFallo }}</h2>
+      <p>{{ bitacora }}</p>
+      <p class="vidas-restantes">Vidas restantes: {{ vidas }}</p>
+      <button type="button" *ngIf="falloFase && !gameOver" (click)="reintentarFase()">Reintentar fase</button>
+      <button type="button" *ngIf="gameOver" (click)="reiniciarNivel()">Reiniciar nivel</button>
+    </section>
+  </div>
+
+  <div class="celebracion-overlay" *ngIf="nivelCompletado">
+    <div class="particulas-victoria" aria-hidden="true">
+      <i *ngFor="let particula of [1,2,3,4,5,6,7,8,9,10,11,12]"></i>
+    </div>
+
+    <section class="celebracion-panel nivel-final">
+      <img src="/assets/images/exprecionsedraco/feliz.png" class="draco-feliz"
+           alt="Draco celebrando la misión completada">
+
+      <h1>¡MISIÓN COMPLETADA!</h1>
+      <p class="mensaje-recompensa">{{ mensajeRecompensa }}</p>
+      <div class="estrellas-celebracion" [attr.aria-label]="estrellas + ' estrellas obtenidas'">
+        <span *ngFor="let estrella of estrellasAnimadas; let indice = index"
+              [style.animation-delay.ms]="350 + indice * 260">★</span>
+      </div>
+
+      <div class="resultado-grid resultado-final">
+        <div><strong>{{ calificacion }}</strong><span>calificación</span></div>
+        <div><strong>{{ tiempoSegundos }}s</strong><span>tiempo</span></div>
+        <div><strong>{{ intentosCalificables }}</strong><span>intentos</span></div>
+      </div>
+      <p class="detalle-final">
+        {{ mensajeSincronizacion || 'Los tres listeners respondieron durante el mismo ciclo automático.' }}
+      </p>
+
+      <div class="botones-celebracion">
+        <button type="button" class="btn-secundario" (click)="reiniciarNivel()">REINICIAR NIVEL</button>
+        <button type="button" class="btn-victoria" (click)="salir()">SALIR DE LA MISIÓN</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" *ngIf="ayudaVisible">
+    <section class="modal-resultado modal-ayuda">
+      <span class="modal-icono">▣</span>
+      <h2>GRIMORIO DE EVENTOS</h2>
+      <p><strong>Un evento</strong> permanece escuchando hasta que cambia algo en el taladro.</p>
+      <p><strong>Un condicional</strong> decide qué acción ejecutar cuando el sensor alcanza su límite.</p>
+      <p>En la fase final, varios condicionales pueden convivir dentro de un mismo listener.</p>
+      <code>evento(...) &#123; si(...) &#123; acción(); &#125; &#125;</code>
+      <button type="button" (click)="ayudaVisible = false">Cerrar grimorio</button>
+    </section>
+  </div>
+</div>

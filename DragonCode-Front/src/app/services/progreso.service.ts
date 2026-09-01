@@ -10,7 +10,7 @@ export interface GuardarProgresoRequest {
   intentos: number;          // Número de intentos que tomó completarlo
   codigo_solucion: string;   // El código que escribió el jugador
   aula_id?: string;          // Opcional: si el jugador está en un aula
-  reto_personalizado_id?: number; // Identifica qué reto específico se completó en el aula
+  reto_personalizado_id?: string; // UUID del reto específico completado en el aula
 }
 
 export interface ProgresoResponse {
@@ -18,6 +18,15 @@ export interface ProgresoResponse {
   estrellas_obtenidas: number;
   estrellas_totales_usuario: number;
   es_primera_vez: boolean;
+}
+
+export interface ProgresoNivel {
+  reto_nivel_id: number;
+  completado: boolean;
+  estrellas_obtenidas: number;
+  intentos: number;
+  tiempo_segundos: number;
+  fecha_completado: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -41,7 +50,7 @@ export class ProgresoService {
    * Obtiene el historial de progreso del usuario en todos los niveles.
    * Útil para mostrar estrellas reales en el modal de la pantalla principal.
    */
-  miProgreso(): Observable<any[]> {
-    return this.http.get<any[]>('/progreso/mis-niveles');
+  miProgreso(): Observable<ProgresoNivel[]> {
+    return this.http.get<ProgresoNivel[]>('/progreso/mis-niveles');
   }
 }
