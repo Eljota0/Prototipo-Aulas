@@ -11,6 +11,7 @@ export interface Avatar {
   precio_estrellas: number;
   activo: boolean;
   desbloqueado: boolean;
+  descripcion?: string;
 }
 
 @Component({
@@ -29,7 +30,73 @@ export class TiendaComponent implements OnInit, OnDestroy {
   avatarToBuy: Avatar | null = null;
   cargandoCompra = false;
 
-  avatars: Avatar[] = [];
+  /**
+   * Catálogo visual temporal.
+   *
+   * Los personajes permanecen en el frontend hasta que se decida activar la
+   * persistencia de compras y equipamiento en Supabase.
+   */
+  readonly catalogoSoloVisual = true;
+  avatars: Avatar[] = [
+    {
+      id: 1,
+      nombre_skin: 'Drako Base',
+      url_imagen: 'assets/images/tienda/avatares/drakobase.png',
+      precio_estrellas: 5,
+      activo: true,
+      desbloqueado: true,
+      descripcion: 'El clásico y confiable compañero de código.'
+    },
+    {
+      id: 2,
+      nombre_skin: 'Drako Aprendiz',
+      url_imagen: 'assets/images/tienda/avatares/drakoaprendiz.png',
+      precio_estrellas: 5,
+      activo: true,
+      desbloqueado: false,
+      descripcion: 'Listo para absorber nuevos conocimientos.'
+    },
+    {
+      id: 3,
+      nombre_skin: 'Drako Capa',
+      url_imagen: 'assets/images/tienda/avatares/drakocapa.png',
+      precio_estrellas: 5,
+      activo: true,
+      desbloqueado: false,
+      descripcion: 'Elegancia mágica para tus sesiones.'
+    },
+    {
+      id: 4,
+      nombre_skin: 'Drako Chancla',
+      url_imagen: 'assets/images/tienda/avatares/drakochancla.png',
+      precio_estrellas: 5,
+      activo: true,
+      desbloqueado: false,
+      descripcion: 'Disciplina legendaria para dominar cada reto.'
+    },
+    {
+      id: 5,
+      nombre_skin: 'Drako Haaland',
+      url_imagen: 'assets/images/tienda/avatares/drakohaaland.png',
+      precio_estrellas: 5,
+      activo: true,
+      desbloqueado: false,
+      descripcion: 'Potencia imparable para resolver desafíos.'
+    },
+    {
+      id: 6,
+      nombre_skin: 'Drako Mbappé',
+      url_imagen: 'assets/images/tienda/avatares/drakombappe.png',
+      precio_estrellas: 5,
+      activo: true,
+      desbloqueado: false,
+      descripcion: 'Velocidad máxima para avanzar en el código.'
+    }
+  ];
+  readonly totalEstrellasCatalogo = this.avatars.reduce(
+    (total, avatar) => total + avatar.precio_estrellas,
+    0
+  );
   userProfile: UserProfile | null = null;
   private sub?: Subscription;
 
@@ -40,7 +107,9 @@ export class TiendaComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.sub = this.userService.getProfile().subscribe(p => this.userProfile = p);
-    this.cargarCatalogo();
+    if (!this.catalogoSoloVisual) {
+      this.cargarCatalogo();
+    }
   }
 
   ngOnDestroy(): void {
@@ -59,6 +128,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
   }
 
   selectAvatar(avatar: Avatar): void {
+    if (this.catalogoSoloVisual) return;
     if (this.avatarActual === avatar.url_imagen) return;
     
     if (avatar.desbloqueado || avatar.precio_estrellas === 0) {
