@@ -17,7 +17,8 @@ depends_on = None
 def upgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
-    if "retos_personalizados" not in inspector.get_table_names():
+    tablas = set(inspector.get_table_names())
+    if "retos_personalizados" not in tablas:
         return
 
     columnas = {columna["name"] for columna in inspector.get_columns("retos_personalizados")}
@@ -26,9 +27,6 @@ def upgrade() -> None:
             "retos_personalizados",
             sa.Column("reto_nivel_id", sa.Integer(), nullable=True),
         )
-        op.execute(sa.text(
-            "UPDATE retos_personalizados SET reto_nivel_id = 1 WHERE reto_nivel_id IS NULL"
-        ))
     if "fecha_limite" not in columnas:
         op.add_column(
             "retos_personalizados",
@@ -40,7 +38,38 @@ def upgrade() -> None:
             sa.Column("fecha_cierre", sa.DateTime(), nullable=True),
         )
 
-    if "progreso_aula" in inspector.get_table_names():
+    # La base histórica de Supabase ya contiene las tablas, pero no esta
+    # relación. Se añade sin borrar ni recrear registros.
+    inspector = sa.inspect(bind)
+    claves_foraneas = {
+        clave.get("name")
+        for clave in inspector.get_foreign_keys("retos_personalizados")
+    }
+    if (
+        "retos_niveles" in tablas
+        and "fk_retos_personalizados_reto_nivel_id" not in claves_foraneas
+    ):
+        op.create_foreign_key(
+            "fk_retos_personalizados_reto_nivel_id",
+            "retos_personalizados",
+            "retos_niveles",
+            ["reto_nivel_id"],
+            ["id"],
+        )
+
+    if "retos_niveles" in tablas:
+        restricciones_unicas = {
+            restriccion.get("name")
+            for restriccion in sa.inspect(bind).get_unique_constraints("retos_niveles")
+        }
+        if "uq_retos_niveles_orden" not in restricciones_unicas:
+            op.create_unique_constraint(
+                "uq_retos_niveles_orden",
+                "retos_niveles",
+                ["orden"],
+            )
+
+    if "progreso_aula" in tablas:
         op.execute(sa.text(
             """
             UPDATE progreso_aula
@@ -60,6 +89,29 @@ def downgrade() -> None:
     inspector = sa.inspect(bind)
     if "retos_personalizados" not in inspector.get_table_names():
         return
+
+    claves_foraneas = {
+        clave.get("name")
+        for clave in inspector.get_foreign_keys("retos_personalizados")
+    }
+    if "fk_retos_personalizados_reto_nivel_id" in claves_foraneas:
+        op.drop_constraint(
+            "fk_retos_personalizados_reto_nivel_id",
+            "retos_personalizados",
+            type_="foreignkey",
+        )
+
+    if "retos_niveles" in inspector.get_table_names():
+        restricciones_unicas = {
+            restriccion.get("name")
+            for restriccion in sa.inspect(bind).get_unique_constraints("retos_niveles")
+        }
+        if "uq_retos_niveles_orden" in restricciones_unicas:
+            op.drop_constraint(
+                "uq_retos_niveles_orden",
+                "retos_niveles",
+                type_="unique",
+            )
 
     columnas = {columna["name"] for columna in inspector.get_columns("retos_personalizados")}
     if "fecha_cierre" in columnas:

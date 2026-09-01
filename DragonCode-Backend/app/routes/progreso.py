@@ -111,8 +111,9 @@ def guardar_progreso(
             progreso_existente.codigo_solucion = datos.codigo_solucion
             progreso_existente.fecha_completado = ahora_utc()
 
-        # Si el resultado es igual o peor, no tocamos nada (pero sí actualizamos intentos)
-        progreso_existente.intentos += 1
+        # Si el resultado es igual o peor, se conserva íntegro el mejor
+        # registro. ``intentos`` describe ese intento guardado, no la cantidad
+        # histórica de veces que el usuario volvió a jugar el nivel.
 
     # 3.5 Guardar o actualizar progreso de aula si existe reto_personalizado
     if datos.aula_id and reto_personalizado:
