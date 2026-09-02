@@ -40,6 +40,11 @@ export class PerfilComponent implements OnInit {
   // ── ESTADO PARA CONFIRMAR CORREO ──
   pendingEmail: string = '';
   confirmEmailPass: string = '';
+  mostrarClaveCorreo: boolean = false;
+
+  toggleClaveCorreo(): void {
+    this.mostrarClaveCorreo = !this.mostrarClaveCorreo;
+  }
 
 
 
@@ -50,6 +55,23 @@ export class PerfilComponent implements OnInit {
     confirmPass: ''
   };
   passwordError: boolean = false;
+  
+  // ── ESTADOS DE VISIBILIDAD DE CONTRASEÑA ──
+  mostrarActual: boolean = false;
+  mostrarNueva: boolean = false;
+  mostrarConfirmacion: boolean = false;
+
+  toggleActual(): void {
+    this.mostrarActual = !this.mostrarActual;
+  }
+
+  toggleNueva(): void {
+    this.mostrarNueva = !this.mostrarNueva;
+  }
+
+  toggleConfirmacion(): void {
+    this.mostrarConfirmacion = !this.mostrarConfirmacion;
+  }
 
   // ── ESTADO DE RECUPERACIÓN ──
   recoverySent = false;
@@ -119,20 +141,53 @@ export class PerfilComponent implements OnInit {
   }
 
   // ── MÉTODOS DE CONTRASEÑA ──
-  confirmPasswordChange(): void {
-    const pass = this.passwordData.newPass || '';
-    const hasUpper = /[A-Z]/.test(pass);
-    const hasLower = /[a-z]/.test(pass);
-    const hasNumber = /[0-9]/.test(pass);
-    const hasSymbol = /[\W_]/.test(pass);
+  requisitosClave = {
+    longitud: false,
+    mayuscula: false,
+    numero: false,
+    especial: false
+  };
 
-    if (!hasUpper || !hasLower || !hasNumber || !hasSymbol) {
-      this.passwordError = true;
+  errorVacio: boolean = false;
+  errorRequisitos: boolean = false;
+  errorCoincidencia: boolean = false;
+
+  validarPassword(clave: string): void {
+    if (!clave) {
+      this.requisitosClave = { longitud: false, mayuscula: false, numero: false, especial: false };
+      return;
+    }
+    this.requisitosClave.longitud = clave.length >= 6;
+    this.requisitosClave.mayuscula = /[A-Z]/.test(clave);
+    this.requisitosClave.numero = /[0-9]/.test(clave);
+    this.requisitosClave.especial = /[^a-zA-Z0-9]/.test(clave);
+  }
+
+  confirmPasswordChange(): void {
+    // Reset errores
+    this.errorVacio = false;
+    this.errorRequisitos = false;
+    this.errorCoincidencia = false;
+
+    if (!this.passwordData.oldPass || !this.passwordData.newPass || !this.passwordData.confirmPass) {
+      this.errorVacio = true;
+      this.notificationService.show('Por favor, completa todos los campos de contraseña.', 'error');
       return;
     }
 
-    this.passwordError = false;
-    
+    const { longitud, mayuscula, numero, especial } = this.requisitosClave;
+    if (!longitud || !mayuscula || !numero || !especial) {
+      this.errorRequisitos = true;
+      this.notificationService.show('La nueva contraseña no cumple con los requisitos de seguridad.', 'error');
+      return;
+    }
+
+    if (this.passwordData.newPass !== this.passwordData.confirmPass) {
+      this.errorCoincidencia = true;
+      this.notificationService.show('Las contraseñas no coinciden.', 'error');
+      return;
+    }
+
     // Dispara el toast global
     this.notificationService.show('Contraseña actualizada exitosamente', 'success');
     

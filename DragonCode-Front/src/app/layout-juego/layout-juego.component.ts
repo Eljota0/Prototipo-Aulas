@@ -24,7 +24,7 @@ export class LayoutJuegoComponent {
   lineasCodigo: Instruccion[] = [{ texto: '', color: '#d4d4d4', tieneError: false }];
   
   // Estado de ejecución
-  ejecutando: boolean = false;
+  @Input() ejecutando: boolean = false;
 
   // Servicio de Notificaciones
   // Servicio de Notificaciones
@@ -41,16 +41,29 @@ export class LayoutJuegoComponent {
   // Flag para habilitar el modo anticopia en la consola
   @Input() antiCopiaActivo: boolean = false;
 
+  // Nivel actual del juego (para la poción de clarividencia)
+  @Input() nivelActual: number = 1;
+
+  // Estado inicial del inventario
+  @Input() estadoObjetos?: any;
+
   // Emisor hacia el nivel (Ogro) con el código ensamblado
   @Output() ejecutarJuego = new EventEmitter<string>();
 
-  // Emisor hacia el nivel para el uso de pociones
-  @Output() onUsarItem = new EventEmitter<'roja' | 'verde' | 'amarilla'>();
+  // Emisor hacia el nivel (Ogro) cuando se usa un ítem
+  @Output() onUsarItem = new EventEmitter<'roja' | 'verde' | 'amarilla' | 'libro'>();
+
+  // Emisor del toggle de Draco
+  @Output() onToggleDraco = new EventEmitter<boolean>();
+
+  // Emisor hacia el nivel cuando se usa una tarjeta de acción
+  @Output() onUsarTarjeta = new EventEmitter<void>();
 
   // Método accionado por la Baraja para agregar código
   agregarCodigo(tarjeta: TarjetaConfig) {
     if (this.consola) {
       this.consola.insertarDesdeTarjeta(tarjeta);
+      this.onUsarTarjeta.emit();
     }
   }
 
@@ -102,9 +115,6 @@ export class LayoutJuegoComponent {
     
     // Lo disparamos hacia el Nivel (Ogro)
     this.ejecutarJuego.emit(codigoEnsamblado);
-    
-    // Apagamos la UI de ejecución poco después
-    setTimeout(() => this.ejecutando = false, 2000);
   }
 
   // Utilidad: Asegurar que nunca quede en 0 líneas
@@ -116,5 +126,12 @@ export class LayoutJuegoComponent {
 
   abandonarPartida() {
     this.router.navigate(['/pantalla-principal']);
+  }
+
+  // Puente: Activa la poción de clarividencia en la consola
+  activarClarividencia() {
+    if (this.consola) {
+      this.consola.usarPocionClarividencia();
+    }
   }
 }

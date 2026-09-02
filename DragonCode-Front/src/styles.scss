@@ -65,7 +65,7 @@ html, body {
   }
 }
 
-.draco-sprite {
+.loader-draco-sprite {
   width: 167px; /* Asumiendo 1/4 del ancho real proporcional a la pantalla */
   height: 162px;
   background-image: url('/assets/images/pantallacarga/spritecarga.png');
@@ -108,9 +108,23 @@ html, body {
     padding-bottom: 30vh;
   }
   
-  .draco-sprite {
+  .loader-draco-sprite {
     /* Reduce el tamaño un 15% (de 1 a 0.85) */
     transform: scale(0.85);
     margin-bottom: 10px; /* Ajustamos margen por la reducción */
   }
+}
+
+/* =========================================
+   OVERRIDE GLOBAL DEL AUTOFILL DE WEBKIT
+   (Previene el fondo blanco/amarillo que rompe el Dark Theme)
+   ========================================= */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  /* Método Bulletproof: Sombra interior masiva usando un color marrón/gris opaco compatible con los componentes */
+  -webkit-box-shadow: 0 0 0px 1000px #241710 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
 }

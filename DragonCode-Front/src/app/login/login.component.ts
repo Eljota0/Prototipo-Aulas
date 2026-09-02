@@ -31,6 +31,11 @@ export class LoginComponent implements OnInit {
   email: string = '';
   password: string = '';
   isLoading: boolean = false;
+  mostrarClave: boolean = false;
+
+  toggleClave(): void {
+    this.mostrarClave = !this.mostrarClave;
+  }
 
   // Centralizamos los avatares aquí
   private readonly DRACO_AVATARS: string[] = [

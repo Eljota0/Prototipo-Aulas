@@ -5,7 +5,26 @@
   </div>
 
   <!-- Contenedor del Editor -->
-  <div class="editor-lines-container" (click)="enfocarUltimoInput()">
+  <div class="editor-lines-container" (click)="enfocarUltimoInput()" style="position: relative;">
+
+    <!-- Barra de Tiempo de Clarividencia -->
+    <div class="barra-magica-tiempo" [class.consumiendo]="pocionActiva"></div>
+
+    <!-- Ojo Dorado de Clarividencia -->
+    @if (pocionActiva) {
+      <span class="material-symbols-outlined ojo-dorado" [class.ojo-click]="ojoAnimado" (click)="detonarDestello(); $event.stopPropagation()">visibility</span>
+    }
+
+    <!-- Overlay de Clarividencia -->
+    <div class="overlay-clarividencia" [class.mostrar]="overlayDorado">
+      @for (linea of solucionesMagicas[nivelActual] || []; track $index) {
+        <div class="overlay-line">
+          <span class="overlay-line-number">{{ $index + 1 }}</span>
+          <span class="overlay-line-text linea-dorada">{{ linea }}</span>
+        </div>
+      }
+    </div>
+
     @for (linea of lineas; track $index) {
       <div class="code-line" (click)="$event.stopPropagation()">
         <span class="line-number">{{ $index + 1 }}</span>

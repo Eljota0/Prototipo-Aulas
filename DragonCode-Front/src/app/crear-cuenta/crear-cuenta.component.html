@@ -66,20 +66,34 @@
   <!-- Fila 3: Contraseñas -->
   <div class="input-group">
     <label>Contraseña</label>
-    <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••" required>
+    <div class="input-wrapper">
+      <input [type]="mostrarClave ? 'text' : 'password'" [(ngModel)]="password" (ngModelChange)="validarPassword($event)" name="password" placeholder="••••••••" required [ngClass]="{'input-error': errorRequisitos || errorCoincidencia}">
+      <button type="button" class="btn-ver-clave" (click)="toggleClave()">
+        <span class="material-symbols-outlined icono-toggle">{{ mostrarClave ? 'visibility_off' : 'visibility' }}</span>
+      </button>
+    </div>
+    <!-- Lista de Requisitos -->
+    <ul class="password-requirements">
+      <li [ngClass]="{'valido': requisitosClave.longitud}">Mínimo 6 caracteres</li>
+      <li [ngClass]="{'valido': requisitosClave.mayuscula}">1 Mayúscula</li>
+      <li [ngClass]="{'valido': requisitosClave.numero}">1 Número</li>
+      <li [ngClass]="{'valido': requisitosClave.especial}">1 Especial</li>
+    </ul>
   </div>
   <div class="input-group">
     <label>Confirmar Contraseña</label>
-    <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
-    @if (passwordError) {
-      <span class="error-text">{{ passwordError }}</span>
-    }
+    <div class="input-wrapper">
+      <input [type]="mostrarConfirmacion ? 'text' : 'password'" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="••••••••" required [ngClass]="{'input-error': errorCoincidencia}">
+      <button type="button" class="btn-ver-clave" (click)="toggleConfirmacion()">
+        <span class="material-symbols-outlined icono-toggle">{{ mostrarConfirmacion ? 'visibility_off' : 'visibility' }}</span>
+      </button>
+    </div>
   </div>
 
   <!-- Fila 4: Términos y Condiciones -->
   <div class="checkbox-group full-width">
     <label class="custom-checkbox">
-      <input type="checkbox" [(ngModel)]="aceptaTerminos" name="aceptaTerminos">
+      <input type="checkbox" [(ngModel)]="aceptaTerminos" name="aceptaTerminos" [ngClass]="{'input-error': errorTerminos}">
       Acepto los términos y condiciones.
     </label>
   </div>

@@ -47,7 +47,7 @@ export class BarajaTarjetasComponent {
   animandoOla: boolean = false;
   bloquearBoton: boolean = false;
 
-  @Output() onUsarItem = new EventEmitter<'roja' | 'verde' | 'amarilla'>();
+  @Output() onUsarItem = new EventEmitter<'roja' | 'verde' | 'amarilla' | 'libro'>();
 
   rojaTemblando: boolean = false;
   verdeTemblando: boolean = false;

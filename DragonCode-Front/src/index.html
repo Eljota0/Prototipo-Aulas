@@ -11,6 +11,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <!-- Inyección temporal de Material Symbols para el toggle de contraseña -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 
   <!-- PRECARGA DE ASSETS PESADOS (Para evitar FOUC y pestañeos en animaciones) -->
   <link rel="preload" href="assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero1.png" as="image">
@@ -27,7 +29,7 @@
 <body>
   <!-- APP SHELL LOADER -->
   <div id="global-loader" class="pantalla-carga-global">
-    <div class="draco-sprite"></div>
+    <div class="loader-draco-sprite"></div>
     <p class="texto-carga"><span id="texto-carga-dinamico">CARGANDO</span><span class="puntos-animados"></span></p>
   </div>
 

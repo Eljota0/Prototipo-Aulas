@@ -199,6 +199,11 @@
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   cursor: pointer;
   
+  /* Prevención de selección de texto y arrastre */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  
   /* Alineación para que no salte al empujar */
   margin-bottom: 5px; 
 }
@@ -265,6 +270,9 @@
   height: auto;
   cursor: pointer;
   transition: all 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* Tamaños Diferenciados */

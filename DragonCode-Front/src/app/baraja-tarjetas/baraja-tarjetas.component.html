@@ -22,7 +22,8 @@
                  [style.backgroundColor]="tarjeta.colorBoton" 
                  [style.animation-delay]="animandoOla ? (i * 0.1) + 's' : '0s'"
                  [class.salto-ola]="animandoOla"
-                 (click)="seleccionarTarjeta(tarjeta)">
+                 (click)="seleccionarTarjeta(tarjeta)"
+                 (mousedown)="$event.preventDefault()">
               <span class="card-title">{{ tarjeta.nombre }}</span>
               <span class="card-code">{{ tarjeta.accion }}</span>
             </div>
@@ -44,7 +45,7 @@
           <!-- Libro -->
           <div class="objeto-socket" [class.animacion-objeto]="animandoOla" [style.animation-delay]="animandoOla ? '0s' : '0s'">
             @if (estadoObjetos.libro.activo) {
-              <img class="magic-obj objeto-img obj-libro libro" src="assets/images/aventura/objetos/libro-ayuda.png" alt="Libro de Ayuda" title="Tomo de los Ancestros. Susurra antiguos secretos de programación para guiar tu camino en este nivel.">
+              <img class="magic-obj objeto-img obj-libro libro" src="assets/images/aventura/objetos/libro-ayuda.png" alt="Libro de Ayuda" title="Tomo de los Ancestros. Susurra antiguos secretos de programación para guiar tu camino en este nivel." (click)="onUsarItem.emit('libro')" (mousedown)="$event.preventDefault()">
             } @else {
               <div class="placeholder-vacio"></div>
             }
@@ -55,6 +56,7 @@
             @if (estadoObjetos.clarividencia.activo && !estadoObjetos.clarividencia.consumida) {
               <img class="magic-obj objeto-img obj-clarividencia pocion" 
                    (click)="onUsarItem.emit('amarilla')" 
+                   (mousedown)="$event.preventDefault()"
                    [class.animacion-negacion]="amarillaTemblando"
                    src="assets/images/aventura/objetos/pocion-clarividencia.png" 
                    alt="Poción de Clarividencia" 
@@ -69,6 +71,7 @@
             @if (estadoObjetos.vida.activo && !estadoObjetos.vida.consumida) {
               <img class="magic-obj objeto-img obj-vida pocion" 
                    (click)="onUsarItem.emit('roja')" 
+                   (mousedown)="$event.preventDefault()"
                    [class.animacion-negacion]="rojaTemblando"
                    src="assets/images/aventura/objetos/pocion-vida.png" 
                    alt="Poción de Vida" 
@@ -83,6 +86,7 @@
             @if (estadoObjetos.tiempo.activo && !estadoObjetos.tiempo.consumida) {
               <img class="magic-obj objeto-img obj-tiempo pocion" 
                    (click)="onUsarItem.emit('verde')" 
+                   (mousedown)="$event.preventDefault()"
                    [class.animacion-negacion]="verdeTemblando"
                    src="assets/images/aventura/objetos/pocion-tiempo.png" 
                    alt="Poción de Tiempo" 

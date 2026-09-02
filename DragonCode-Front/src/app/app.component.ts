@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ToastComponent } from './components/toast/toast.component';
-import { filter } from 'rxjs/operators';
+import { LoaderService } from './services/loader.service';
 
 @Component({
   selector: 'app-root',
@@ -13,13 +13,31 @@ import { filter } from 'rxjs/operators';
 })
 export class AppComponent {
   mostrarFooter: boolean = true;
+  private rutasAuth = ['/login', '/crear-cuenta', '/recuperar-cuenta'];
 
-  constructor(private router: Router) {
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
-      // Ocultar el pie de página si estamos en un nivel
-      this.mostrarFooter = !event.urlAfterRedirects.includes('/nivel/');
+  constructor(private router: Router, private loaderService: LoaderService) {
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationStart) {
+        // Regla 1: Exclusión de Rutas (Navegación entre auth)
+        const esNavegacionEntreAuth = this.esRutaAuth(this.router.url) && this.esRutaAuth(event.url);
+        
+        if (!esNavegacionEntreAuth) {
+          this.loaderService.mostrar('CARGANDO...');
+        }
+      }
+
+      if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
+        if (event instanceof NavigationEnd) {
+          // Ocultar el pie de página si estamos en un nivel
+          this.mostrarFooter = !event.urlAfterRedirects.includes('/nivel/');
+        }
+        this.loaderService.ocultar();
+      }
     });
+  }
+
+  private esRutaAuth(url: string): boolean {
+    const urlBase = url.split('?')[0]; // Ignorar query params si los hay
+    return this.rutasAuth.includes(urlBase);
   }
 }

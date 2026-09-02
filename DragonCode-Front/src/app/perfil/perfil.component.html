@@ -99,22 +99,32 @@
         <form class="password-form">
           <div class="form-group">
             <label>Contraseña Actual</label>
-            <input type="password" name="oldPass" [(ngModel)]="passwordData.oldPass" class="retro-input">
+            <div class="input-wrapper">
+              <input [type]="mostrarActual ? 'text' : 'password'" name="oldPass" [(ngModel)]="passwordData.oldPass" class="retro-input" [ngClass]="{'input-error': errorVacio && !passwordData.oldPass}">
+              <span class="material-symbols-outlined icono-toggle" (click)="toggleActual()">{{ mostrarActual ? 'visibility_off' : 'visibility' }}</span>
+            </div>
           </div>
           
           <div class="form-group">
             <label>Nueva Contraseña</label>
-            <input type="password" name="newPass" [(ngModel)]="passwordData.newPass" class="retro-input" (ngModelChange)="passwordError = false">
-            @if (passwordData.newPass || passwordError) {
-              <span class="password-hint" [class.error-hint]="passwordError">
-                * Mínimo: 1 mayúscula, 1 minúscula, 1 número y 1 signo.
-              </span>
-            }
+            <div class="input-wrapper">
+              <input [type]="mostrarNueva ? 'text' : 'password'" name="newPass" [(ngModel)]="passwordData.newPass" class="retro-input" (ngModelChange)="validarPassword($event)" [ngClass]="{'input-error': (errorVacio && !passwordData.newPass) || errorRequisitos || errorCoincidencia}">
+              <span class="material-symbols-outlined icono-toggle" (click)="toggleNueva()">{{ mostrarNueva ? 'visibility_off' : 'visibility' }}</span>
+            </div>
+            <ul class="password-requirements">
+              <li [ngClass]="{'valido': requisitosClave.longitud}">Mínimo 6 caracteres</li>
+              <li [ngClass]="{'valido': requisitosClave.mayuscula}">1 Mayúscula</li>
+              <li [ngClass]="{'valido': requisitosClave.numero}">1 Número</li>
+              <li [ngClass]="{'valido': requisitosClave.especial}">1 Especial</li>
+            </ul>
           </div>
           
           <div class="form-group">
             <label>Confirmar Nueva Contraseña</label>
-            <input type="password" name="confirmPass" [(ngModel)]="passwordData.confirmPass" class="retro-input">
+            <div class="input-wrapper">
+              <input [type]="mostrarConfirmacion ? 'text' : 'password'" name="confirmPass" [(ngModel)]="passwordData.confirmPass" class="retro-input" [ngClass]="{'input-error': (errorVacio && !passwordData.confirmPass) || errorCoincidencia}">
+              <span class="material-symbols-outlined icono-toggle" (click)="toggleConfirmacion()">{{ mostrarConfirmacion ? 'visibility_off' : 'visibility' }}</span>
+            </div>
           </div>
 
           <div class="password-actions">
@@ -149,7 +159,10 @@
 
           <div class="form-group">
             <label>Contraseña Actual</label>
-            <input type="password" name="confirmEmailPass" [(ngModel)]="confirmEmailPass" class="retro-input" autofocus>
+            <div class="input-wrapper">
+              <input [type]="mostrarClaveCorreo ? 'text' : 'password'" name="confirmEmailPass" [(ngModel)]="confirmEmailPass" class="retro-input" autofocus>
+              <span class="material-symbols-outlined icono-toggle" (click)="toggleClaveCorreo()">{{ mostrarClaveCorreo ? 'visibility_off' : 'visibility' }}</span>
+            </div>
           </div>
           
           <div style="display: flex; justify-content: center; flex-direction: row; gap: 20px; margin-top: 30px;">

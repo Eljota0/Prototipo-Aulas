@@ -1,4 +1,4 @@
-<app-game-header (salir)="abandonarPartida()"></app-game-header>
+<app-game-header (salir)="abandonarPartida()" (onToggleDraco)="onToggleDraco.emit($event)"></app-game-header>
 
 <main class="game-layout-wrapper">
   <div class="game-content-wrapper">
@@ -14,6 +14,7 @@
         [lineas]="lineasCodigo" 
         [ejecutando]="ejecutando"
         [antiCopiaActivo]="antiCopiaActivo"
+        [nivelActual]="nivelActual"
         (lineaBorrada)="eliminarLinea($event)"
         (onEjecutar)="ejecutarCodigo()"
         (onBorrarLinea)="borrarUltimaLinea()"
@@ -23,6 +24,12 @@
       <app-baraja-tarjetas 
         class="cards-section"
         [configuracion]="configuracionTarjetas" 
+        [estadoObjetos]="estadoObjetos || {
+          libro: { activo: true },
+          clarividencia: { activo: true, consumida: false },
+          vida: { activo: true, consumida: false },
+          tiempo: { activo: true, consumida: false }
+        }"
         (instruccionSeleccionada)="agregarCodigo($event)"
         (onUsarItem)="onUsarItem.emit($event)">
       </app-baraja-tarjetas>
