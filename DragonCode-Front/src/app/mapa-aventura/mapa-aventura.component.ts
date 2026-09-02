@@ -50,7 +50,9 @@ export class MapaAventuraComponent implements OnInit {
         id,
         titulo: titulos[id] ?? `Nivel ${id}`,
         completado: completados.has(id),
-        bloqueado: id > ultimoNivelImplementado || (id > 1 && !completados.has(id - 1))
+        // TODO: [DEV MODE] Eliminar antes de producción. 
+        // Original: bloqueado: id > ultimoNivelImplementado || (id > 1 && !completados.has(id - 1))
+        bloqueado: id > ultimoNivelImplementado // Desbloquea todos los niveles que ya estén implementados
       };
     });
   }
