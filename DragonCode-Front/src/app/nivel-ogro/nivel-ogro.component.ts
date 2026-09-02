@@ -9,6 +9,7 @@ import { LoaderService } from '../services/loader.service';
 import { TarjetaConfig } from '../baraja-tarjetas/baraja-tarjetas.component';
 import { ProgresoService } from '../services/progreso.service';
 import { AulasService } from '../services/aulas.service';
+import { AssetPreloaderService } from '../services/asset-preloader.service';
 
 export type TipoTerreno = 'vacio' | 'suelo' | 'sueloroto' | 'suelo-ogro' | 'salida' | 'meta-ogro';
 export type TipoObjeto = 'ninguno' | 'roca' | 'cofre';
@@ -32,6 +33,12 @@ export interface EntidadOgro {
   frameActual: number; // 1 o 2 para intercalar animaciones
 }
 
+export interface DialogNode {
+  texto: string;
+  expresion: string;
+  itemCentro?: string;
+}
+
 @Component({
   selector: 'app-nivel-ogro',
   standalone: true,
@@ -40,6 +47,30 @@ export interface EntidadOgro {
   styleUrl: './nivel-ogro.component.scss'
 })
 export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
+  // === INVENTARIO DEL NIVEL 1 ===
+  inventarioNivel = {
+    libro: { activo: true },
+    clarividencia: { activo: true, consumida: false },
+    vida: { activo: true, consumida: false },
+    tiempo: { activo: false, consumida: false }
+  };
+
+  // === SISTEMA DE DIÁLOGOS TUTORIAL ===
+  dialogosTutorial: DialogNode[] = [
+    { expresion: 'feliz', texto: '¡Hey, novato! ¡Sí, tú, el que está al otro lado de la pantalla! Soy Draco, el Arquitecto de este calabozo. Bienvenido a DragonCode.' },
+    { expresion: 'base', texto: '¿Ves a ese grandulón de ahí? Es un ogro, y tiene tanta fuerza como falta de sentido de la orientación. Nuestro objetivo es guiarlo hacia su oro.' },
+    { expresion: 'feliz', texto: 'Pero aquí no usamos joysticks. ¡Usamos CÓDIGO! Escribirás tus instrucciones en el pergamino y él las ejecutará en secuencia.' },
+    { expresion: 'base', texto: 'Si te da pereza escribir, mira abajo. Tienes Tarjetas de Acción. Haz clic en ellas para inyectar el código directamente en el pergamino. ¡Programación visual al rescate!' },
+    { expresion: 'pensativo', texto: 'Si te pierdes, revisa tu Inventario o abre el Manual del Programador. Leer la documentación salva vidas... y ogros.', itemCentro: 'libro-ayuda' },
+    { expresion: 'asustado', texto: 'Hablando de salvar vidas... si el ogro se lastima, perderás corazones. ¡Usa esta Poción de Vida para curarte! Trata de no matar a nuestro amigo azul, ¿ok?', itemCentro: 'pocion-vida' },
+    { expresion: 'sorpendido', texto: 'Ah, y si tu código es un desastre... te dejaré usar esta Poción de Clarividencia. ¡Pero no te acostumbres, no siempre daré la respuesta!', itemCentro: 'pocion-clarividencia' },
+    { expresion: 'feliz', texto: '¡Es hora de codificar! Escribe tu primer script en el pergamino mágico y hagamos que ese ogro camine. ¡Buena suerte!' }
+  ];
+  mostrarTutorial = true;
+  dialogoActualIndex = 0;
+  textoMostrado = '';
+  isTyping = false;
+  typeInterval: any;
   
   configTarjetasOgro: TarjetaConfig[] = [
     { accion: 'ogro.caminarArriba()', nombre: 'Arriba', colorBoton: '#2056F6', colorConsola: '#82B1FF' },
@@ -65,7 +96,12 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   maxVidas: number = 3;
   vidasActuales: number = 3;
   cofresRecolectados: number = 0;
+  totalCofresNivel: number = 5;
+  ayudasUsadas: boolean = false;
+  estrellasFinales: number = 0;
+  arrayEstrellas: number[] = []; // Para iterar en el HTML
   efectoCuracionActivo: boolean = false;
+  isLoadingAssets: boolean = true;
 
   // Helper para generar el array de vidas para el *ngFor
   get arrayVidas(): number[] {
@@ -131,6 +167,56 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   mensajePuntaje: string = '';
 
   tableroSnapshot: Casilla[][] = []; // Fotografía del mapa original
+
+  // --- MANUAL DEL PROGRAMADOR ---
+  mostrarManual = false;
+  paginaActual = 0; // Índice base (0 y 1 para las dos primeras)
+  totalPaginas = 8;
+  esMovil = window.innerWidth <= 768;
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.esMovil = window.innerWidth <= 768;
+    // Prevenir que el índice se rompa al cambiar de tamaño
+    if (!this.esMovil && this.paginaActual % 2 !== 0) {
+      this.paginaActual -= 1; 
+    }
+    // CRUCIAL PARA ONPUSH o para asegurar el renderizado
+    if (this.cdr) {
+      this.cdr.detectChanges();
+    }
+  }
+
+  abrirManual() { 
+    this.esMovil = window.innerWidth <= 768; 
+    this.mostrarManual = true; 
+    this.paginaActual = 0; 
+  }
+  cerrarManual() { this.mostrarManual = false; }
+
+  siguientePagina() {
+    const esCelular = window.innerWidth <= 768;
+    const salto = esCelular ? 1 : 2;
+    if (this.paginaActual + salto < this.totalPaginas) {
+      this.paginaActual += salto;
+    }
+  }
+
+  anteriorPagina() {
+    const esCelular = window.innerWidth <= 768;
+    const salto = esCelular ? 1 : 2;
+    if (this.paginaActual - salto >= 0) {
+      this.paginaActual -= salto;
+    }
+  }
+
+  get puedeAvanzar() { 
+    const esCelular = window.innerWidth <= 768;
+    return esCelular ? this.paginaActual < this.totalPaginas - 1 : this.paginaActual < this.totalPaginas - 2; 
+  }
+  get puedeRetroceder() { 
+    return this.paginaActual > 0; 
+  }
   cofresSnapshot: number = 0; // Cofres que tenía antes de empezar el intento
   perdidaCofresEfecto: boolean = false; // Trigger para el HUD
 
@@ -146,6 +232,16 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Añadir la variable anti_copia
   antiCopiaActivo: boolean = false;
+  
+  // Timeout para recuperación de aturdimiento
+  stunTimeout: any;
+  stunAnimationInterval: any;
+  toggleAturdido: boolean = false;
+  
+  isShaking: boolean = false;
+  isRecovering: boolean = false;
+  shakeTimeout: any;
+  recoverTimeout: any;
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -155,13 +251,81 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     private route: ActivatedRoute,
     private loaderService: LoaderService,
     private progresoService: ProgresoService,
-    private aulasService: AulasService
+    private aulasService: AulasService,
+    private assetPreloader: AssetPreloaderService
   ) {}
+
+  iniciarDialogo() {
+    const nodoActual = this.dialogosTutorial[this.dialogoActualIndex];
+    this.textoMostrado = '';
+    this.isTyping = true;
+    let i = 0;
+    
+    if (this.typeInterval) clearInterval(this.typeInterval);
+    
+    this.typeInterval = setInterval(() => {
+      this.textoMostrado += nodoActual.texto.charAt(i);
+      i++;
+      if (i >= nodoActual.texto.length) {
+        clearInterval(this.typeInterval);
+        this.isTyping = false;
+        this.cdr.detectChanges();
+      }
+      this.cdr.detectChanges();
+    }, 30);
+  }
+
+  clickDialogo() {
+    const nodoActual = this.dialogosTutorial[this.dialogoActualIndex];
+    if (this.isTyping) {
+      clearInterval(this.typeInterval);
+      this.textoMostrado = nodoActual.texto;
+      this.isTyping = false;
+    } else {
+      this.dialogoActualIndex++;
+      if (this.dialogoActualIndex < this.dialogosTutorial.length) {
+        this.iniciarDialogo();
+      } else {
+        this.mostrarTutorial = false;
+      }
+    }
+  }
 
   ngOnInit() {
     this.esAulaActiva = !!localStorage.getItem('aulaActiva');
+    
+    // Iniciar el tutorial basado en la preferencia de Ayuda de Draco
+    const ayudaActivada = localStorage.getItem('ayuda_draco') !== 'false';
+    // Aquí verifica contra tu variable real de nivel completado
+    const nivelYaSuperado = false; // Ajusta esto si tienes un tracker de nivel pasado
+    
+    if (ayudaActivada && !nivelYaSuperado) {
+      this.mostrarTutorial = true;
+      this.iniciarDialogo();
+    } else {
+      this.mostrarTutorial = false;
+    }
+
     // APP SHELL: Mostrar pantalla de carga instantánea
     this.loaderService.mostrar('CARGANDO NIVEL');
+    
+    // Rutas exactas del ogro
+    const rutasOgro = [
+      '/assets/images/aventura/nivel1/ogro/ogrofeliz.png',
+      '/assets/images/aventura/nivel1/ogro/ogrocayendo.png',
+      '/assets/images/aventura/nivel1/ogro/ogrotuardido1.png',
+      '/assets/images/aventura/nivel1/ogro/ogrotuardido2.png',
+      '/assets/images/aventura/nivel1/ogro/ogroespalda1.png',
+      '/assets/images/aventura/nivel1/ogro/ogroespalda2.png',
+      '/assets/images/aventura/nivel1/ogro/ogrolado1.png',
+      '/assets/images/aventura/nivel1/ogro/ogrolado2.png',
+      '/assets/images/aventura/nivel1/ogro/ogrocamino1.png',
+      '/assets/images/aventura/nivel1/ogro/ogrocamino2.png'
+    ];
+
+    this.assetPreloader.precargarImagenes(rutasOgro).then(() => {
+      this.isLoadingAssets = false;
+    });
 
     // 1. Determinar el rol basado en la URL
     const urlActual = this.router.url;
@@ -329,6 +493,20 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  manejarToggleDraco(estado: boolean) {
+    if (estado) {
+      if (this.nivelActual === 1 && !this.pantallaNivelCompletado) {
+        this.dialogoActualIndex = 0;
+        this.textoMostrado = '';
+        this.mostrarTutorial = true;
+        this.iniciarDialogo();
+      }
+    } else {
+      this.mostrarTutorial = false;
+      if (this.typeInterval) clearInterval(this.typeInterval);
+    }
+  }
+
   /** Inicializa la entidad Ogro buscando el Spawn en el tablero activo */
   private inicializarOgroEnSpawn() {
     let spawnX = 0, spawnY = 0;
@@ -365,14 +543,23 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   efectoTiempoActivo: boolean = false;
 
-  manejarUsoPocion(tipo: 'roja' | 'verde' | 'amarilla') {
+  manejarUsoPocion(tipo: 'roja' | 'verde' | 'amarilla' | 'libro') {
     if (!this.jugando) return;
     
+    // Si usa pociones, marca como ayuda usada
+    if (tipo !== 'libro') {
+      this.ayudasUsadas = true;
+    }
+
     // Extrae la referencia real a tu estado del inventario para poder marcar los ítems como consumidos
     const inventario = this.layoutJuego?.baraja?.estadoObjetos; 
     if (!inventario) return;
 
     switch (tipo) {
+      case 'libro':
+        this.abrirManual();
+        break;
+
       case 'roja':
         if (inventario.vida.consumida) return; // Ya se usó
         
@@ -401,7 +588,9 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
         break;
         
       case 'amarilla':
-        // Funcionalidad futura: clarividencia (mostrar pistas)
+        if (inventario.clarividencia.consumida) return;
+        inventario.clarividencia.consumida = true;
+        this.layoutJuego.activarClarividencia();
         break;
     }
   }
@@ -709,6 +898,12 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   restaurarEstadoOriginal() {
+    if (this.stunTimeout) clearTimeout(this.stunTimeout);
+    if (this.stunAnimationInterval) clearInterval(this.stunAnimationInterval);
+    if (this.shakeTimeout) clearTimeout(this.shakeTimeout);
+    if (this.recoverTimeout) clearTimeout(this.recoverTimeout);
+    this.isShaking = false;
+    this.isRecovering = false;
     this.colaComandos = [];
     this.ejecutandoComandos = false;
 
@@ -774,17 +969,63 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
       this.ogro.direccion = direccion; // Voltea a ver la roca
       this.ogro.estado = 'aturdido';
       
-      // Animación de temblor en el ogro y en la roca
+      // Asignar primer frame de mareo INMEDIATAMENTE
+      this.ogro.frameActual = 1;
+      this.toggleAturdido = true;
+      
+      // Animación de temblor en la roca
       this.provocarColisionObjeto(celdaDestino); 
+      
+      // DISPARAR EFECTOS VISUALES INICIALES SIEMPRE (sin importar el suelo)
+      if (this.shakeTimeout) clearTimeout(this.shakeTimeout);
+      if (this.stunAnimationInterval) clearInterval(this.stunAnimationInterval);
+      
+      this.isShaking = true;
+      this.shakeTimeout = setTimeout(() => {
+        this.isShaking = false;
+        this.cdr.detectChanges();
+      }, 1500);
+      
+      // Iniciamos el parpadeo de la animación cada 300ms
+      this.stunAnimationInterval = setInterval(() => {
+          this.toggleAturdido = !this.toggleAturdido;
+          if (this.ogro) {
+            this.ogro.frameActual = this.toggleAturdido ? 1 : 2;
+            this.cdr.detectChanges();
+          }
+      }, 300);
+      
       this.cdr.detectChanges();
       
-      // Intercalamos frames de aturdimiento rápidamente
-      for (let i = 0; i < 4; i++) {
-        this.ogro.frameActual = this.ogro.frameActual === 1 ? 2 : 1;
-        this.cdr.detectChanges();
-        await this.esperar(150);
+      // STUN RECOVERY: Evaluar suelo en el que estamos parados (celdaActual)
+      if (celdaActual.terreno !== 'sueloroto' && celdaActual.terreno !== 'vacio' && celdaActual.terreno !== 'suelo') {
+        // Suelo firme: Iniciar recuperación a largo plazo
+        if (this.stunTimeout) clearTimeout(this.stunTimeout);
+
+        this.stunTimeout = setTimeout(() => {
+          clearInterval(this.stunAnimationInterval);
+          if (this.ogro) {
+            this.ogro.estado = 'idle';
+            this.ogro.frameActual = 1;
+          }
+          this.ejecutandoComandos = false; // Desbloquea la consola
+          
+          this.isRecovering = true;
+          if (this.recoverTimeout) clearTimeout(this.recoverTimeout);
+          this.recoverTimeout = setTimeout(() => {
+            this.isRecovering = false;
+            this.cdr.detectChanges();
+          }, 800);
+          
+          this.cdr.detectChanges();
+        }, 3000);
+      } else {
+        // Suelo frágil: Se mantendrá aturdido.
+        // Hacemos una pausa equivalente al antiguo bucle for para que el usuario vea el temblor
+        // antes de que procesarColaComandos() ceda el control y el suelo colapse.
+        await this.esperar(600); // 4 * 150ms
       }
-      
+
       return false; // Retorna falso porque NO pudo avanzar
     }
 
@@ -889,6 +1130,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
                 : `¡Bien! Mejor puntaje actualizado. Tienes ${respuesta.estrellas_totales_usuario} estrellas en total.`;
               this.estrellasObtenidasEmoji = emoji;
               this.mensajePuntaje = msg;
+              this.calcularEstrellas();
               this.pantallaNivelCompletado = true;
             },
             error: () => {
@@ -896,6 +1138,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
               this.notificationService.show('Progreso guardado (sin respuesta del servidor)', 'success');
               this.estrellasObtenidasEmoji = '⭐';
               this.mensajePuntaje = '¡Has completado la aventura!';
+              this.calcularEstrellas();
               this.pantallaNivelCompletado = true;
             }
           });
@@ -907,10 +1150,21 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.ejecutarTransicionMeta();
         
       } else if (celdaFinal.terreno === 'suelo' || celdaFinal.terreno === 'sueloroto') {
-        // PENALIZACIÓN DE PESO MUERTO: El suelo se rompe si se queda quieto aquí
-        // (Esto incluye si se quedó aturdido por chocar con una roca sobre tierra)
+        // La tierra empieza a temblar/romperse. El ogro sigue aturdido durante este tiempo si chocó.
         this.provocarColapsoSuelo(celdaFinal);
         await this.esperar(1200); // Esperamos a que la tierra desaparezca
+
+        // HARD RESET (Inyectado justo antes de caer, después de que el suelo desaparece)
+        this.isShaking = false;
+        this.isRecovering = false;
+        if (this.shakeTimeout) clearTimeout(this.shakeTimeout);
+        if (this.stunTimeout) clearTimeout(this.stunTimeout);
+        if (this.recoverTimeout) clearTimeout(this.recoverTimeout);
+        if (this.stunAnimationInterval) clearInterval(this.stunAnimationInterval);
+
+        // IMPORTANTE: Limpiar el estado y la imagen antes de llamar a ejecutarCaidaVacio()
+        this.ogro.estado = 'cayendo'; // Fuerza salir de 'aturdido'
+
         await this.ejecutarCaidaVacio();
         
       } else if (this.ogro.estado !== 'aturdido') {
@@ -918,9 +1172,12 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
         this.ogro.frameActual = 1;
       }
     }
-    
     this.cdr.detectChanges();
-    this.ejecutandoComandos = false;
+    
+    // Desbloquear la consola solo si no estamos aturdidos sobre suelo firme
+    if (this.ogro.estado !== 'aturdido' || celdaFinal.terreno === 'suelo' || celdaFinal.terreno === 'sueloroto') {
+      this.ejecutandoComandos = false;
+    }
   }
 
   async ejecutarCaidaVacio() {
@@ -940,6 +1197,12 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   reiniciarNivelGameOver() {
+    if (this.stunTimeout) clearTimeout(this.stunTimeout);
+    if (this.stunAnimationInterval) clearInterval(this.stunAnimationInterval);
+    if (this.shakeTimeout) clearTimeout(this.shakeTimeout);
+    if (this.recoverTimeout) clearTimeout(this.recoverTimeout);
+    this.isShaking = false;
+    this.isRecovering = false;
     this.nivelActual = 1;
     this.vidasActuales = this.maxVidas;
     this.cofresRecolectados = 0;
@@ -1006,6 +1269,13 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   reaparecerOgro() {
+    if (this.stunTimeout) clearTimeout(this.stunTimeout);
+    if (this.stunAnimationInterval) clearInterval(this.stunAnimationInterval);
+    if (this.shakeTimeout) clearTimeout(this.shakeTimeout);
+    if (this.recoverTimeout) clearTimeout(this.recoverTimeout);
+    this.isShaking = false;
+    this.isRecovering = false;
+    
     // 1. Restaurar el mapa a su estado original (Deep Copy inversa)
     this.tablero = JSON.parse(JSON.stringify(this.tableroSnapshot));
     this.calcularFilos(); // Recalculamos los bordes 3D por si se rompió el suelo
@@ -1131,6 +1401,29 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  calcularEstrellas() {
+    let estrellas = 0;
+    
+    // 1ra Estrella: Completar el nivel
+    estrellas++; 
+    
+    // 2da Estrella: Todos los cofres
+    if (this.cofresRecolectados >= this.totalCofresNivel) {
+      estrellas++;
+    }
+    
+    // 3ra Estrella: Código puro (Sin tarjetas ni pociones)
+    if (!this.ayudasUsadas) {
+      estrellas++;
+    }
+    
+    this.estrellasFinales = estrellas;
+    // Creamos un array del tamaño de las estrellas ganadas para el *ngFor
+    this.arrayEstrellas = Array(this.estrellasFinales).fill(0);
+    
+    // TODO futuro: Enviar this.estrellasFinales al Backend
+  }
+
   compilarYEjecutar(codigoDesdeEditor?: string) {
     if (codigoDesdeEditor !== undefined) {
       this.codigoUsuario = codigoDesdeEditor;
@@ -1251,6 +1544,18 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy() {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
+    }
+    if (this.stunTimeout) {
+      clearTimeout(this.stunTimeout);
+    }
+    if (this.stunAnimationInterval) {
+      clearInterval(this.stunAnimationInterval);
+    }
+    if (this.shakeTimeout) {
+      clearTimeout(this.shakeTimeout);
+    }
+    if (this.recoverTimeout) {
+      clearTimeout(this.recoverTimeout);
     }
   }
 
