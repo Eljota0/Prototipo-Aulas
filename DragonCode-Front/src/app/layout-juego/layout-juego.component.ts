@@ -10,6 +10,8 @@ export interface Instruccion {
   texto: string;
   color: string;
   tieneError: boolean;
+  fija?: boolean;
+  esPlaceholder?: boolean;
 }
 
 @Component({
@@ -26,7 +28,13 @@ export class LayoutJuegoComponent {
   // Estado de ejecución
   @Input() ejecutando: boolean = false;
 
-  // Servicio de Notificaciones
+  // Extensión para Modo Plantilla
+  @Input() modoPlantilla: boolean = false;
+  @Input() listoParaEjecutar: boolean = false;
+  @Output() onLimpiarPlantilla = new EventEmitter<void>();
+  @Output() onBorrarLineaPlantilla = new EventEmitter<void>();
+  @Output() onDeshacerPaso = new EventEmitter<string>();
+
   // Servicio de Notificaciones
   private notificationService = inject(NotificationService);
   private router = inject(Router);
@@ -57,24 +65,36 @@ export class LayoutJuegoComponent {
   @Output() onToggleDraco = new EventEmitter<boolean>();
 
   // Emisor hacia el nivel cuando se usa una tarjeta de acción
-  @Output() onUsarTarjeta = new EventEmitter<void>();
+  @Output() onUsarTarjeta = new EventEmitter<TarjetaConfig>();
+
+  // Permite que un Nivel intercepte la inserción sin afectar a la consola automáticamente
+  @Input() controlManualTarjetas: boolean = false;
 
   // Método accionado por la Baraja para agregar código
   agregarCodigo(tarjeta: TarjetaConfig) {
+    if (this.controlManualTarjetas) {
+      this.onUsarTarjeta.emit(tarjeta);
+      return;
+    }
     if (this.consola) {
       this.consola.insertarDesdeTarjeta(tarjeta);
-      this.onUsarTarjeta.emit();
+      this.onUsarTarjeta.emit(tarjeta);
     }
   }
 
   // Método accionado por la Consola cuando el usuario borra una línea completa
   eliminarLinea(index: number) {
+    if (this.modoPlantilla && this.lineasCodigo[index]?.fija) return;
     this.lineasCodigo.splice(index, 1);
     this.verificarLineaMinima();
   }
 
   // Toolbar: Borrar última línea
   borrarUltimaLinea() {
+    if (this.modoPlantilla) {
+      this.onBorrarLineaPlantilla.emit();
+      return;
+    }
     if (this.lineasCodigo.length > 0) {
       this.lineasCodigo.pop();
     }
@@ -83,6 +103,10 @@ export class LayoutJuegoComponent {
 
   // Toolbar: Limpiar Todo
   limpiarTodo() {
+    if (this.modoPlantilla) {
+      this.onLimpiarPlantilla.emit();
+      return;
+    }
     this.lineasCodigo = [{ texto: '', color: '#d4d4d4', tieneError: false }];
   }
 

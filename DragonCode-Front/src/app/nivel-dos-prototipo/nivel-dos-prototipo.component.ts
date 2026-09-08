@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GameHeaderComponent } from '../game-header/game-header.component';
+import { LayoutJuegoComponent } from '../layout-juego/layout-juego.component';
+import { TarjetaConfig } from '../baraja-tarjetas/baraja-tarjetas.component';
 import {
   BanderasEstrategiaTaladro,
   FaseTaladro
@@ -15,29 +16,33 @@ import {
 } from '../services/aulas.service';
 import { LoaderService } from '../services/loader.service';
 import { ProgresoService } from '../services/progreso.service';
+import nivel2Data from '../../assets/data/aventuraniveles/nivel-2.json';
 
-type TipoEventoTaladro = 'temperatura' | 'peso' | 'carbon';
+type TipoEventoTaladro = 'temperatura' | 'peso' | 'agua';
 type EstadoTaladro =
   | 'detenido'
   | 'perforando'
   | 'liberando-vapor'
   | 'empacando'
-  | 'recargando'
+  | 'recargando' // keep for legacy if needed, or remove
   | 'explosion'
   | 'banda-rota'
   | 'sin-combustible'
-  | 'estable';
+  | 'estable'
+  | 'ahogo'
+  | 'descompuesto'
+  | 'desestabilizado';
 
 interface TarjetaTaladro {
   codigo: string;
   etiqueta: string;
-  tono: 'azul' | 'verde' | 'dorado' | 'violeta';
-  tipo: 'condicion' | 'accion';
+  tono: 'verde' | 'dorado' | 'azul' | 'violeta';
+  tipo: 'accion' | 'condicion';
   protocolo: TipoEventoTaladro;
 }
 
 interface FaseNivelDos {
-  numero: FaseTaladro;
+  numero: number;
   titulo: string;
   concepto: string;
   objetivo: string;
@@ -46,7 +51,7 @@ interface FaseNivelDos {
   tarjetas: TarjetaTaladro[];
 }
 
-interface ProtocoloAprendido {
+export interface ProtocoloAprendido {
   numero: number;
   nombre: string;
   condicion: string;
@@ -58,109 +63,52 @@ interface ProtocoloAprendido {
 @Component({
   selector: 'app-nivel-dos-prototipo',
   standalone: true,
-  imports: [CommonModule, FormsModule, GameHeaderComponent],
+  imports: [CommonModule, FormsModule, LayoutJuegoComponent],
   templateUrl: './nivel-dos-prototipo.component.html',
   styleUrl: './nivel-dos-prototipo.component.scss'
 })
 export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
-  readonly protocolosAprendidos: ProtocoloAprendido[] = [
-    {
-      numero: 1,
-      nombre: 'Temperatura',
-      condicion: 'Si supera 100°',
-      accion: 'Liberar vapor',
-      condicionCodigo: 'si(taladro.temperatura > 100)',
-      accionCodigo: 'taladro.liberarVapor();'
-    },
-    {
-      numero: 2,
-      nombre: 'Carga',
-      condicion: 'Si supera 50',
-      accion: 'Empacar cristales',
-      condicionCodigo: 'si(taladro.pesoCarga > 50)',
-      accionCodigo: 'taladro.empacarCristales();'
-    },
-    {
-      numero: 3,
-      nombre: 'Carbón',
-      condicion: 'Si llega a 0',
-      accion: 'Recargar carbón',
-      condicionCodigo: 'si(taladro.carbon == 0)',
-      accionCodigo: 'taladro.recargarCarbon();'
-    }
-  ];
+  readonly protocolosAprendidos: ProtocoloAprendido[] = nivel2Data.protocolosAprendidos as ProtocoloAprendido[];
+  fases: FaseNivelDos[] = nivel2Data.fases as unknown as FaseNivelDos[];
 
-  readonly fasesBase: FaseNivelDos[] = [
-    {
-      numero: 1,
-      titulo: 'Control de sobrecalentamiento',
-      concepto: 'Evento de temperatura',
-      objetivo: 'Programa al taladro para liberar vapor cuando su temperatura supere los 100°.',
-      pista: 'Inserta “Si supera 100°” y después coloca “Liberar vapor” dentro de sus llaves.',
-      evento: 'evento(taladro.sobrecalentamiento) {',
-      tarjetas: [
-        { codigo: 'taladro.apagarMotor();', etiqueta: 'Apagar motor', tono: 'verde', tipo: 'accion', protocolo: 'temperatura' },
-        { codigo: 'si(taladro.temperatura > 100) {\n}', etiqueta: 'Si supera 100°', tono: 'dorado', tipo: 'condicion', protocolo: 'temperatura' },
-        { codigo: 'si(taladro.temperatura < 100) {\n}', etiqueta: 'Si está frío', tono: 'violeta', tipo: 'condicion', protocolo: 'temperatura' },
-        { codigo: 'taladro.liberarVapor();', etiqueta: 'Liberar vapor', tono: 'azul', tipo: 'accion', protocolo: 'temperatura' }
-      ]
-    },
-    {
-      numero: 2,
-      titulo: 'Carga de cristales',
-      concepto: 'Evento de sobrecarga',
-      objetivo: 'Empaca los cristales cuando el peso acumulado supere 50 unidades.',
-      pista: 'Primero escucha si pesoCarga supera 50 y luego empaca los cristales dentro de la condición.',
-      evento: 'evento(taladro.sobrecarga) {',
-      tarjetas: [
-        { codigo: 'taladro.empacarCristales();', etiqueta: 'Empacar cristales', tono: 'violeta', tipo: 'accion', protocolo: 'peso' },
-        { codigo: 'si(taladro.pesoCarga < 50) {\n}', etiqueta: 'Si pesa poco', tono: 'verde', tipo: 'condicion', protocolo: 'peso' },
-        { codigo: 'si(taladro.pesoCarga > 50) {\n}', etiqueta: 'Si supera 50', tono: 'azul', tipo: 'condicion', protocolo: 'peso' },
-        { codigo: 'taladro.detenerBanda();', etiqueta: 'Detener banda', tono: 'dorado', tipo: 'accion', protocolo: 'peso' }
-      ]
-    },
-    {
-      numero: 3,
-      titulo: 'Reserva de carbón',
-      concepto: 'Evento de combustible',
-      objetivo: 'Recarga el carbón cuando el depósito llegue exactamente a 0.',
-      pista: 'Compara carbon con 0 usando == y coloca la recarga dentro de esa condición.',
-      evento: 'evento(taladro.tanqueVacio) {',
-      tarjetas: [
-        { codigo: 'taladro.apagarHorno();', etiqueta: 'Apagar horno', tono: 'azul', tipo: 'accion', protocolo: 'carbon' },
-        { codigo: 'taladro.recargarCarbon();', etiqueta: 'Recargar carbón', tono: 'dorado', tipo: 'accion', protocolo: 'carbon' },
-        { codigo: 'si(taladro.carbon > 0) {\n}', etiqueta: 'Si aún queda', tono: 'verde', tipo: 'condicion', protocolo: 'carbon' },
-        { codigo: 'si(taladro.carbon == 0) {\n}', etiqueta: 'Si carbón es 0', tono: 'violeta', tipo: 'condicion', protocolo: 'carbon' }
-      ]
-    },
-    {
-      numero: 4,
-      titulo: 'Turno automático completo',
-      concepto: 'Coordinación de eventos',
-      objetivo: 'Construye los tres protocolos en orden para mantener el taladro funcionando por sí solo.',
-      pista: 'Consulta la memoria de protocolos: temperatura, carga y carbón. Cada acción debe quedar dentro de su propia condición.',
-      evento: 'evento(taladro.operacionCompleta) {',
-      tarjetas: [
-        { codigo: 'taladro.recargarCarbon();', etiqueta: 'Recargar carbón', tono: 'verde', tipo: 'accion', protocolo: 'carbon' },
-        { codigo: 'si(taladro.pesoCarga > 50) {\n}', etiqueta: 'Peso > 50', tono: 'dorado', tipo: 'condicion', protocolo: 'peso' },
-        { codigo: 'taladro.apagarMotor();', etiqueta: 'Apagar motor', tono: 'violeta', tipo: 'accion', protocolo: 'temperatura' },
-        { codigo: 'si(taladro.temperatura > 100) {\n}', etiqueta: 'Temperatura > 100', tono: 'azul', tipo: 'condicion', protocolo: 'temperatura' },
-        { codigo: 'taladro.empacarCristales();', etiqueta: 'Empacar carga', tono: 'violeta', tipo: 'accion', protocolo: 'peso' },
-        { codigo: 'si(taladro.carbon == 0) {\n}', etiqueta: 'Carbón == 0', tono: 'azul', tipo: 'condicion', protocolo: 'carbon' },
-        { codigo: 'taladro.liberarVapor();', etiqueta: 'Liberar vapor', tono: 'verde', tipo: 'accion', protocolo: 'temperatura' },
-        { codigo: 'si(taladro.pesoCarga < 50) {\n}', etiqueta: 'Peso < 50', tono: 'dorado', tipo: 'condicion', protocolo: 'peso' }
-      ]
-    }
-  ];
+  @ViewChild(LayoutJuegoComponent) layoutJuego!: LayoutJuegoComponent;
+  pasoAndamiaje = 0;
+  antiCopiaActivo = false;
+  ayudaUsada = false;
 
-  fases: FaseNivelDos[] = [...this.fasesBase];
+  private readonly tonoColores: Record<string, { boton: string; consola: string }> = {
+    azul:    { boton: '#174bd4', consola: '#82B1FF' },
+    verde:   { boton: '#288650', consola: '#A5D6A7' },
+    dorado:  { boton: '#df4517', consola: '#FFAB91' },
+    violeta: { boton: '#8e1ba4', consola: '#CE93D8' },
+    rojo:    { boton: '#c62828', consola: '#ef9a9a' },
+    naranja: { boton: '#e65100', consola: '#ffcc80' },
+    cyan:    { boton: '#006064', consola: '#80deea' },
+    gris:    { boton: '#424242', consola: '#bdbdbd' },
+    turquesa:{ boton: '#00838f', consola: '#4dd0e1' },
+    purpura: { boton: '#4a148c', consola: '#ea80fc' },
+    mostaza: { boton: '#f57f17', consola: '#fff59d' },
+    magenta: { boton: '#880e4f', consola: '#f48fb1' }
+  };
+
+  inventarioNivel = {
+    libro: { activo: true },
+    clarividencia: { activo: false, consumida: false },
+    vida: { activo: true, consumida: false },
+    tiempo: { activo: false, consumida: false }
+  };
 
   faseActualIndice = 0;
   codigoUsuario = '';
-  vidas = 3;
   temperatura = 0;
   pesoCristales = 0;
   combustible = 100;
+  profundidadActual = 0;
+  profundidadAgua = 500;
+  profundidadMaxima = 600;
+  extrayendoAgua = false;
+  aguaContaminada = false;
+  escalasProfundidad: number[] = Array.from({length: 13}, (_, i) => i * 50); // [0, 50, 100... 600]
   intentosEjecucion = 0;
   erroresAcumulados = 0;
   tiempoSegundos = 0;
@@ -168,6 +116,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   faseCompletada = false;
   nivelCompletado = false;
   falloFase = false;
+  modalFalloTimeout?: ReturnType<typeof setTimeout>;
   gameOver = false;
   pistaVisible = false;
   ayudaVisible = false;
@@ -177,22 +126,264 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   estrellas = 0;
   calificacion = 0;
   pestanaInventario: 'acciones' | 'objetos' = 'acciones';
-  antiCopiaActivo = false;
   cargandoContextoAula = false;
   guardandoProgreso = false;
   progresoGuardado = false;
   mensajeSincronizacion = '';
+  
+  falloFase1AndamiajeConfig = { operador: '', valor: 0, accion: '', tipoFallo: '' };
+  falloFase2AndamiajeConfig = { operador: '', valor: 0, accion: '', tipoFallo: '' };
+  falloFase3AndamiajeConfig = { operador: '', valor: 0, accion: '', booleano: false, tipoFallo: '' };
+  
+  historialFases = '';
+  plantillaActiva = '';
+  get ejecutandoComandos(): boolean { return this.ejecutando; }
+  get listoParaEjecutar(): boolean {
+    return !!this.plantillaActiva && 
+           this.pasoAndamiaje > 0 && 
+           !this.plantillaActiva.includes('▯');
+  }
+  get tituloFaseCorto(): string {
+    switch(this.faseActual.numero) {
+      case 1: return 'Encender el motor';
+      case 2: return 'Estabilizar el taladro';
+      case 3: return 'Extraer agua';
+      default: return '';
+    }
+  }
+
+  configuracionTarjetasActual: TarjetaConfig[] = [];
+
+  actualizarTarjetasDisponibles(): void {
+    if (this.faseActual.numero >= 1 && this.faseActual.numero <= 3) {
+      let andamiaje: any[] = [];
+
+      if (this.faseActual.numero === 1) {
+        switch (this.pasoAndamiaje) {
+          case 0:
+            andamiaje = [{ etiqueta: "Control temperatura", codigo: "si(taladro.temperatura \u25AF \u25AF) {\n    \u25AF\n  }", tono: "dorado" }];
+            break;
+          case 1:
+            andamiaje = [
+              { etiqueta: "Mayor que", codigo: ">", tono: "verde" },
+              { etiqueta: "Menor que", codigo: "<", tono: "rojo" }
+            ];
+            break;
+          case 2:
+            const tonosArray = ['azul', 'naranja', 'violeta', 'cyan', 'dorado'];
+            andamiaje = [0, 50, 75, 100, 150].map((v, i) => ({ etiqueta: "Valor", codigo: v.toString(), tono: tonosArray[i % tonosArray.length] }));
+            break;
+          case 3:
+            andamiaje = [
+              { etiqueta: "Liberar vapor", codigo: "taladro.liberarVapor();", tono: "azul" },
+              { etiqueta: "Apagar motor", codigo: "taladro.apagarMotor();", tono: "gris" },
+              { etiqueta: "Extraer carb\u00f3n", codigo: "taladro.extraerCarbon();", tono: "verde" }
+            ];
+            break;
+        }
+      } else if (this.faseActual.numero === 2) {
+        // Fase 2: Presión constante (andamiaje con ==)
+        switch (this.pasoAndamiaje) {
+          case 0:
+            andamiaje = [{ etiqueta: "Control presión", codigo: "si(taladro.presion \u25AF \u25AF) {\n    \u25AF\n  }", tono: "mostaza" }];
+            break;
+          case 1:
+            andamiaje = [
+              { etiqueta: "Igual que", codigo: "==", tono: "turquesa" },
+              { etiqueta: "Distinto de", codigo: "!=", tono: "magenta" },
+              { etiqueta: "Mayor que", codigo: ">", tono: "purpura" },
+              { etiqueta: "Menor que", codigo: "<", tono: "gris" }
+            ];
+            break;
+          case 2:
+            andamiaje = [
+              { etiqueta: "Valor", codigo: "8", tono: "cyan" },
+              { etiqueta: "Valor", codigo: "30", tono: "purpura" },
+              { etiqueta: "Valor", codigo: "45", tono: "magenta" },
+              { etiqueta: "Valor", codigo: "50", tono: "turquesa" },
+              { etiqueta: "Valor", codigo: "55", tono: "mostaza" },
+              { etiqueta: "Valor", codigo: "70", tono: "violeta" },
+              { etiqueta: "Valor", codigo: "100", tono: "gris" }
+            ];
+            break;
+          case 3:
+            andamiaje = [
+              { etiqueta: "Mantener fuerza", codigo: "taladro.mantenerFuerza();", tono: "turquesa" },
+              { etiqueta: "Apagar motor", codigo: "taladro.apagarMotor();", tono: "gris" },
+              { etiqueta: "Aumentar fuerza", codigo: "taladro.aumentarFuerza();", tono: "magenta" },
+              { etiqueta: "Liberar vapor", codigo: "taladro.liberarVapor();", tono: "purpura" }
+            ];
+            break;
+        }
+      } else if (this.faseActual.numero === 3) {
+        switch (this.pasoAndamiaje) {
+          case 0:
+            andamiaje = [{ etiqueta: "Recolectar Agua", codigo: "si(taladro.profundidad \u25AF \u25AF) {\n    \u25AF\n    taladro.extraerAgua = \u25AF;\n  }", tono: "azul" }];
+            break;
+          case 1:
+            andamiaje = [
+              { etiqueta: "Igual que", codigo: "==", tono: "turquesa" },
+              { etiqueta: "Mayor que", codigo: ">", tono: "purpura" },
+              { etiqueta: "Menor que", codigo: "<", tono: "gris" }
+            ];
+            break;
+          case 2:
+            andamiaje = [
+              { etiqueta: "Valor", codigo: "200", tono: "cyan" },
+              { etiqueta: "Valor", codigo: "500", tono: "purpura" },
+              { etiqueta: "Valor", codigo: "800", tono: "magenta" }
+            ];
+            break;
+          case 3:
+            andamiaje = [
+              { etiqueta: "Detenerse", codigo: "taladro.detenerse();", tono: "azul" },
+              { etiqueta: "Apagar Motor", codigo: "taladro.apagarMotor();", tono: "gris" },
+              { etiqueta: "Lanzar Gasolina", codigo: "taladro.lanzarGasolina();", tono: "purpura" }
+            ];
+            break;
+          case 4:
+            andamiaje = [
+              { etiqueta: "Verdadero", codigo: "true", tono: "naranja" },
+              { etiqueta: "Falso", codigo: "false", tono: "rojo" }
+            ];
+            break;
+        }
+      }
+
+      const tarjetasFormateadas = andamiaje.map(t => {
+        const colores = this.tonoColores[t.tono] || this.tonoColores['azul'];
+        return { nombre: t.etiqueta, accion: t.codigo, colorBoton: colores.boton, colorConsola: colores.consola };
+      });
+      this.configuracionTarjetasActual = this.desordenarTarjetas(tarjetasFormateadas);
+      return;
+    }
+    
+    const tarjetasLibres = this.faseActual.tarjetas.map(t => {
+      const colores = this.tonoColores[(t as any).tono] || this.tonoColores['azul'];
+      return { nombre: (t as any).etiqueta, accion: (t as any).codigo, colorBoton: colores.boton, colorConsola: colores.consola };
+    });
+    this.configuracionTarjetasActual = this.desordenarTarjetas(tarjetasLibres);
+  }
+
+  private desordenarTarjetas(array: any[]) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  manejarToggleDraco(estado: boolean) { this.ayudaVisible = estado; }
+  manejarUsoPocion(pocion: string) { if (pocion === 'libro') this.ayudaVisible = !this.ayudaVisible; }
+  registrarAyudaUsada() { this.ayudaUsada = true; }
+
+  manejarUsoTarjeta(tarjeta: TarjetaConfig): void {
+    if (this.faseActual.numero > 3) { this.ayudaUsada = true; return; }
+    
+    if (this.layoutJuego && this.layoutJuego.consola) {
+      this.layoutJuego.consola.guardarEstadoPlantilla(this.plantillaActiva);
+    }
+    
+    if (this.pasoAndamiaje === 0) {
+      this.plantillaActiva = `${this.faseActual.evento}\n${tarjeta.accion.split('\n').map(t => '  ' + t).join('\n')}\n}`;
+      this.pasoAndamiaje++;
+      this.actualizarTarjetasDisponibles();
+    } else {
+      if (this.plantillaActiva.includes('▯')) {
+        this.plantillaActiva = this.plantillaActiva.replace('▯', tarjeta.accion);
+        this.pasoAndamiaje++;
+        this.actualizarTarjetasDisponibles();
+      }
+    }
+    
+    this.renderizarConsolaTexto();
+  }
+
+  retrocederPaso(plantillaAnterior: string): void {
+    this.plantillaActiva = plantillaAnterior;
+    this.pasoAndamiaje--;
+    this.actualizarTarjetasDisponibles();
+    this.renderizarConsolaTexto();
+  }
+
+  ngAfterViewInit(): void { setTimeout(() => this.inicializarConsolaTexto(), 0); }
+
+  private inicializarConsolaTexto(): void {
+    this.historialFases = '';
+    if (this.faseActual.numero > 1 && this.solucionesPorFase.has(1)) {
+      this.historialFases += this.solucionesPorFase.get(1) + '\n\n';
+    }
+    if (this.faseActual.numero > 2 && this.solucionesPorFase.has(2)) {
+      this.historialFases += this.solucionesPorFase.get(2) + '\n\n';
+    }
+    
+    this.plantillaActiva = `${this.faseActual.evento}\n  // Inserta tu codigo aqui\n}`;
+    
+    this.renderizarConsolaTexto();
+
+    if (this.faseActual.numero <= 3) {
+      this.pasoAndamiaje = 0;
+      this.actualizarTarjetasDisponibles();
+    }
+  }
+
+  private renderizarConsolaTexto(): void {
+    if (!this.layoutJuego) return;
+    
+    const lineasBase: any[] = [];
+    
+    if (this.historialFases) {
+      this.historialFases.trim().split('\n').forEach(linea => {
+        lineasBase.push({ texto: linea, color: '#5c6370', tieneError: false, fija: true });
+      });
+      lineasBase.push({ texto: '', color: '#5c6370', tieneError: false, fija: true });
+    }
+    
+    if (this.plantillaActiva) {
+      this.plantillaActiva.split('\n').forEach((linea, index, array) => {
+        const esPlaceholder = linea.includes('// Inserta tu codigo aqui');
+        let color = '#DCDCAA';
+        if (linea.startsWith('evento') || linea === '}') color = '#C586C0';
+        if (esPlaceholder) color = '#6b7280';
+        
+        lineasBase.push({
+          texto: linea,
+          color: color,
+          tieneError: false,
+          esPlaceholder: esPlaceholder,
+          fija: index === 0 || index === array.length - 1 || esPlaceholder
+        });
+      });
+    }
+
+    this.layoutJuego.lineasCodigo = lineasBase;
+    if (this.layoutJuego.consola) {
+      this.layoutJuego.consola.lineas = lineasBase;
+      this.layoutJuego.consola.lineaActivaIndex = lineasBase.findIndex(l => l.esPlaceholder);
+    }
+  }
+
+  restaurarPlantilla(): void {
+    if (this.ejecutando || this.faseCompletada || this.falloFase) return;
+    this.inicializarConsolaTexto();
+    this.errores = [];
+  }
+
+  borrarUltimaLineaPlantilla(): void {
+    // Disabled logic since undo stack is the primary driver
+  }
 
   estrategias: BanderasEstrategiaTaladro = this.banderasVacias();
   eventosResueltos: Record<TipoEventoTaladro, boolean> = {
     temperatura: false,
     peso: false,
-    carbon: false
+    agua: false
   };
 
   private tiempoInicioMs = 0;
   private temporizador?: ReturnType<typeof setInterval>;
   private gameLoop?: ReturnType<typeof setInterval>;
+  private loopCosmetico?: ReturnType<typeof setInterval>;
   private erroresPendientes: string[] = [];
   private aulaActualId?: string;
   private retoActualId?: string;
@@ -204,7 +395,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     private loaderService: LoaderService,
     private router: Router,
     private progresoService: ProgresoService,
-    private aulasService: AulasService
+    private aulasService: AulasService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -241,11 +433,11 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   }
 
   get temperaturaPorcentaje(): number {
-    return Math.min(100, this.temperatura);
+    return Math.min(100, (this.temperatura / 300) * 100);
   }
 
   get pesoPorcentaje(): number {
-    return Math.min(100, this.pesoCristales * 2);
+    return Math.min(100, this.pesoCristales);
   }
 
   get estadoTaladroTexto(): string {
@@ -258,8 +450,11 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
       explosion: 'SOBRECARGA CRÍTICA',
       'banda-rota': 'BANDA TRANSPORTADORA ROTA',
       'sin-combustible': 'HORNO APAGADO',
-      estable: 'SISTEMA ESTABLE'
-    }[this.estadoTaladro];
+      estable: 'SISTEMA ESTABLE',
+      ahogo: 'MOTOR AHOGADO',
+      descompuesto: 'ENGRANAJES ROTOS',
+      desestabilizado: 'SISTEMA INESTABLE'
+    }[this.estadoTaladro] as string;
   }
 
   get intentosCalificables(): number {
@@ -277,61 +472,15 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     return `¡Felicidades! Obtuviste ${this.estrellas} ${palabra} por completar la misión.`;
   }
 
-  get tituloFallo(): string {
-    if (this.estadoTaladro === 'banda-rota') return 'LA BANDA SE ROMPIÓ';
-    if (this.estadoTaladro === 'sin-combustible') return 'EL HORNO SE APAGÓ';
-    return 'EL TALADRO EXPLOTÓ';
-  }
 
-  insertarTarjeta(tarjeta: TarjetaTaladro): void {
+  ejecutarNivel(codigoDesdeConsola: string): void {
     if (this.ejecutando || this.faseCompletada || this.falloFase || this.gameOver) return;
 
-    if (tarjeta.tipo === 'condicion') {
-      if (this.faseActual.numero === 4 && this.codigoUsuario.trim()) {
-        this.codigoUsuario = `${this.codigoUsuario.trimEnd()}\n${tarjeta.codigo}`;
-      } else {
-        this.codigoUsuario = tarjeta.codigo;
-      }
-    } else if (/si\s*\(/.test(this.codigoUsuario) && this.codigoUsuario.trimEnd().endsWith('}')) {
-      const cierre = this.codigoUsuario.lastIndexOf('}');
-      this.codigoUsuario = `${this.codigoUsuario.slice(0, cierre).trimEnd()}\n  ${tarjeta.codigo}\n}`;
-    } else {
-      this.codigoUsuario = this.codigoUsuario.trim()
-        ? `${this.codigoUsuario.trimEnd()}\n${tarjeta.codigo}`
-        : tarjeta.codigo;
-    }
-
-    this.errores = [];
-  }
-
-  protocoloInsertado(protocolo: ProtocoloAprendido): boolean {
-    return this.codigoUsuario.includes(protocolo.condicionCodigo)
-      && this.codigoUsuario.includes(protocolo.accionCodigo);
-  }
-
-  numeroProtocolo(tipo: TipoEventoTaladro): number {
-    return { temperatura: 1, peso: 2, carbon: 3 }[tipo];
-  }
-
-  limpiarPergamino(): void {
-    if (this.ejecutando || this.faseCompletada || this.falloFase) return;
-    this.codigoUsuario = '';
-    this.errores = [];
-  }
-
-  borrarLinea(): void {
-    if (this.ejecutando || this.faseCompletada || this.falloFase) return;
-    const lineas = this.codigoUsuario.split('\n');
-    lineas.pop();
-    this.codigoUsuario = lineas.join('\n');
-    this.errores = [];
-  }
-
-  ejecutarCodigo(): void {
-    if (this.ejecutando || this.faseCompletada || this.falloFase || this.gameOver) return;
+    this.codigoUsuario = codigoDesdeConsola;
 
     this.iniciarTemporizador();
     this.detenerGameLoop();
+    this.detenerLoopCosmetico(); // Detener el loop cosmético mientras corre el real
     this.intentosEjecucion++;
     this.ejecutando = true;
     this.reiniciarMedidores();
@@ -339,17 +488,54 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     this.estadoTaladro = 'perforando';
     this.bitacora = `Fase ${this.faseActual.numero}: los sensores comenzaron a enviar datos...`;
 
-    const resultado = this.motor.evaluarTaladro(this.codigoCompleto, this.faseActual.numero);
-    this.estrategias = resultado.banderas;
-    this.erroresPendientes = resultado.errores.map(error => error.mensaje);
+    this.falloFase1AndamiajeConfig = { operador: '', valor: 0, accion: '', tipoFallo: '' };
+    this.falloFase2AndamiajeConfig = { operador: '', valor: 0, accion: '', tipoFallo: '' };
+    this.falloFase3AndamiajeConfig = { operador: '', valor: 0, accion: '', booleano: false, tipoFallo: '' };
+
+    if (this.faseActual.numero === 1) {
+      const res = this.motor.evaluarAndamiajeFase1(codigoDesdeConsola);
+      if (res.valido) {
+        this.estrategias.estrategiaVaporCorrecta = true;
+      } else {
+        this.estrategias.estrategiaVaporCorrecta = false;
+        this.falloFase1AndamiajeConfig = res;
+      }
+    } else if (this.faseActual.numero === 2) {
+      const res = this.motor.evaluarAndamiajeFase2(codigoDesdeConsola);
+      if (res.valido) {
+        this.estrategias.estrategiaPesoCorrecta = true;
+      } else {
+        this.estrategias.estrategiaPesoCorrecta = false;
+        this.falloFase2AndamiajeConfig = res;
+      }
+    } else if (this.faseActual.numero === 3) {
+      const res = this.motor.evaluarAndamiajeFase3(codigoDesdeConsola);
+      if (res.valido) {
+        this.estrategias.estrategiaAguaCorrecta = true;
+      } else {
+        this.estrategias.estrategiaAguaCorrecta = false;
+        this.falloFase3AndamiajeConfig = res;
+      }
+    } else {
+      const resultado = this.motor.evaluarTaladro(codigoDesdeConsola, this.faseActual.numero as FaseTaladro);
+      this.estrategias = resultado.banderas;
+      this.erroresPendientes = resultado.errores.map(error => error.mensaje);
+    }
 
     this.gameLoop = setInterval(() => this.actualizarSimulacion(), 240);
   }
 
+  transicionando = false;
+
   avanzarFase(): void {
     if (!this.faseCompletada || this.faseActualIndice >= this.fases.length - 1) return;
-    this.faseActualIndice++;
-    this.prepararFaseActual();
+    
+    this.transicionando = true;
+    setTimeout(() => {
+      this.faseActualIndice++;
+      this.prepararFaseActual();
+      this.transicionando = false;
+    }, 500);
   }
 
   reintentarFase(): void {
@@ -359,10 +545,11 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   }
 
   reiniciarNivel(): void {
+    if (this.modalFalloTimeout) clearTimeout(this.modalFalloTimeout);
     this.detenerTemporizador();
     this.detenerGameLoop();
+    this.detenerLoopCosmetico();
     this.faseActualIndice = 0;
-    this.vidas = 3;
     this.intentosEjecucion = 0;
     this.erroresAcumulados = 0;
     this.tiempoSegundos = 0;
@@ -385,6 +572,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.detenerTemporizador();
     this.detenerGameLoop();
+    this.detenerLoopCosmetico();
+    if (this.modalFalloTimeout) clearTimeout(this.modalFalloTimeout);
   }
 
   private actualizarSimulacion(): void {
@@ -392,7 +581,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     this.estadoTaladro = 'perforando';
     // El valor debe superar el umbral para que el código enseñado (> 100)
     // también sea verdadero en la simulación, no solo en el evaluador.
-    this.temperatura = Math.min(110, this.temperatura + 10);
+    this.temperatura = Math.min(300, this.temperatura + 10);
 
     if (fase >= 2) {
       this.pesoCristales = Math.min(55, this.pesoCristales + 5);
@@ -401,46 +590,118 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
       this.combustible = Math.max(0, this.combustible - 10);
     }
 
-    if (fase === 1 && this.temperatura > 100) {
-      this.resolverEvento('temperatura');
+    if (fase === 1) {
+      if (this.estrategias.estrategiaVaporCorrecta) {
+        if (this.temperatura > 100) this.resolverEvento('temperatura');
+        return;
+      }
+
+      const conf = this.falloFase1AndamiajeConfig;
+      let condicionCumplida = false;
+      if (conf.operador === '>') condicionCumplida = this.temperatura > conf.valor;
+      if (conf.operador === '<') condicionCumplida = this.temperatura < conf.valor;
+
+      if (condicionCumplida && conf.tipoFallo) {
+        this.fallarFase1Andamiaje(conf.tipoFallo);
+        return;
+      }
+
+      if (this.temperatura > 100) {
+        this.fallarFase1Andamiaje('SOBRECALENTAMIENTO');
+      }
       return;
     }
 
     if (fase === 2) {
+      // Evitar que la temperatura estalle durante la ejecución real de Fase 2
       if (this.temperatura > 100) this.temperatura = 0;
-      if (this.pesoCristales > 50) this.resolverEvento('peso');
+
+      if (this.estrategias.estrategiaPesoCorrecta) {
+        if (this.pesoCristales >= 50) this.resolverEvento('peso');
+      } else {
+        const conf = this.falloFase2AndamiajeConfig;
+        let condicionCumplida = false;
+        if (conf.operador === '==') condicionCumplida = this.pesoCristales === conf.valor;
+        if (conf.operador === '!=') condicionCumplida = this.pesoCristales !== conf.valor;
+
+        if (condicionCumplida && conf.tipoFallo) {
+          this.fallarFase2Andamiaje(conf.tipoFallo);
+          return;
+        }
+
+        if (this.pesoCristales >= 55) {
+          this.fallarFase2Andamiaje('DESESTABILIZACION');
+        }
+      }
       return;
     }
 
     if (fase === 3) {
       if (this.temperatura > 100) this.temperatura = 0;
       if (this.pesoCristales > 50) this.pesoCristales = 0;
-      if (this.combustible <= 0) this.resolverEvento('carbon');
+      
+      const conf = this.falloFase3AndamiajeConfig;
+      let targetDepth = this.profundidadMaxima;
+      
+      if (conf.valor && conf.valor > 0) {
+        targetDepth = Math.min(conf.valor, this.profundidadMaxima);
+      } else if (this.estrategias.estrategiaAguaCorrecta) {
+        targetDepth = 500;
+      }
+      
+      if (this.profundidadActual < targetDepth) {
+        this.profundidadActual = Math.min(targetDepth, this.profundidadActual + 20);
+      }
+
+      if (this.profundidadActual >= targetDepth) {
+        if (this.estrategias.estrategiaAguaCorrecta) {
+          this.resolverEvento('agua');
+        } else {
+          this.fallarFase3Andamiaje(conf.tipoFallo || 'SINTAXIS');
+        }
+      }
       return;
     }
+  }
 
-    if (fase === 4) {
-      if (this.temperatura > 100 && !this.eventosResueltos.temperatura) {
-        this.resolverEvento('temperatura');
-      }
-      if (this.pesoCristales > 50 && !this.eventosResueltos.peso && !this.falloFase) {
-        this.resolverEvento('peso');
-      }
-      if (this.combustible <= 0 && !this.eventosResueltos.carbon && !this.falloFase) {
-        this.resolverEvento('carbon');
-      }
-      if (this.eventosResueltos.temperatura && this.eventosResueltos.peso && this.eventosResueltos.carbon) {
-        this.detenerGameLoop();
-        setTimeout(() => this.completarFase(), 850);
-      }
+  private fallarFase3Andamiaje(tipoFallo: string) {
+    this.detenerGameLoop();
+    this.ejecutando = false;
+    this.erroresAcumulados++;
+    this.errores = ['Configuración incorrecta del andamiaje.'];
+
+    let msg = '¡El taladro pasó de largo y se estrelló contra el fondo! Faltó extraer el agua a la profundidad correcta.';
+    
+    if (tipoFallo === 'ANTES_DE_AGUA') {
+      this.estadoTaladro = 'detenido';
+      msg = 'Te detuviste antes de llegar al agua.';
+    } else if (tipoFallo === 'PROFUNDIDAD_INCORRECTA') {
+      this.estadoTaladro = 'explosion';
+      this.aguaContaminada = true;
+      msg = '¡El taladro perforó la reserva, rompió la piedra base y ensució el agua pura! Has arruinado la misión.';
+    } else if (tipoFallo === 'APAGADO') {
+      this.estadoTaladro = 'descompuesto' as any;
+      msg = 'Apagaste el motor. Ahora la máquina no tiene energía para extraer el agua.';
+    } else if (tipoFallo === 'CONTAMINACION') {
+      this.estadoTaladro = 'explosion';
+      this.aguaContaminada = true;
+      msg = '¡El taladro perforó la reserva, rompió la piedra base y ensució el agua pura! Has arruinado la misión.';
+    } else if (tipoFallo === 'NO_EXTRAER') {
+      this.estadoTaladro = 'detenido';
+      msg = 'Llegaste al agua, pero le dijiste a la máquina que NO la extraiga (false).';
+    } else {
+      this.estadoTaladro = 'explosion';
+      this.aguaContaminada = true;
     }
+
+    this.dispararModalGameOver(msg);
   }
 
   private resolverEvento(tipo: TipoEventoTaladro): void {
     const estrategiaCorrecta = {
       temperatura: this.estrategias.estrategiaVaporCorrecta,
       peso: this.estrategias.estrategiaPesoCorrecta,
-      carbon: this.estrategias.estrategiaCarbonCorrecta
+      agua: this.estrategias.estrategiaAguaCorrecta
     }[tipo];
 
     if (!estrategiaCorrecta) {
@@ -459,21 +720,34 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
       this.pesoCristales = 0;
       this.bitacora = 'La banda empacó los cristales antes de romperse.';
     }
-    if (tipo === 'carbon') {
-      this.estadoTaladro = 'recargando';
-      this.combustible = 100;
-      this.bitacora = 'El depósito recibió carbón y el horno siguió encendido.';
+    if (tipo === 'agua') {
+      this.estadoTaladro = 'estable';
+      this.extrayendoAgua = true;
+      this.bitacora = 'El taladro se detuvo a la profundidad exacta y extrajo el agua.';
     }
 
-    if (this.faseActual.numero < 4) {
-      this.detenerGameLoop();
-      setTimeout(() => this.completarFase(), 900);
-    }
+    this.detenerGameLoop();
+    setTimeout(() => this.completarFase(), 900);
   }
 
   private completarFase(): void {
     if (this.falloFase || this.gameOver) return;
-    this.solucionesPorFase.set(this.faseActual.numero, this.codigoCompleto);
+    
+    // Reconstruir el historial exacto inyectado al inicio de la fase
+    let codigoHistorial = '';
+    if (this.faseActual.numero > 1 && this.solucionesPorFase.has(1)) {
+      codigoHistorial += this.solucionesPorFase.get(1) + '\n\n';
+    }
+    if (this.faseActual.numero > 2 && this.solucionesPorFase.has(2)) {
+      codigoHistorial += this.solucionesPorFase.get(2) + '\n\n';
+    }
+    
+    let codigoFase = this.codigoUsuario;
+    if (codigoHistorial && codigoFase.startsWith(codigoHistorial.trim())) {
+      codigoFase = codigoFase.substring(codigoHistorial.trim().length);
+    }
+    
+    this.solucionesPorFase.set(this.faseActual.numero, codigoFase.trim());
     this.ejecutando = false;
     this.faseCompletada = true;
     this.estadoTaladro = 'estable';
@@ -490,38 +764,84 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     this.avanzarFase();
   }
 
+  private dispararModalGameOver(bitacoraMsg: string): void {
+    this.bitacora = bitacoraMsg;
+    if (this.modalFalloTimeout) clearTimeout(this.modalFalloTimeout);
+    this.modalFalloTimeout = setTimeout(() => {
+      this.falloFase = true;
+      this.cdr.detectChanges();
+    }, 2500);
+  }
+
+  fallarFase1Andamiaje(tipoFallo: string): void {
+    this.detenerGameLoop();
+    this.ejecutando = false;
+    this.erroresAcumulados++;
+    this.errores = ['Configuración incorrecta del andamiaje.'];
+
+    let msg = '';
+    if (tipoFallo === 'AHOGO') {
+      this.estadoTaladro = 'ahogo' as any;
+      msg = 'El motor se ahogó por liberar vapor antes de tiempo.';
+    } else if (tipoFallo === 'SOBRECALENTAMIENTO') {
+      this.estadoTaladro = 'explosion';
+      msg = 'El taladro se sobrecalentó.';
+    } else if (tipoFallo === 'DESCOMPUESTO') {
+      this.estadoTaladro = 'descompuesto' as any;
+      msg = 'Apagar el motor de golpe dañó los engranajes.';
+    } else {
+      this.estadoTaladro = 'explosion';
+      msg = 'El taladro explotó por configuración incorrecta.';
+    }
+    this.dispararModalGameOver(msg);
+  }
+
+  fallarFase2Andamiaje(tipoFallo: string): void {
+    this.detenerGameLoop();
+    this.ejecutando = false;
+    this.erroresAcumulados++;
+    this.errores = ['La presion debe ser exactamente 50 para no desestabilizar la maquina.'];
+
+    let msg = '';
+    if (tipoFallo === 'DESCOMPUESTO') {
+      this.estadoTaladro = 'descompuesto' as any;
+      msg = 'Apagar el motor de golpe desestabilizo la maquina.';
+    } else {
+      this.estadoTaladro = 'desestabilizado';
+      msg = 'La presion no se estabilizo y la maquina se sacudio bruscamente.';
+    }
+    this.dispararModalGameOver(msg);
+  }
+
   private fallarFase(tipo: TipoEventoTaladro): void {
     this.detenerGameLoop();
     this.ejecutando = false;
-    this.falloFase = true;
-    this.vidas--;
     this.erroresAcumulados++;
     this.errores = this.erroresPendientes.length > 0
       ? this.erroresPendientes
       : ['El evento no tenía una estrategia válida.'];
 
+    let msg = '';
     if (tipo === 'temperatura') {
       this.estadoTaladro = 'explosion';
-      this.bitacora = 'La temperatura llegó al límite y el taladro explotó.';
-    }
-    if (tipo === 'peso') {
+      msg = 'La temperatura llegó al límite y el taladro explotó.';
+    } else if (tipo === 'peso') {
       this.estadoTaladro = 'banda-rota';
-      this.bitacora = 'La carga superó el límite y rompió la banda transportadora.';
+      msg = 'La carga superó el límite y rompió la banda transportadora.';
+    } else if (tipo === 'agua') {
+      this.estadoTaladro = 'explosion';
+      msg = '¡El taladro pasó de largo y se estrelló contra el fondo! Faltó extraer el agua a la profundidad correcta.';
     }
-    if (tipo === 'carbon') {
-      this.estadoTaladro = 'sin-combustible';
-      this.bitacora = 'El carbón se agotó y el fuego del taladro se apagó.';
-    }
-
-    if (this.vidas <= 0) {
-      this.gameOver = true;
-      this.detenerTemporizador();
-    }
+    this.dispararModalGameOver(msg);
   }
 
   private prepararFaseActual(): void {
+    if (this.modalFalloTimeout) clearTimeout(this.modalFalloTimeout);
     this.detenerGameLoop();
     this.codigoUsuario = '';
+    if (this.layoutJuego && this.layoutJuego.consola) {
+      this.layoutJuego.consola.historialPlantilla = [];
+    }
     this.reiniciarMedidores();
     this.ejecutando = false;
     this.faseCompletada = false;
@@ -534,13 +854,29 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     this.estadoTaladro = 'detenido';
     this.bitacora = `Fase ${this.faseActual.numero} preparada. Construye la estrategia dentro del evento.`;
     this.pestanaInventario = 'acciones';
+    
+    // Forzar recarga de UI para la nueva fase
+    this.inicializarConsolaTexto();
+    if (this.layoutJuego && this.layoutJuego.baraja) {
+      // Angular reevaluará configTarjetasTaladro por binding, pero por si acaso limpiamos estado
+      this.layoutJuego.baraja.animandoOla = false;
+    }
+
+    if (this.faseActual.numero >= 2) {
+      this.iniciarLoopCosmeticoFase1();
+    } else {
+      this.detenerLoopCosmetico();
+    }
   }
 
   private reiniciarMedidores(): void {
     this.temperatura = 0;
     this.pesoCristales = 0;
     this.combustible = 100;
-    this.eventosResueltos = { temperatura: false, peso: false, carbon: false };
+    this.profundidadActual = 0;
+    this.extrayendoAgua = false;
+    this.aguaContaminada = false;
+    this.eventosResueltos = { temperatura: false, peso: false, agua: false };
   }
 
   private iniciarTemporizador(): void {
@@ -616,7 +952,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
 
     if (fasesSeleccionadas?.length) {
       const seleccion = new Set(fasesSeleccionadas);
-      this.fases = this.fasesBase.filter(fase => seleccion.has(fase.numero));
+      const rawFases = nivel2Data.fases as unknown as FaseNivelDos[];
+      this.fases = rawFases.filter(fase => seleccion.has(fase.numero));
     }
   }
 
@@ -671,13 +1008,41 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     return {
       estrategiaVaporCorrecta: false,
       estrategiaPesoCorrecta: false,
-      estrategiaCarbonCorrecta: false
+      estrategiaAguaCorrecta: false
     };
   }
 
   private detenerTemporizador(): void {
     if (this.temporizador) clearInterval(this.temporizador);
     this.temporizador = undefined;
+  }
+
+  iniciarLoopCosmeticoFase1() {
+    this.detenerLoopCosmetico();
+  
+    this.loopCosmetico = setInterval(() => {
+      this.temperatura += 10; 
+  
+      if (this.temperatura >= 100) {
+        this.estadoTaladro = 'liberando-vapor';
+  
+        setTimeout(() => {
+          this.estadoTaladro = 'perforando';
+          this.temperatura = 0;
+        }, 1000);
+      }
+
+      if (this.faseActual.numero >= 3) {
+        // Genera un número aleatorio entre -2 y +2
+        const fluctuacion = Math.floor(Math.random() * 5) - 2; 
+        this.pesoCristales = 50 + fluctuacion; // Oscilará visualmente entre 48 y 52
+      }
+    }, 500);
+  }
+
+  private detenerLoopCosmetico(): void {
+    if (this.loopCosmetico) clearInterval(this.loopCosmetico);
+    this.loopCosmetico = undefined;
   }
 
   private detenerGameLoop(): void {

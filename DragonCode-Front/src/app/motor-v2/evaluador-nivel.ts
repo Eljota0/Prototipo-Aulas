@@ -42,12 +42,12 @@ export interface EvaluadorNivel<TReglas> {
   evaluar(codigo: string, reglas: TReglas): ResultadoEvaluacion;
 }
 
-export type FaseTaladro = 1 | 2 | 3 | 4;
+export type FaseTaladro = 1 | 2 | 3;
 
 export interface BanderasEstrategiaTaladro {
   estrategiaVaporCorrecta: boolean;
   estrategiaPesoCorrecta: boolean;
-  estrategiaCarbonCorrecta: boolean;
+  estrategiaAguaCorrecta: boolean;
 }
 
 export interface ResultadoEvaluacionTaladro {

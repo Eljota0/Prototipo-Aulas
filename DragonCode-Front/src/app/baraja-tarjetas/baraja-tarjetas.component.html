@@ -5,8 +5,8 @@
 
   <!-- CABECERA DE PESTAÑAS (Visible en <= 1280px) -->
   <div class="tabs-header">
-    <button class="tab-btn" [class.active]="pestanaActiva === 'acciones'" (click)="cambiarPestana('acciones')">ACCIONES</button>
-    <button class="tab-btn" [class.active]="pestanaActiva === 'objetos'" (click)="cambiarPestana('objetos')">OBJETOS</button>
+    <button class="tab-btn" [class.active]="pestanaActiva === 'acciones'" (click)="cambiarPestana('acciones')" [disabled]="bloquearBoton">ACCIONES</button>
+    <button class="tab-btn" [class.active]="pestanaActiva === 'objetos'" (click)="cambiarPestana('objetos')" [disabled]="bloquearBoton">OBJETOS</button>
     <div class="tab-indicator" [class.es-objetos]="pestanaActiva === 'objetos'"></div>
   </div>
 
@@ -19,13 +19,15 @@
         <div class="cards-grid">
           @for (tarjeta of configuracion; track tarjeta.accion; let i = $index) {
             <div class="action-card" 
-                 [style.backgroundColor]="tarjeta.colorBoton" 
-                 [style.animation-delay]="animandoOla ? (i * 0.1) + 's' : '0s'"
                  [class.salto-ola]="animandoOla"
+                 [style.backgroundColor]="tarjeta.colorBoton" 
+                 [style.animation-delay]="(i * 0.1) + 's'"
                  (click)="seleccionarTarjeta(tarjeta)"
                  (mousedown)="$event.preventDefault()">
-              <span class="card-title">{{ tarjeta.nombre }}</span>
-              <span class="card-code">{{ tarjeta.accion }}</span>
+              <div class="card-etiqueta-container">
+                <span class="card-etiqueta">{{ tarjeta.nombre }}</span>
+              </div>
+              <span class="card-codigo" *ngIf="tarjeta.accion !== tarjeta.nombre">{{ tarjeta.accion }}</span>
             </div>
           }
         </div>
@@ -34,7 +36,7 @@
 
     @if (modoJuego === 'aventura') {
       <!-- Botón divisor: vive en la línea entre ambos paneles -->
-      <button class="toggle-drawer-btn desktop-only" (click)="toggleObjetos()">
+      <button class="toggle-drawer-btn desktop-only" (click)="toggleObjetos()" [disabled]="bloquearBoton">
         {{ mostrarObjetos ? '▶' : '◀' }}
       </button>
 

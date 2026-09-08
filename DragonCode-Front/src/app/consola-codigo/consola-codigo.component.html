@@ -31,25 +31,39 @@
         
         <div class="code-line-wrapper" 
              [class.has-error]="linea.tieneError" 
-             [style.--char-count]="linea.texto.length">
-          <input 
-            #lineaInput
-            type="text" 
-            class="line-input"
-            [class.is-executing]="ejecutando"
-            [style.color]="linea.tieneError ? '#ffffff' : linea.color"
-            [ngModel]="linea.texto"
-            (ngModelChange)="onTextoCambiado($index, $event, linea)"
-            (focus)="lineaActivaIndex = $index"
-            (keydown)="onKeyDown($event, $index, linea)"
-            (keydown.enter)="crearNuevaLinea($index)"
-            (keydown.arrowUp)="moverFoco($index - 1, $event)"
-            (keydown.arrowDown)="moverFoco($index + 1, $event)"
-            (paste)="preventPaste($event)"
-            (contextmenu)="preventPaste($event)"
-            spellcheck="false"
-            autocomplete="off"
-            [disabled]="ejecutando">
+             [style.--char-count]="linea.texto.length"
+             style="position: relative; display: flex; flex-grow: 1;">
+
+          <!-- MODO PLANTILLA: Solo un div de lectura con Syntax Highlighting -->
+          @if (modoPlantilla) {
+            <div class="plantilla-display"
+                 [innerHTML]="parsearSintaxis(linea.texto, $index) | safeHtml">
+            </div>
+          } @else {
+            <!-- MODO LIBRE (Nivel 1): Input nativo editable -->
+            <input 
+              #lineaInput
+              type="text" 
+              class="line-input"
+              [class.is-executing]="ejecutando"
+              [class.linea-fija]="linea.fija"
+              [class.linea-placeholder]="linea.esPlaceholder"
+              [style.color]="linea.tieneError ? '#ffffff' : linea.color"
+              [ngModel]="linea.texto"
+              (ngModelChange)="onTextoCambiado($index, $event, linea)"
+              (focus)="lineaActivaIndex = $index; onLineaFocus(linea)"
+              (blur)="onLineaBlur(linea)"
+              (keydown)="onKeyDown($event, $index, linea)"
+              (keydown.enter)="crearNuevaLinea($index)"
+              (keydown.arrowUp)="moverFoco($index - 1, $event)"
+              (keydown.arrowDown)="moverFoco($index + 1, $event)"
+              (paste)="preventPaste($event)"
+              (contextmenu)="preventPaste($event)"
+              spellcheck="false"
+              autocomplete="off"
+              [readonly]="linea.fija"
+              [disabled]="ejecutando">
+          }
         </div>
       </div>
     }
@@ -58,11 +72,12 @@
   <!-- Toolbar Inferior Rediseñada -->
   <div class="console-toolbar">
     <div class="toolbar-left">
-      <button class="btn-tool btn-danger" (click)="clickBorrar($event)" [disabled]="ejecutando">Borrar Línea</button>
+      <button class="btn-tool btn-danger" *ngIf="!modoPlantilla" (click)="clickBorrar($event)" [disabled]="ejecutando">Borrar Línea</button>
+      <button class="btn-tool btn-danger" *ngIf="modoPlantilla" (click)="deshacerPasoAndamiaje($event)" [disabled]="historialPlantilla.length === 0">Atrás</button>
       <button class="btn-tool btn-danger" (click)="clickLimpiar($event)" [disabled]="ejecutando">Limpiar Todo</button>
     </div>
     <div class="toolbar-right">
-      <button class="btn-tool btn-execute" (click)="clickEjecutar($event)" [disabled]="ejecutando">
+      <button class="btn-tool btn-execute" [class.glow-retro]="listoParaEjecutar" (click)="clickEjecutar($event)" [disabled]="ejecutando">
         ▶ Ejecutar
       </button>
     </div>

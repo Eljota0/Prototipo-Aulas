@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   height: 100%;
   width: 100%;
@@ -108,6 +108,17 @@
   gap: 12px;
 }
 
+.line-input.linea-fija {
+  user-select: none;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.line-input.linea-placeholder {
+  color: #6b7280 !important;
+  font-style: italic;
+}
+
 .btn-tool {
   background: transparent;
   border: 2px solid transparent;
@@ -176,7 +187,7 @@
     line-height: 1.2;
   }
 
-  .line-input {
+  .line-input, .plantilla-display {
     font-size: 0.85rem;
   }
 
@@ -352,5 +363,43 @@
   }
   .ojo-dorado {
     font-size: 1.2rem;
+  }
+}
+/* ==========================================================================
+   MODO PLANTILLA: Display de solo lectura con Syntax Highlighting
+   ========================================================================== */
+.plantilla-display {
+  flex-grow: 1;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+  line-height: 1.5;
+  white-space: pre;
+  min-height: 1.5em;
+  color: #d4d4d4;
+}
+
+/* Animaci�n para el placeholder activo en Modo Plantilla */
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+::ng-deep .placeholder-parpadeo {
+  animation: blink-cursor 1s step-end infinite !important;
+}
+
+.glow-retro {
+  animation: blinkRetro 0.8s steps(2, end) infinite;
+}
+
+@keyframes blinkRetro {
+  0% { 
+    background-color: #2d5a27;
+    color: white; 
+  }
+  100% { 
+    background-color: #ffd700;
+    color: black;
   }
 }
