@@ -50,14 +50,15 @@ describe('MapaAventuraComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('desbloquea el siguiente nivel implementado según el progreso', () => {
+  it('mantiene disponibles los cinco niveles durante el modo temporal de pruebas', () => {
     expect(component.niveles.length).toBe(5);
     expect(component.niveles[0].completado).toBeTrue();
     expect(component.niveles[1].completado).toBeTrue();
     expect(component.niveles[1].bloqueado).toBeFalse();
     expect(component.niveles[2].bloqueado).toBeFalse();
     expect(component.niveles[2].titulo).toBe('La Cueva de las Variables');
-    expect(component.niveles[3].bloqueado).toBeTrue();
+    expect(component.niveles[3].bloqueado).toBeFalse();
+    expect(component.niveles[4].bloqueado).toBeFalse();
     expect(component.nivelesCompletados).toBe(2);
     expect(component.porcentajeProgreso).toBe(40);
   });

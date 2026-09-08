@@ -1,0 +1,104 @@
+{
+  "id": 2,
+  "nombre": "Taladro a Vapor",
+  "descripcion": "Aprende a usar eventos y condicionales para controlar una máquina automatizada.",
+  "protocolosAprendidos": [
+    {
+      "numero": 1,
+      "nombre": "Temperatura",
+      "condicion": "Si supera 100°",
+      "accion": "Liberar vapor",
+      "condicionCodigo": "si(taladro.temperatura > 100)",
+      "accionCodigo": "taladro.liberarVapor();"
+    },
+    {
+      "numero": 2,
+      "nombre": "Presion",
+      "condicion": "Si es exactamente 50",
+      "accion": "Mantener fuerza",
+      "condicionCodigo": "si(taladro.presion == 50)",
+      "accionCodigo": "taladro.mantenerFuerza();"
+    },
+    {
+      "numero": 3,
+      "nombre": "Extracción de Agua",
+      "condicion": "Si profundidad llega a 500",
+      "accion": "Extraer agua es verdadero",
+      "condicionCodigo": "si(taladro.profundidad == 500)",
+      "accionCodigo": "taladro.extraerAgua = true;"
+    }
+  ],
+  "fases": [
+    {
+      "numero": 1,
+      "titulo": "Control de sobrecalentamiento",
+      "concepto": "Evento de temperatura",
+      "objetivo": "Programa al taladro para liberar vapor cuando su temperatura supere los 100°.",
+      "pista": "Inserta “Si supera 100°” y después coloca “Liberar vapor” dentro de sus llaves.",
+      "evento": "evento(taladro.sobrecalentamiento) {",
+      "tarjetas": [
+        {
+          "codigo": "taladro.apagarMotor();",
+          "etiqueta": "Apagar motor",
+          "tono": "verde",
+          "tipo": "accion",
+          "protocolo": "temperatura"
+        },
+        {
+          "codigo": "si(taladro.temperatura > 100) {\n}",
+          "etiqueta": "Si supera 100°",
+          "tono": "dorado",
+          "tipo": "condicion",
+          "protocolo": "temperatura"
+        },
+        {
+          "codigo": "si(taladro.temperatura < 100) {\n}",
+          "etiqueta": "Si está frío",
+          "tono": "violeta",
+          "tipo": "condicion",
+          "protocolo": "temperatura"
+        },
+        {
+          "codigo": "taladro.liberarVapor();",
+          "etiqueta": "Liberar vapor",
+          "tono": "azul",
+          "tipo": "accion",
+          "protocolo": "temperatura"
+        }
+      ]
+    },
+    {
+      "numero": 2,
+      "titulo": "Presion constante",
+      "concepto": "Igualdad estricta",
+      "objetivo": "Manten la presion exactamente en 50 para no desestabilizar la maquina.",
+      "pista": "Compara la presion con 50 usando == y ejecuta mantenerFuerza dentro de esa condicion.",
+      "evento": "evento(taladro.estabilizarPresion) {",
+      "tarjetas": [
+        {
+          "codigo": "taladro.mantenerFuerza();",
+          "etiqueta": "Mantener fuerza",
+          "tono": "azul",
+          "tipo": "accion",
+          "protocolo": "peso"
+        },
+        {
+          "codigo": "taladro.apagarMotor();",
+          "etiqueta": "Apagar motor",
+          "tono": "gris",
+          "tipo": "accion",
+          "protocolo": "peso"
+        }
+      ]
+    },
+    {
+      "numero": 3,
+      "titulo": "Extracción Subterránea",
+      "concepto": "Booleanos y Profundidad",
+      "objetivo": "Activa la extracción de agua cuando el taladro alcance la profundidad correcta.",
+      "pista": "Usa la condición para detectar la meta, y asigna 'true' a extraerAgua.",
+      "evento": "evento(taladro.recolectarAgua) {",
+      "tarjetas": []
+    }
+  ]
+}

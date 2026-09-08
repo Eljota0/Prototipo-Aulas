@@ -11,27 +11,33 @@
     <!-- Nueva Contraseña -->
     <div class="cyber-input-group">
       <label for="new-password">Nueva Contraseña</label>
-      <input
-        type="password"
-        id="new-password"
-        name="nuevaPass"
-        [(ngModel)]="nuevaPass"
-        placeholder="••••••••"
-        required
-      >
+      <div class="input-wrapper">
+        <input
+          [type]="mostrarNueva ? 'text' : 'password'"
+          id="new-password"
+          name="nuevaPass"
+          [(ngModel)]="nuevaPass"
+          placeholder="••••••••"
+          required
+        >
+        <span class="material-symbols-outlined icono-toggle" (click)="toggleNueva()">{{ mostrarNueva ? 'visibility_off' : 'visibility' }}</span>
+      </div>
     </div>
 
     <!-- Confirmar Contraseña -->
     <div class="cyber-input-group">
       <label for="confirm-password">Confirmar Contraseña</label>
-      <input
-        type="password"
-        id="confirm-password"
-        name="confirmarPass"
-        [(ngModel)]="confirmarPass"
-        placeholder="••••••••"
-        required
-      >
+      <div class="input-wrapper">
+        <input
+          [type]="mostrarConfirmacion ? 'text' : 'password'"
+          id="confirm-password"
+          name="confirmarPass"
+          [(ngModel)]="confirmarPass"
+          placeholder="••••••••"
+          required
+        >
+        <span class="material-symbols-outlined icono-toggle" (click)="toggleConfirmacion()">{{ mostrarConfirmacion ? 'visibility_off' : 'visibility' }}</span>
+      </div>
     </div>
 
     <!-- Acción Principal -->

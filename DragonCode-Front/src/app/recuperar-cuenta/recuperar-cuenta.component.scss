@@ -189,3 +189,15 @@
     font-size: 1rem;
   }
 }
+
+/* =========================================
+   OVERRIDE DE AUTOFILL DE WEBKIT (AISLADO)
+   ========================================= */
+::ng-deep .cyber-form input:-webkit-autofill,
+::ng-deep .cyber-form input:-webkit-autofill:hover,
+::ng-deep .cyber-form input:-webkit-autofill:focus,
+::ng-deep .cyber-form input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #06090e inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+}

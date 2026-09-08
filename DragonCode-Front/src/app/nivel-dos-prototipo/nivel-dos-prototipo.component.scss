@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 :host {
   display: block;
   min-height: 100dvh;
@@ -16,6 +18,21 @@ button, textarea { font: inherit; }
   background: #0b0f19;
 }
 
+.fade-overlay {
+  position: fixed;
+  inset: 0;
+  background: black;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 10000;
+  
+  &.activo {
+    opacity: 1;
+    pointer-events: all;
+  }
+}
+
 .juego-layout {
   width: 100vw;
   height: calc(100dvh - 60px);
@@ -26,16 +43,13 @@ button, textarea { font: inherit; }
   background: #0b0f19;
 }
 
-.tablero-juego,
-.panel-derecho {
-  width: 50%;
-  height: 100%;
-  min-width: 0;
-}
-
 .tablero-juego {
+  width: 100%;
+  height: 100%;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   background: #050505;
   border: 4px solid rgba(255, 255, 255, 0.22);
   border-radius: 8px;
@@ -348,33 +362,98 @@ button, textarea { font: inherit; }
 .etapa-4 .chispa { display: none; }
 @keyframes chisporroteo { 50% { opacity: 0; transform: translate(4px, -5px); } }
 
-.diagnostico {
+.medidor-profundidad-wrapper {
   position: absolute;
   z-index: 5;
-  right: 5%;
-  top: 18%;
-  width: min(25%, 180px);
-  padding: 9px;
-  display: grid;
-  gap: 5px;
-  color: #95a5a7;
-  background: rgba(6, 9, 9, 0.88);
-  border: 2px solid #315a55;
-  font-family: 'TuFuentePixel', monospace;
-  font-size: 0.54rem;
-  line-height: 1.45;
+  left: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.diagnostico strong { color: #77ddca; font-size: 0.58rem; }
-.barra-diagnostico { height: 7px; overflow: hidden; background: #131b1a; border: 1px solid #38504c; }
-.barra-diagnostico i { display: block; height: 100%; background: #77ddca; transition: width .5s ease; }
+.medidor-profundidad {
+  position: relative;
+  width: 24px;
+  height: 450px;
+  background: rgba(6, 9, 9, 0.88);
+  border: 2px solid #ffffff;
+  border-radius: 4px;
+  overflow: visible;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
 
-.diagnostico p {
-  margin: 2px 0 0;
+.lago-subterraneo {
+  position: absolute;
+  width: 100%;
+  background-color: #3b82f6;
+  transition: background-color 0.5s ease;
+  z-index: 1;
+}
+.lago-subterraneo.contaminado {
+  background-color: #4a3018;
+}
+
+.escala-marca {
+  position: absolute;
+  left: 100%;
+  margin-left: 10px;
+  transform: translateY(-50%);
+  color: white;
+  font-size: 0.6rem;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  z-index: 5;
+  white-space: nowrap;
+}
+.escala-marca::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  width: 6px;
+  height: 2px;
+  background-color: white;
+  transform: translateY(-50%);
+}
+
+.indicador-taladro {
+  position: absolute;
+  right: 100%;
+  margin-right: 5px;
+  transform: translateY(-50%);
+  color: #ffd700;
+  font-weight: bold;
+  text-align: right;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 1rem;
+  z-index: 10;
+  transition: top 0.24s linear;
+  white-space: nowrap;
+}
+
+.agua-extrayendose {
+  position: absolute;
+  width: 100%;
+  background-color: #00ffff;
+  z-index: 6;
+  animation: extraerAguaArriba 2s ease forwards;
+}
+
+@keyframes extraerAguaArriba {
+  0% { height: 0%; }
+  100% { height: 100%; }
+}
+
+.profundidad-texto {
   color: #a9b8b5;
-  font-family: 'Consolas', 'Courier New', monospace;
-  font-size: .66rem;
-  line-height: 1.25;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 0.85rem;
+  font-weight: bold;
+  background: rgba(6, 9, 9, 0.8);
+  padding: 4px 8px;
+  border: 1px solid #315a55;
+  border-radius: 4px;
 }
 
 .medidores {
@@ -400,7 +479,7 @@ button, textarea { font: inherit; }
   display: flex;
   justify-content: space-between;
   gap: 5px;
-  font-family: 'TuFuentePixel', monospace;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
   font-size: .48rem;
 }
 
@@ -806,7 +885,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 .tarjeta-codigo code {
   width: 100%;
-  overflow: visible;
+  overflow: hidden;
   font-size: clamp(.6rem, .64vw, .72rem);
   font-weight: 700;
   line-height: 1.35;
@@ -1060,7 +1139,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 @media (max-width: 767px) {
-  .nivel-dos-shell { overflow: visible; }
+  .nivel-dos-shell { overflow: hidden; }
   .juego-layout {
     height: calc(100dvh - 60px);
     padding: 1rem;
@@ -1070,7 +1149,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   }
   .tablero-juego, .panel-derecho { width: 100%; flex-shrink: 0; }
   .tablero-juego { height: 440px; }
-  .panel-derecho { height: 600px; overflow: visible; }
+  .panel-derecho { height: 600px; overflow: hidden; }
   .consola-codigo { height: 340px; }
   .inventario { height: 244px; }
   .hud-juego { inset: 14px 5% auto; }
@@ -1094,4 +1173,196 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .tarjeta-codigo { min-height: 52px; padding: 5px; }
   .mision-flotante { padding: 7px 10px; }
   .mision-flotante p { margin-top: 3px; }
+}
+.escena-maquina.anim-descompuesto .taladro-wrap img {
+  animation: descompuestoTemblor 0.1s infinite;
+  filter: grayscale(100%) contrast(120%);
+}
+@keyframes descompuestoTemblor {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3px, 2px); }
+  50% { transform: translate(3px, -2px); }
+  75% { transform: translate(-3px, -2px); }
+  100% { transform: translate(3px, 2px); }
+}
+.escena-maquina.anim-descompuesto .vapor {
+  background: rgba(30, 30, 30, 0.8) !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.9) !important;
+  filter: brightness(0.2);
+}
+.escena-maquina.anim-ahogo .taladro-wrap img {
+  animation: ahogo 1s ease;
+  filter: brightness(0.7);
+}
+.escena-maquina.anim-ahogo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(100, 100, 100, 0.5);
+  z-index: 10;
+  animation: fadeOutAhogo 2s forwards;
+}
+@keyframes fadeOutAhogo {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes ahogo {
+  0%, 100% { transform: scale(1); }
+  20%, 60% { transform: scale(0.95) translateX(-5px); }
+  40%, 80% { transform: scale(0.95) translateX(5px); }
+}
+
+.escena-maquina.anim-desestabilizado .taladro-wrap img {
+  animation: desestabilizacion 0.15s steps(2) infinite;
+  filter: sepia(0.3) brightness(1.1) drop-shadow(0 0 15px #ff9800);
+}
+@keyframes desestabilizacion {
+  0% { transform: translate(-4px, 2px) rotate(-1deg); }
+  100% { transform: translate(4px, -2px) rotate(1deg); }
+}
+
+/* =========================================
+   MODAL: GAME OVER
+   ========================================= */
+.modal-game-over {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  
+  .draco-llorando {
+    width: 250px;
+    margin-bottom: 40px;
+    image-rendering: pixelated;
+    filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));
+  }
+
+  h1 {
+    color: #ff4444;
+    font-size: clamp(30px, 5vw, 60px);
+    margin-bottom: 10px;
+    text-shadow: 4px 4px 0px #000;
+    text-align: center;
+  }
+  
+  .subtitulo-derrota {
+    color: #ccc;
+    font-size: clamp(10px, 1.5vw, 16px);
+    margin-bottom: 40px;
+    text-align: center;
+    max-width: 80%;
+    line-height: 1.4;
+  }
+
+  .botones-modal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+
+    button {
+      width: 100%;
+      max-width: 280px;
+      padding: 15px 20px;
+      font-size: clamp(12px, 1.5vw, 16px);
+      font-family: inherit;
+      border: 4px solid #fff;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: 4px 4px 0px #000;
+      transition: transform 0.1s;
+
+      &:active { transform: translate(4px, 4px); box-shadow: none; }
+      
+      &.btn-verde { background: #00AA00; color: white; border-color: #005500; }
+      &.btn-rojo { background: #E50000; color: white; border-color: #8B0000; }
+      
+      &:hover { filter: brightness(1.2); }
+    }
+  }
+}
+
+.hud-titulo-centro {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #000000;
+  border: 2px solid #ffd700;
+  padding: 10px 20px;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #ffffff;
+  white-space: nowrap;
+  z-index: 50;
+  text-shadow: 2px 2px 0px #000;
+}
+
+.hud-contador-der {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1rem;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  z-index: 50;
+  text-shadow: 2px 2px 0px #000;
+}
+
+.hud-inferior-wrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+  width: 100%;
+  margin-top: 15px;
+  padding: 10px;
+  box-sizing: border-box;
+  z-index: 50;
+}
+
+@media (max-width: 768px) {
+  .hud-inferior-wrapper {
+    flex-direction: column;
+  }
+}
+
+.hud-panel-medidores, .hud-panel-mision {
+  background-color: #000000;
+  border: 2px solid #ffffff;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hud-panel-medidores {
+  gap: 10px;
+  min-width: 250px;
+}
+
+.hud-panel-mision {
+  flex-grow: 1;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #ffffff;
+  text-shadow: 1px 1px 0px #000;
+}
+
+.dato-clave {
+  color: #56b6c2;
+  font-weight: bold;
 }

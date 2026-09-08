@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface TarjetaConfig {
   nombre: string;
+  titulo?: string;
   colorBoton: string;
   colorConsola: string;
   accion: string;
@@ -15,11 +16,20 @@ export interface TarjetaConfig {
   templateUrl: './baraja-tarjetas.component.html',
   styleUrl: './baraja-tarjetas.component.scss'
 })
-export class BarajaTarjetasComponent {
+export class BarajaTarjetasComponent implements OnChanges {
   @Input() configuracion: TarjetaConfig[] = [];
   
   // Ahora emitimos el objeto completo para que el Layout sepa el color
   @Output() instruccionSeleccionada = new EventEmitter<TarjetaConfig>();
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['configuracion']) {
+      this.animandoOla = true;
+      setTimeout(() => {
+        this.animandoOla = false;
+      }, 1000);
+    }
+  }
 
   @Input() modoJuego: 'aventura' | 'aula' = 'aventura';
   @Input() estadoObjetos = {
@@ -34,7 +44,6 @@ export class BarajaTarjetasComponent {
     if (this.pestanaActiva === tab || this.bloquearBoton) return;
     this.pestanaActiva = tab;
     
-    // Dispara la animación de ola al cambiar de pestaña
     this.animandoOla = true;
     this.bloquearBoton = true;
     setTimeout(() => {
@@ -47,7 +56,7 @@ export class BarajaTarjetasComponent {
   animandoOla: boolean = false;
   bloquearBoton: boolean = false;
 
-  @Output() onUsarItem = new EventEmitter<'roja' | 'verde' | 'amarilla'>();
+  @Output() onUsarItem = new EventEmitter<'roja' | 'verde' | 'amarilla' | 'libro'>();
 
   rojaTemblando: boolean = false;
   verdeTemblando: boolean = false;
@@ -62,7 +71,7 @@ export class BarajaTarjetasComponent {
   agitarPocion(tipo: 'roja' | 'verde' | 'amarilla') {
     if (tipo === 'roja') {
       this.rojaTemblando = true;
-      this.cdr.detectChanges(); // FIX CRÍTICO: Forzar a Angular a pintar el temblor
+      this.cdr.detectChanges();
       setTimeout(() => {
         this.rojaTemblando = false;
         this.cdr.detectChanges();
@@ -87,23 +96,12 @@ export class BarajaTarjetasComponent {
   toggleObjetos() {
     if (this.bloquearBoton) return;
     this.bloquearBoton = true;
-
-    if (this.mostrarObjetos) {
-      this.mostrarObjetos = false;
-      setTimeout(() => {
-        this.animandoOla = true;
-      }, 300);
-      setTimeout(() => {
-        this.animandoOla = false;
-        this.bloquearBoton = false;
-      }, 1300);
-    } else {
-      this.mostrarObjetos = true;
-      this.animandoOla = true;
-      setTimeout(() => {
-        this.animandoOla = false;
-        this.bloquearBoton = false;
-      }, 1000);
-    }
+    this.mostrarObjetos = !this.mostrarObjetos;
+    
+    this.animandoOla = true;
+    setTimeout(() => {
+      this.animandoOla = false;
+      this.bloquearBoton = false;
+    }, 1000);
   }
 }

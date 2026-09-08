@@ -95,6 +95,41 @@
 /* ==========================================================================
    VALIDACIÓN REACTIVA CSS PURE
    ========================================================================== */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.cyber-input-group .input-wrapper input {
+  padding-right: 40px !important;
+}
+
+.icono-toggle {
+  position: absolute;
+  right: 12px;
+  color: #ffb700; /* Color dorado retro */
+  opacity: 0.6;
+  cursor: pointer;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.icono-toggle:hover {
+  opacity: 1;
+}
+
+/* Override del Autofill encapsulado a este componente */
+:host ::ng-deep .cyber-form .cyber-input-group input:-webkit-autofill,
+:host ::ng-deep .cyber-form .cyber-input-group input:-webkit-autofill:hover,
+:host ::ng-deep .cyber-form .cyber-input-group input:-webkit-autofill:focus,
+:host ::ng-deep .cyber-form .cyber-input-group input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
+}
+
 .error-text {
   color: #ff4444;
   font-family: 'TuFuentePixel', monospace;

@@ -1,5 +1,24 @@
 <div class="modo-creador-wrapper" [class.es-creador]="esModoProfesor">
-  <app-layout-juego class="juego-area" [configuracionTarjetas]="configTarjetasOgro" [antiCopiaActivo]="antiCopiaActivo" (ejecutarJuego)="compilarYEjecutar($event)" (onUsarItem)="manejarUsoPocion($event)">
+    <!-- === TUTORIAL OVERLAY === -->
+  <div class="tutorial-overlay" *ngIf="mostrarTutorial" (click)="clickDialogo()" (mousedown)="$event.preventDefault()">
+    <!-- &Iacute;tem destacado flotando en el centro -->
+    <img *ngIf="dialogosTutorial[dialogoActualIndex].itemCentro" 
+         [src]="'/assets/images/aventura/objetos/' + dialogosTutorial[dialogoActualIndex].itemCentro + '.png'" 
+         class="item-destacado">
+    
+    <!-- UI de Di&aacute;logo -->
+    <div class="dialogo-container">
+      <div class="avatar-caja">
+        <img [src]="'/assets/images/exprecionsedraco/' + dialogosTutorial[dialogoActualIndex].expresion + '.png'" alt="Draco" class="draco-avatar">
+      </div>
+      <div class="globo-texto">
+        <p>{{ textoMostrado }}</p>
+        <span class="click-continuar" *ngIf="!isTyping">Clic para continuar &#9660;</span>
+      </div>
+    </div>
+  </div>
+
+<app-layout-juego class="juego-area" [configuracionTarjetas]="configTarjetasOgro" [estadoObjetos]="inventarioNivel" [antiCopiaActivo]="antiCopiaActivo" [ejecutando]="ejecutandoComandos" [nivelActual]="nivelActual" (ejecutarJuego)="compilarYEjecutar($event)" (onUsarItem)="manejarUsoPocion($event)" (onToggleDraco)="manejarToggleDraco($event)" (onUsarTarjeta)="ayudasUsadas = true">
   
   <!-- Contenido Inyectado en ng-content (El Tablero) -->
   <div class="escenario-container" #contenedor>
@@ -25,24 +44,30 @@
       </div>
     </div>
 
-    <!-- PANTALLA NIVEL COMPLETADO -->
+        <!-- PANTALLA NIVEL COMPLETADO -->
     <div class="modal-game-over" *ngIf="pantallaNivelCompletado">
       <img src="/assets/images/exprecionsedraco/feliz.png" class="draco-llorando" alt="Draco feliz" style="filter: drop-shadow(0 0 15px rgba(255,215,0,0.8));">
       
-      <!-- TÍTULO DINÁMICO -->
-      <h1 *ngIf="esAulaActiva" style="color: #FFD700; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(255,215,0,0.5);">¡ACTIVIDAD COMPLETADA!</h1>
-      <h1 *ngIf="!esAulaActiva" style="color: #FFD700; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(255,215,0,0.5);">¡MISIÓN COMPLETADA!</h1>
+      <!-- T&Iacute;TULO DIN&Aacute;MICO -->
+      <h1 *ngIf="esAulaActiva" style="color: #FFD700; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(255,215,0,0.5);">&iexcl;ACTIVIDAD COMPLETADA!</h1>
+      <h1 *ngIf="!esAulaActiva" style="color: #FFD700; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(255,215,0,0.5);">&iexcl;MISI&Oacute;N COMPLETADA!</h1>
       
       <p class="subtitulo-derrota" style="color: #82F4E0; margin-top: 10px; font-size: 0.95rem;">{{ mensajePuntaje }}</p>
       
-      <div style="font-size: 3rem; margin: 20px 0; text-shadow: 2px 2px 0 #000, 0 0 20px rgba(255,215,0,0.8);">
-        {{ estrellasObtenidasEmoji }}
+      <div class="contenedor-estrellas-victoria">
+        <div class="estrellas-ganadas">
+          <ng-container *ngFor="let i of arrayEstrellas; let idx = index">
+            <span class="estrella-victoria animacion-pop" [style.animation-delay]="(idx * 0.3) + 's'" style="font-size: 3rem; text-shadow: 2px 2px 0 #000, 0 0 20px rgba(255,215,0,0.8);">
+              &#11088;
+            </span>
+          </ng-container>
+        </div>
       </div>
       
       <div class="botones-modal">
-        <!-- BOTÓN DINÁMICO -->
+        <!-- BOT&Oacute;N DIN&Aacute;MICO -->
         <button *ngIf="esAulaActiva" class="btn-verde" style="width: 100%; font-size: 1.1rem; padding: 15px;" (click)="volverAlAula()">VOLVER AL AULA</button>
-        <button *ngIf="!esAulaActiva" class="btn-verde" style="width: 100%; font-size: 1.1rem; padding: 15px;" (click)="salirMenuPrincipal()">SALIR DE LA MISIÓN</button>
+        <button *ngIf="!esAulaActiva" class="btn-verde" style="width: 100%; font-size: 1.1rem; padding: 15px;" (click)="salirMenuPrincipal()">SALIR DE LA MISI&Oacute;N</button>
       </div>
     </div>
 
@@ -208,4 +233,188 @@
         style="position: absolute; top: 15px; right: 20px; z-index: 100; background: #ff4444; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px; cursor: pointer; border: 2px solid white;">
   ⏹ DETENER PRUEBA
 </button>
+
+<!-- MANUAL DEL PROGRAMADOR -->
+<div class="manual-overlay" *ngIf="mostrarManual" (click)="cerrarManual()">
+  <div class="libro-contenedor" (click)="$event.stopPropagation()">
+    <button class="btn-cerrar" (click)="cerrarManual()">X</button>
+    <button class="flecha flecha-izq" *ngIf="puedeRetroceder" (click)="anteriorPagina()">&#9664;</button>
+    
+    <div class="hojas-contenedor">
+      <!-- P&aacute;gina Izquierda (o &uacute;nica en m&oacute;vil) -->
+      <div class="hoja">
+        <div [ngSwitch]="paginaActual">
+          <!-- P&Aacute;GINA 1: EL OBJETIVO -->
+          <ng-container *ngSwitchCase="0">
+            <h2 class="titulo-prototipo">El Objetivo</h2>
+            <p class="texto-manual">Bienvenido, Aprendiz de C&oacute;digo. Tu misi&oacute;n en este calabozo requiere de una mente aguda.</p>
+            <div class="manual-imagenes-centro">
+              <img src="/assets/images/aventura/nivel1/ogro/ogrofeliz.png" alt="Ogro" class="img-manual">
+              <span class="texto-decorativo">&#10132;</span>
+              <img src="/assets/images/aventura/nivel1/terreno/cofre-tesoro.png" alt="Tesoro" class="img-manual">
+            </div>
+            <p class="texto-manual">Nuestro amigo es fuerte, pero necesita tu l&oacute;gica para moverse. Debes guiarlo sano y salvo hacia su tesoro. &iexcl;Planifica tu ruta, escribe las instrucciones en el pergamino y &eacute;l las obedecer&aacute; al pie de la letra!</p>
+          </ng-container>
+
+          <!-- NUEVA P&Aacute;GINA 3 (&Iacute;ndice 2): Poci&oacute;n de Clarividencia -->
+          <ng-container *ngSwitchCase="2">
+            <h2 class="titulo-prototipo">Elixires Arcanos</h2>
+            <p class="texto-manual">Durante tu traves&iacute;a, encontrar&aacute;s frascos de puro poder. Usa su magia sabiamente.</p>
+            <div class="manual-imagenes-centro">
+              <img src="/assets/images/aventura/objetos/pocion-clarividencia.png" alt="Clarividencia" class="img-manual">
+            </div>
+            <h3 class="subtitulo-magico">Poci&oacute;n de Clarividencia</h3>
+            <p class="texto-manual">Cuando la mente se nuble y el laberinto parezca indescifrable, bebe este elixir dorado. Te otorgar&aacute; una visi&oacute;n temporal de las instrucciones perfectas para superar el nivel. &iexcl;La luz te guiar&aacute;!</p>
+          </ng-container>
+
+          <!-- P&Aacute;GINA 5 (&Iacute;ndice 4): Estrellas 1 y 2 -->
+          <ng-container *ngSwitchCase="4">
+            <h2 class="titulo-prototipo">La Maestr&iacute;a</h2>
+            <p class="texto-manual">Tu destreza ser&aacute; evaluada al final de cada nivel mediante las Estrellas de Maestr&iacute;a. &iexcl;Aspira a la perfecci&oacute;n!</p>
+            
+            <div class="manual-lista-estrellas">
+              <div class="item-estrella">
+                <div class="icono-estrella-manual" style="font-size: 1.5rem; text-shadow: 1px 1px 0 #000, 0 0 10px rgba(255,215,0,0.8);">&#11088;</div>
+                <p class="texto-manual"><strong>1. Victoria:</strong> Gu&iacute;a al ogro hasta su tesoro final sano y salvo. &iexcl;Solo necesitas sobrevivir!</p>
+              </div>
+              <div class="item-estrella">
+                <div class="icono-estrella-manual" style="font-size: 1.5rem; text-shadow: 1px 1px 0 #000, 0 0 10px rgba(255,215,0,0.8);">&#11088;</div>
+                <p class="texto-manual"><strong>2. Recolecci&oacute;n:</strong> Aseg&uacute;rate de que el ogro recoja todos los cofres esparcidos en el laberinto antes de la meta.</p>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- P&Aacute;GINA 7 (&Iacute;ndice 6): Ap&eacute;ndice Pt. 1 -->
+          <ng-container *ngSwitchCase="6">
+            <div class="apendice-tecnico">
+              <h2 class="titulo-prototipo serio">Ap&eacute;ndice Pedag&oacute;gico</h2>
+              <p class="texto-manual"><strong>Nota del Desarrollador:</strong> Este nivel est&aacute; dise&ntilde;ado bajo principios fundamentales de la ense&ntilde;anza de Ciencias de la Computaci&oacute;n.</p>
+              
+              <h3 class="subtitulo-serio">1. Pensamiento Algor&iacute;tmico</h3>
+              <p class="texto-manual">El jugador debe analizar el laberinto, identificar obst&aacute;culos (rocas) y trazar una ruta mental antes de escribir. Este proceso fomenta la capacidad de dividir un problema complejo en una serie de pasos discretos y l&oacute;gicos.</p>
+              
+              <h3 class="subtitulo-serio">2. Ejecuci&oacute;n Secuencial</h3>
+              <p class="texto-manual">El motor de c&oacute;digo eval&uacute;a las instrucciones estrictamente de arriba hacia abajo (Top-to-Bottom). Esto interioriza el concepto de flujo de control lineal, demostrando que el orden de las instrucciones altera el resultado final del programa.</p>
+            </div>
+          </ng-container>
+
+          <!-- ====== COPIA DE IMPARES PARA M&Oacute;VIL ====== -->
+
+          <!-- P&Aacute;GINA 2: LOS CONTROLES (Copia M&oacute;vil) -->
+          <ng-container *ngSwitchCase="1">
+            <h2 class="titulo-prototipo">Los Comandos</h2>
+            <p class="texto-manual">Para mover al Ogro, debes invocar comandos de direcci&oacute;n. Puedes escribirlos o usar las Tarjetas de Acci&oacute;n:</p>
+            <div class="manual-grid-tarjetas">
+              <div class="mock-tarjeta azul">Arriba</div>
+              <div class="mock-tarjeta verde">Abajo</div>
+              <div class="mock-tarjeta rojo">Izquierda</div>
+              <div class="mock-tarjeta morado">Derecha</div>
+            </div>
+            <p class="texto-manual mt-2">Recuerda: El motor ejecuta tu c&oacute;digo secuencialmente, de arriba hacia abajo. &iexcl;Revisa tu l&oacute;gica antes de compilar!</p>
+          </ng-container>
+
+          <!-- NUEVA P&Aacute;GINA 4 (&Iacute;ndice 3): Poci&oacute;n de Vida (Copia M&oacute;vil) -->
+          <ng-container *ngSwitchCase="3">
+            <h2 class="titulo-prototipo">B&aacute;lsamo Vital</h2>
+            <div class="manual-imagenes-centro">
+              <img src="/assets/images/aventura/objetos/pocion-vida.png" alt="Vida" class="img-manual">
+            </div>
+            <h3 class="subtitulo-magico">Poci&oacute;n de Salud</h3>
+            <p class="texto-manual">El calabozo no perdona los errores de compilaci&oacute;n. Si tu c&oacute;digo falla y el Ogro tropieza hacia su perdici&oacute;n, perder&aacute;s un coraz&oacute;n de salud.</p>
+            <p class="texto-manual">Bebe la poci&oacute;n roja para restaurar tu vitalidad y tener otra oportunidad para depurar tu c&oacute;digo. &iexcl;No te rindas, Aprendiz!</p>
+          </ng-container>
+
+          <!-- P&Aacute;GINA 6 (&Iacute;ndice 5): Estrella 3 (Copia M&oacute;vil) -->
+          <ng-container *ngSwitchCase="5">
+            <h2 class="titulo-prototipo">El C&oacute;digo Puro</h2>
+            <p class="texto-manual">La tercera estrella est&aacute; reservada solo para los verdaderos hechiceros del c&oacute;digo:</p>
+            
+            <div class="manual-lista-estrellas">
+              <div class="item-estrella">
+                <div class="icono-estrella-manual" style="font-size: 1.5rem; text-shadow: 1px 1px 0 #000, 0 0 10px rgba(255,215,0,0.8);">&#11088;</div>
+                <p class="texto-manual"><strong>3. Sin Ayudas:</strong> Supera el nivel sin usar las Tarjetas de Acci&oacute;n ni Pociones M&aacute;gicas. Deber&aacute;s tipear cada l&iacute;nea a mano.</p>
+              </div>
+            </div>
+            
+            <p class="texto-manual mt-2" style="font-style: italic; opacity: 0.9; text-align: center;">
+              Nota: Consultar este Manual nunca te penalizar&aacute;. &iexcl;Un buen programador siempre lee la documentaci&oacute;n!
+            </p>
+          </ng-container>
+
+          <!-- P&Aacute;GINA 8 (&Iacute;ndice 7): Ap&eacute;ndice Pt. 2 (Copia M&oacute;vil) -->
+          <ng-container *ngSwitchCase="7">
+            <div class="apendice-tecnico">
+              <h3 class="subtitulo-serio">3. Introducci&oacute;n a la Sintaxis</h3>
+              <p class="texto-manual">El formato <code>objeto.metodo()</code> (ej. <code>ogro.caminarAbajo()</code>) act&uacute;a como un primer acercamiento a la Programaci&oacute;n Orientada a Objetos (POO). El estudiante se familiariza con la notaci&oacute;n de punto y la invocaci&oacute;n de funciones sin requerir teor&iacute;a compleja previa.</p>
+              
+              <h3 class="subtitulo-serio">4. Andamiaje Cognitivo (Scaffolding)</h3>
+              <p class="texto-manual">El uso de Tarjetas de Acci&oacute;n funciona como una rueda de entrenamiento. Permite a los principiantes construir l&oacute;gica mediante interacci&oacute;n visual (Drag/Click &amp; Drop) reduciendo la frustraci&oacute;n por errores de tipeo o sintaxis, preparando el terreno para la escritura de c&oacute;digo puro.</p>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- P&aacute;gina Derecha (Solo Desktop) -->
+      <div class="hoja hoja-derecha" *ngIf="!esMovil && paginaActual + 1 < totalPaginas">
+        <div [ngSwitch]="paginaActual + 1">
+          <!-- P&Aacute;GINA 2: LOS CONTROLES -->
+          <ng-container *ngSwitchCase="1">
+            <h2 class="titulo-prototipo">Los Comandos</h2>
+            <p class="texto-manual">Para mover al Ogro, debes invocar comandos de direcci&oacute;n. Puedes escribirlos o usar las Tarjetas de Acci&oacute;n:</p>
+            <div class="manual-grid-tarjetas">
+              <div class="mock-tarjeta azul">Arriba</div>
+              <div class="mock-tarjeta verde">Abajo</div>
+              <div class="mock-tarjeta rojo">Izquierda</div>
+              <div class="mock-tarjeta morado">Derecha</div>
+            </div>
+            <p class="texto-manual mt-2">Recuerda: El motor ejecuta tu c&oacute;digo secuencialmente, de arriba hacia abajo. &iexcl;Revisa tu l&oacute;gica antes de compilar!</p>
+          </ng-container>
+          
+          <!-- NUEVA P&Aacute;GINA 4 (&Iacute;ndice 3): Poci&oacute;n de Vida -->
+          <ng-container *ngSwitchCase="3">
+            <h2 class="titulo-prototipo">B&aacute;lsamo Vital</h2>
+            <div class="manual-imagenes-centro">
+              <img src="/assets/images/aventura/objetos/pocion-vida.png" alt="Vida" class="img-manual">
+            </div>
+            <h3 class="subtitulo-magico">Poci&oacute;n de Salud</h3>
+            <p class="texto-manual">El calabozo no perdona los errores de compilaci&oacute;n. Si tu c&oacute;digo falla y el Ogro tropieza hacia su perdici&oacute;n, perder&aacute;s un coraz&oacute;n de salud.</p>
+            <p class="texto-manual">Bebe la poci&oacute;n roja para restaurar tu vitalidad y tener otra oportunidad para depurar tu c&oacute;digo. &iexcl;No te rindas, Aprendiz!</p>
+          </ng-container>
+
+          <!-- P&Aacute;GINA 6 (&Iacute;ndice 5): Estrella 3 -->
+          <ng-container *ngSwitchCase="5">
+            <h2 class="titulo-prototipo">El C&oacute;digo Puro</h2>
+            <p class="texto-manual">La tercera estrella est&aacute; reservada solo para los verdaderos hechiceros del c&oacute;digo:</p>
+            
+            <div class="manual-lista-estrellas">
+              <div class="item-estrella">
+                <div class="icono-estrella-manual" style="font-size: 1.5rem; text-shadow: 1px 1px 0 #000, 0 0 10px rgba(255,215,0,0.8);">&#11088;</div>
+                <p class="texto-manual"><strong>3. Sin Ayudas:</strong> Supera el nivel sin usar las Tarjetas de Acci&oacute;n ni Pociones M&aacute;gicas. Deber&aacute;s tipear cada l&iacute;nea a mano.</p>
+              </div>
+            </div>
+            
+            <p class="texto-manual mt-2" style="font-style: italic; opacity: 0.9; text-align: center;">
+              Nota: Consultar este Manual nunca te penalizar&aacute;. &iexcl;Un buen programador siempre lee la documentaci&oacute;n!
+            </p>
+          </ng-container>
+
+          <!-- P&Aacute;GINA 8 (&Iacute;ndice 7): Ap&eacute;ndice Pt. 2 -->
+          <ng-container *ngSwitchCase="7">
+            <div class="apendice-tecnico">
+              <h3 class="subtitulo-serio">3. Introducci&oacute;n a la Sintaxis</h3>
+              <p class="texto-manual">El formato <code>objeto.metodo()</code> (ej. <code>ogro.caminarAbajo()</code>) act&uacute;a como un primer acercamiento a la Programaci&oacute;n Orientada a Objetos (POO). El estudiante se familiariza con la notaci&oacute;n de punto y la invocaci&oacute;n de funciones sin requerir teor&iacute;a compleja previa.</p>
+              
+              <h3 class="subtitulo-serio">4. Andamiaje Cognitivo (Scaffolding)</h3>
+              <p class="texto-manual">El uso de Tarjetas de Acci&oacute;n funciona como una rueda de entrenamiento. Permite a los principiantes construir l&oacute;gica mediante interacci&oacute;n visual (Drag/Click &amp; Drop) reduciendo la frustraci&oacute;n por errores de tipeo o sintaxis, preparando el terreno para la escritura de c&oacute;digo puro.</p>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bot&oacute;n Siguiente -->
+    <button class="flecha flecha-der" *ngIf="puedeAvanzar" (click)="siguientePagina()">&#9654;</button>
+  </div>
+</div>
+
 </div>

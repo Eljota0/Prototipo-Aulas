@@ -10,6 +10,8 @@ export interface Instruccion {
   texto: string;
   color: string;
   tieneError: boolean;
+  fija?: boolean;
+  esPlaceholder?: boolean;
 }
 
 @Component({
@@ -24,9 +26,15 @@ export class LayoutJuegoComponent {
   lineasCodigo: Instruccion[] = [{ texto: '', color: '#d4d4d4', tieneError: false }];
   
   // Estado de ejecución
-  ejecutando: boolean = false;
+  @Input() ejecutando: boolean = false;
 
-  // Servicio de Notificaciones
+  // Extensión para Modo Plantilla
+  @Input() modoPlantilla: boolean = false;
+  @Input() listoParaEjecutar: boolean = false;
+  @Output() onLimpiarPlantilla = new EventEmitter<void>();
+  @Output() onBorrarLineaPlantilla = new EventEmitter<void>();
+  @Output() onDeshacerPaso = new EventEmitter<string>();
+
   // Servicio de Notificaciones
   private notificationService = inject(NotificationService);
   private router = inject(Router);
@@ -41,27 +49,52 @@ export class LayoutJuegoComponent {
   // Flag para habilitar el modo anticopia en la consola
   @Input() antiCopiaActivo: boolean = false;
 
+  // Nivel actual del juego (para la poción de clarividencia)
+  @Input() nivelActual: number = 1;
+
+  // Estado inicial del inventario
+  @Input() estadoObjetos?: any;
+
   // Emisor hacia el nivel (Ogro) con el código ensamblado
   @Output() ejecutarJuego = new EventEmitter<string>();
 
-  // Emisor hacia el nivel para el uso de pociones
-  @Output() onUsarItem = new EventEmitter<'roja' | 'verde' | 'amarilla'>();
+  // Emisor hacia el nivel (Ogro) cuando se usa un ítem
+  @Output() onUsarItem = new EventEmitter<'roja' | 'verde' | 'amarilla' | 'libro'>();
+
+  // Emisor del toggle de Draco
+  @Output() onToggleDraco = new EventEmitter<boolean>();
+
+  // Emisor hacia el nivel cuando se usa una tarjeta de acción
+  @Output() onUsarTarjeta = new EventEmitter<TarjetaConfig>();
+
+  // Permite que un Nivel intercepte la inserción sin afectar a la consola automáticamente
+  @Input() controlManualTarjetas: boolean = false;
 
   // Método accionado por la Baraja para agregar código
   agregarCodigo(tarjeta: TarjetaConfig) {
+    if (this.controlManualTarjetas) {
+      this.onUsarTarjeta.emit(tarjeta);
+      return;
+    }
     if (this.consola) {
       this.consola.insertarDesdeTarjeta(tarjeta);
+      this.onUsarTarjeta.emit(tarjeta);
     }
   }
 
   // Método accionado por la Consola cuando el usuario borra una línea completa
   eliminarLinea(index: number) {
+    if (this.modoPlantilla && this.lineasCodigo[index]?.fija) return;
     this.lineasCodigo.splice(index, 1);
     this.verificarLineaMinima();
   }
 
   // Toolbar: Borrar última línea
   borrarUltimaLinea() {
+    if (this.modoPlantilla) {
+      this.onBorrarLineaPlantilla.emit();
+      return;
+    }
     if (this.lineasCodigo.length > 0) {
       this.lineasCodigo.pop();
     }
@@ -70,6 +103,10 @@ export class LayoutJuegoComponent {
 
   // Toolbar: Limpiar Todo
   limpiarTodo() {
+    if (this.modoPlantilla) {
+      this.onLimpiarPlantilla.emit();
+      return;
+    }
     this.lineasCodigo = [{ texto: '', color: '#d4d4d4', tieneError: false }];
   }
 
@@ -102,9 +139,6 @@ export class LayoutJuegoComponent {
     
     // Lo disparamos hacia el Nivel (Ogro)
     this.ejecutarJuego.emit(codigoEnsamblado);
-    
-    // Apagamos la UI de ejecución poco después
-    setTimeout(() => this.ejecutando = false, 2000);
   }
 
   // Utilidad: Asegurar que nunca quede en 0 líneas
@@ -116,5 +150,12 @@ export class LayoutJuegoComponent {
 
   abandonarPartida() {
     this.router.navigate(['/pantalla-principal']);
+  }
+
+  // Puente: Activa la poción de clarividencia en la consola
+  activarClarividencia() {
+    if (this.consola) {
+      this.consola.usarPocionClarividencia();
+    }
   }
 }

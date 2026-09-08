@@ -62,12 +62,12 @@ export interface ResultadoEvaluacionProduccionMasiva
   bucleValido: boolean;
 }
 
-export type FaseTaladro = 1 | 2 | 3 | 4;
+export type FaseTaladro = 1 | 2 | 3;
 
 export interface BanderasEstrategiaTaladro {
   estrategiaVaporCorrecta: boolean;
   estrategiaPesoCorrecta: boolean;
-  estrategiaCarbonCorrecta: boolean;
+  estrategiaAguaCorrecta: boolean;
 }
 
 export interface ResultadoEvaluacionTaladro {

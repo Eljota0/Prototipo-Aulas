@@ -335,6 +335,94 @@ $ash-colors: #BC4B42, #E43C19, #EC4121, #8B2216;
   box-shadow: 0 0 10px rgba(255, 183, 0, 0.2), inset 0 3px 6px rgba(0,0,0,0.8);
 }
 
+/* --- SISTEMA DE VISIBILIDAD DE CONTRASEÑA --- */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding-right: 60px; /* Deja espacio para el botón OJO */
+}
+
+.btn-ver-clave {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #ffb700;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+}
+
+.icono-toggle {
+  font-size: 1.5rem;
+  opacity: 0.6;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.btn-ver-clave:hover {
+  color: #ffffff;
+}
+
+.btn-ver-clave:hover .icono-toggle {
+  opacity: 1;
+}
+
+.btn-ver-clave:active {
+  transform: translateY(2px);
+}
+
+/* --- CHECKLIST DE CONTRASEÑA (HORIZONTAL) --- */
+.password-requirements {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.password-requirements li {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.75rem;
+  color: #f0f0f0; /* Blanco roto para máximo contraste */
+  text-shadow: 1px 1px 0px #000000, 2px 2px 0px rgba(0,0,0,0.5); /* Sombra dura retro */
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.3s ease;
+}
+
+.password-requirements li::before {
+  content: 'x';
+  color: #ff4444; /* Rojo de error */
+  font-weight: bold;
+}
+
+.password-requirements li.valido {
+  color: #4CAF50; /* Verde pixel RPG (true) */
+}
+
+.password-requirements li.valido::before {
+  content: 'v';
+  color: #4CAF50;
+}
+
+/* --- CLASE DE ERROR GLOBAL --- */
+.input-error {
+  border: 2px solid #ff3333 !important;
+  box-shadow: 0 0 5px #ff3333, inset 0 3px 6px rgba(0,0,0,0.8) !important;
+}
+
 /* --- MENSAJES DE ERROR --- */
 .error-text {
   color: #ff4444; /* Rojo de alerta */
@@ -603,4 +691,16 @@ $ash-colors: #BC4B42, #E43C19, #EC4121, #8B2216;
     padding: 10px 24px;
     font-size: 1rem;
   }
+}
+
+/* =========================================
+   OVERRIDE DE AUTOFILL DE WEBKIT (AISLADO)
+   ========================================= */
+::ng-deep .forge-layout input:-webkit-autofill,
+::ng-deep .forge-layout input:-webkit-autofill:hover,
+::ng-deep .forge-layout input:-webkit-autofill:focus,
+::ng-deep .forge-layout input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #111111 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
 }

@@ -287,6 +287,35 @@
   border-color: #7fffd4; 
 }
 
+/* --- SISTEMA DE VISIBILIDAD DE CONTRASEÑA --- */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* Forzamos el padding derecho para no pisar el icono, respetando la estructura base */
+.input-group .input-wrapper input {
+  padding-right: 40px;
+}
+
+.icono-toggle {
+  position: absolute;
+  right: 12px;
+  color: #8DFBE3; /* Color específico dictado */
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity 0.2s ease-in-out;
+  /* Centrado vertical matemático seguro */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.icono-toggle:hover {
+  opacity: 1;
+}
+
 
 /* --- 4. BOTONES DE ACCIÓN (Arquitectura 16-bits) --- */
 .retro-btn {

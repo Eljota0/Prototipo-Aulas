@@ -17,10 +17,26 @@ export class CambiarContrasenaComponent {
   confirmarPass: string = '';
   cargando: boolean = false;
 
+  mostrarActual: boolean = false;
+  mostrarNueva: boolean = false;
+  mostrarConfirmacion: boolean = false;
+
   constructor(
     private notificationService: NotificationService,
     private router: Router
   ) {}
+
+  toggleActual(): void {
+    this.mostrarActual = !this.mostrarActual;
+  }
+
+  toggleNueva(): void {
+    this.mostrarNueva = !this.mostrarNueva;
+  }
+
+  toggleConfirmacion(): void {
+    this.mostrarConfirmacion = !this.mostrarConfirmacion;
+  }
 
   submitForm(event: Event): void {
     event.preventDefault();

@@ -174,7 +174,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  padding: 10px; /* El padding que antes estaba en inventory-section */
+  padding: 10px;
+  align-items: center; /* El padding que antes estaba en inventory-section */
 }
 
 /* ==========================================================================
@@ -183,6 +184,11 @@
 .action-card {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 56px;
+  min-width: 80px;
   width: max-content;
   border: 2px solid #000;
   border-radius: 4px; /* Un redondeo mínimo, casi cuadrado */
@@ -198,6 +204,11 @@
   
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   cursor: pointer;
+  
+  /* Prevención de selección de texto y arrastre */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
   
   /* Alineación para que no salte al empujar */
   margin-bottom: 5px; 
@@ -216,19 +227,24 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0px 0 #000;
 }
 
-.card-title {
-  font-family: 'TuFuentePixel', monospace;
-  font-size: 1.1rem;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 5px;
-  border-bottom: 1px solid rgba(0,0,0,0.5);
-  padding-bottom: 3px;
+.card-etiqueta-container {
+  width: 100%;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+  margin-bottom: 4px;
+  padding-bottom: 2px;
 }
 
-.card-code {
+.card-etiqueta {
+  font-family: 'TuFuentePixel', monospace;
+  font-size:  0.85rem;
+  font-weight: bold;
+  text-align: center;
+  display: block;
+}
+
+.card-codigo {
   font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 0.75rem;
+  font-size:  1.05rem;
   font-weight: bold;
   text-align: center;
   margin-top: 2px;
@@ -265,6 +281,9 @@
   height: auto;
   cursor: pointer;
   transition: all 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* Tamaños Diferenciados */
@@ -450,8 +469,8 @@
     max-width: calc(50% - 6px);
   }
 
-  .card-title { font-size: var(--mobile-card-title-size); margin-bottom: 2px; padding-bottom: 1px; }
-  .card-code { font-size: var(--mobile-card-code-size); }
+  .card-etiqueta { font-size: var(--mobile-card-title-size); margin-bottom: 2px; padding-bottom: 1px; }
+  .card-codigo { font-size: var(--mobile-card-code-size); }
   .inventory-main-header { padding: 4px 10px; }
   .inventory-title { font-size: 0.75rem; }
 }
@@ -490,13 +509,12 @@
     padding: 0.3rem;
   }
 
-  .card-title {
+  .card-etiqueta {
     font-size: 0.8rem;
     margin-bottom: 2px;
-    padding-bottom: 2px;
   }
 
-  .card-code {
+  .card-codigo {
     font-size: 0.6rem;
   }
 

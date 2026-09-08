@@ -31,6 +31,11 @@ export class LoginComponent implements OnInit {
   email: string = '';
   password: string = '';
   isLoading: boolean = false;
+  mostrarClave: boolean = false;
+
+  toggleClave(): void {
+    this.mostrarClave = !this.mostrarClave;
+  }
 
   // Centralizamos los avatares aquí
   private readonly DRACO_AVATARS: string[] = [
@@ -80,6 +85,14 @@ export class LoginComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  iniciarConGoogle(): void {
+    // Conserva la acción visual hasta conectar OAuth con el backend real.
+    this.notificationService.show(
+      'Integración con Google en desarrollo (requiere OAuth2 en producción).',
+      'success'
+    );
   }
 
   private setRandomAvatar(): void {
