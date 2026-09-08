@@ -1,0 +1,240 @@
+<div class="nivel-dos-shell nivel-tres-shell">
+  <app-game-header (salir)="salir()"></app-game-header>
+
+  <main class="juego-layout">
+    <section class="tablero-juego" aria-label="Batalla de las variables">
+      <div class="hud-juego">
+        <div class="vidas" aria-label="Vidas disponibles">
+          <span *ngFor="let vida of [1, 2, 3]" [class.perdida]="vida > vidas">♥</span>
+        </div>
+
+        <div class="contador-reparacion" aria-label="Fases superadas">
+          <span class="icono-herramienta">◈</span>
+          <strong>{{ fasesSuperadas }} / {{ fases.length }}</strong>
+        </div>
+
+        <div class="contador-fase">{{ faseActual.numero }} — {{ fases.length }}</div>
+      </div>
+
+      <div class="escena-maquina escena-magia"
+           [class.cueva-oscura]="!luzActiva"
+           [class.memorizando]="estadoEscena === 'memorizando'"
+           [class.hechizo-listo]="estadoEscena === 'hechizo-listo'"
+           [class.atacando]="estadoEscena === 'atacando'"
+           [class.sobrecarga]="estadoEscena === 'sobrecarga'"
+           [class.victoria]="estadoEscena === 'victoria'">
+        <div class="luz-magica"></div>
+        <div class="oscuridad-cueva"></div>
+
+        <aside class="banco-memoria" aria-label="Variables almacenadas">
+          <div class="runa-memoria" data-tipo="booleano"
+               [class.requerida]="variableRequerida('luz')" [class.llena]="estaEnMemoria('luz')">
+            <div class="runa-cabecera"><span>BOOL</span><strong>luz</strong></div>
+            <div class="nucleo-memoria"><i aria-hidden="true"></i><code>{{ valorMemoria('luz') }}</code></div>
+            <small>{{ estaEnMemoria('luz') ? tipoMemoria('luz') : 'ESPACIO DISPONIBLE' }}</small>
+          </div>
+          <div class="runa-memoria" data-tipo="texto"
+               [class.requerida]="variableRequerida('elemento')" [class.llena]="estaEnMemoria('elemento')">
+            <div class="runa-cabecera"><span>STR</span><strong>elemento</strong></div>
+            <div class="nucleo-memoria"><i aria-hidden="true"></i><code>{{ valorMemoria('elemento') }}</code></div>
+            <small>{{ estaEnMemoria('elemento') ? tipoMemoria('elemento') : 'ESPACIO DISPONIBLE' }}</small>
+          </div>
+          <div class="runa-memoria" data-tipo="entero"
+               [class.requerida]="variableRequerida('cantidad')" [class.llena]="estaEnMemoria('cantidad')">
+            <div class="runa-cabecera"><span>INT</span><strong>cantidad</strong></div>
+            <div class="nucleo-memoria"><i aria-hidden="true"></i><code>{{ valorMemoria('cantidad') }}</code></div>
+            <small>{{ estaEnMemoria('cantidad') ? tipoMemoria('cantidad') : 'ESPACIO DISPONIBLE' }}</small>
+          </div>
+        </aside>
+
+        <div class="campo-batalla">
+          <div class="murcielagos" [class.con-jefe]="faseActual.numero === 4"
+               [attr.aria-label]="faseActual.numero === 4 ? 'Murciélago alfa' : 'Tres murciélagos'">
+            <ng-container *ngIf="faseActual.numero < 4">
+              <div class="murcielago" *ngFor="let enemigo of [1, 2, 3]"
+                   role="img" aria-label="Murciélago de la cueva"
+                   [class.derrotado]="enemigo <= murcielagosDerrotados"></div>
+            </ng-container>
+            <div class="murcielago murcielago-jefe" *ngIf="faseActual.numero === 4"
+                 role="img" aria-label="Murciélago alfa, jefe de la cueva"
+                 [class.derrotado]="estadoEscena === 'victoria'">
+              <span>ALFA</span>
+            </div>
+          </div>
+
+          <div class="proyectiles" aria-hidden="true">
+            <i *ngFor="let proyectil of [1, 2, 3]" [class.visible]="cantidadAtaques >= proyectil"></i>
+          </div>
+
+          <div class="drako-hechicero" role="img"
+               aria-label="Drako preparando las variables para combatir">
+            <i class="orbe" [class.encendido]="elementoActivo === 'Fuego'"></i>
+          </div>
+        </div>
+
+        <div class="diagnostico diagnostico-magia">
+          <span>ESTADO DEL HECHIZO</span>
+          <strong>{{ estadoEscenaTexto }}</strong>
+          <p>{{ bitacora }}</p>
+        </div>
+
+        <div class="mision-flotante">
+          <span>FASE {{ faseActual.numero }} · {{ faseActual.concepto | uppercase }}</span>
+          <strong>{{ faseActual.titulo }}</strong>
+          <p>{{ faseActual.objetivo }}</p>
+          <button type="button" (click)="pistaVisible = !pistaVisible">
+            {{ pistaVisible ? 'OCULTAR PISTA' : 'MOSTRAR PISTA' }}
+          </button>
+          <small *ngIf="pistaVisible">{{ faseActual.pista }}</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-derecho">
+      <article class="consola-codigo">
+        <div class="titulo-archivo">pergamino.drg</div>
+
+        <div class="editor-codigo">
+          <div class="numeros-linea" aria-hidden="true">
+            <span *ngFor="let numero of numerosLinea">{{ numero }}</span>
+          </div>
+
+          <div class="codigo-estructurado codigo-variables">
+            <textarea
+              [(ngModel)]="codigoUsuario"
+              [rows]="filasCodigoUsuario"
+              [disabled]="ejecutando || falloFase || gameOver || nivelCompletado"
+              [readOnly]="antiCopiaActivo"
+              spellcheck="false"
+              autocomplete="off"
+              aria-label="Declaraciones de variables"
+              placeholder="// Inserta aquí las variables"></textarea>
+            <code class="linea-fija instruccion-trigger">{{ faseActual.instruccionFija }}</code>
+          </div>
+
+          <div class="errores-panel" *ngIf="errores.length > 0">
+            <p *ngFor="let error of errores">⚠ {{ error }}</p>
+          </div>
+        </div>
+
+        <div class="acciones-editor">
+          <div class="acciones-limpieza">
+            <button type="button" class="btn-borrar" (click)="borrarLinea()"
+                    [disabled]="ejecutando || falloFase || gameOver">Borrar Línea</button>
+            <button type="button" class="btn-borrar" (click)="limpiarPergamino()"
+                    [disabled]="ejecutando || falloFase || gameOver">Limpiar Todo</button>
+          </div>
+
+          <button type="button" class="btn-ejecutar" (click)="ejecutarCodigo()"
+                  [disabled]="ejecutando || falloFase || gameOver || nivelCompletado">
+            {{ ejecutando ? '◈ LEYENDO MEMORIA...' : '▶ Ejecutar' }}
+          </button>
+        </div>
+      </article>
+
+      <article class="inventario">
+        <div class="titulo-inventario">INVENTARIO</div>
+
+        <div class="tabs-inventario">
+          <button type="button" [class.activa]="pestanaInventario === 'acciones'"
+                  (click)="pestanaInventario = 'acciones'">VARIABLES</button>
+          <button type="button" [class.activa]="pestanaInventario === 'objetos'"
+                  (click)="pestanaInventario = 'objetos'">OBJETOS</button>
+        </div>
+
+        <div class="contenido-inventario tarjetas-variables"
+             [class.fase-final]="faseActual.numero === 4"
+             *ngIf="pestanaInventario === 'acciones'; else objetos">
+          <button type="button" *ngFor="let tarjeta of faseActual.tarjetas"
+                  class="tarjeta-codigo" [attr.data-tono]="tarjeta.tono"
+                  (click)="insertarTarjeta(tarjeta)"
+                  [disabled]="ejecutando || falloFase || gameOver || nivelCompletado">
+            <span class="tipo-tarjeta">{{ tarjeta.tipo }}</span>
+            <strong>{{ tarjeta.etiqueta }}</strong>
+            <code>{{ tarjeta.codigo }}</code>
+          </button>
+        </div>
+
+        <ng-template #objetos>
+          <div class="contenido-objetos">
+            <button type="button" class="objeto objeto-boton" (click)="ayudaVisible = true">
+              <img src="assets/images/aventura/objetos/libro-ayuda.png" alt="Grimorio de ayuda">
+              <span>Grimorio</span>
+            </button>
+            <div class="objeto">
+              <img src="assets/images/aventura/objetos/pocion-clarividencia.png" alt="Poción de clarividencia">
+              <span>Clarividencia</span>
+            </div>
+            <div class="objeto">
+              <img src="assets/images/aventura/objetos/pocion-tiempo.png" alt="Poción de tiempo">
+              <span>Tiempo</span>
+            </div>
+            <div class="objeto">
+              <img src="assets/images/aventura/objetos/pocion-vida.png" alt="Poción de vida">
+              <span>Vida</span>
+            </div>
+          </div>
+        </ng-template>
+      </article>
+    </section>
+  </main>
+
+  <div class="modal-overlay" *ngIf="falloFase || gameOver">
+    <section class="modal-resultado">
+      <span class="modal-icono">!</span>
+      <h2>{{ gameOver ? 'SIN ENERGÍA MÁGICA' : tituloFallo }}</h2>
+      <p>{{ bitacora }}</p>
+      <div class="errores-modal" *ngIf="errores.length">
+        <p *ngFor="let error of errores">{{ error }}</p>
+      </div>
+      <p class="vidas-restantes">Vidas restantes: {{ vidas }}</p>
+      <button type="button" *ngIf="!gameOver" (click)="reintentarFase()">Reintentar fase</button>
+      <button type="button" *ngIf="gameOver" (click)="reiniciarNivel()">Reiniciar nivel</button>
+    </section>
+  </div>
+
+  <div class="celebracion-overlay" *ngIf="nivelCompletado">
+    <div class="particulas-victoria" aria-hidden="true">
+      <i *ngFor="let particula of [1,2,3,4,5,6,7,8,9,10,11,12]"></i>
+    </div>
+
+    <section class="celebracion-panel nivel-final">
+      <img src="/assets/images/exprecionsedraco/feliz.png" class="draco-feliz"
+           alt="Drako celebrando el dominio de las variables">
+
+      <h1>¡MISIÓN COMPLETADA!</h1>
+      <p class="mensaje-recompensa">{{ mensajeRecompensa }}</p>
+      <div class="estrellas-celebracion" [attr.aria-label]="estrellas + ' estrellas obtenidas'">
+        <span *ngFor="let estrella of estrellasAnimadas; let indice = index"
+              [style.animation-delay.ms]="350 + indice * 260">★</span>
+      </div>
+
+      <div class="resultado-grid resultado-final">
+        <div><strong>{{ calificacion }}</strong><span>calificación</span></div>
+        <div><strong>{{ tiempoSegundos }}s</strong><span>tiempo</span></div>
+        <div><strong>{{ intentosCalificables }}</strong><span>intentos</span></div>
+      </div>
+      <p class="detalle-final">
+        {{ mensajeSincronizacion || 'Dominaste booleanos, textos y enteros para preparar el combate de Drako.' }}
+      </p>
+
+      <div class="botones-celebracion">
+        <button type="button" class="btn-secundario" (click)="reiniciarNivel()">REINICIAR NIVEL</button>
+        <button type="button" class="btn-victoria" (click)="salir()">SALIR DE LA MISIÓN</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" *ngIf="ayudaVisible">
+    <section class="modal-resultado modal-ayuda">
+      <span class="modal-icono">▣</span>
+      <h2>GRIMORIO DE VARIABLES</h2>
+      <p><strong>Una variable</strong> es una caja con nombre que guarda un valor.</p>
+      <p><strong>=</strong> asigna un valor a esa caja; no representa una igualdad matemática.</p>
+      <p><strong>Booleano:</strong> true o false. <strong>Texto:</strong> usa comillas. <strong>Entero:</strong> representa cantidades completas.</p>
+      <p>La línea morada del pergamino es fija: utiliza tus variables después de almacenarlas.</p>
+      <code>luz = true<br>elemento = "Fuego"<br>cantidad = 3</code>
+      <button type="button" (click)="ayudaVisible = false">Cerrar grimorio</button>
+    </section>
+  </div>
+</div>

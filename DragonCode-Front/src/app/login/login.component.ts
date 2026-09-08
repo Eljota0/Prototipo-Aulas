@@ -82,15 +82,6 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  iniciarConGoogle(): void {
-    // Para propósitos de la tesis/prototipo, mostramos una notificación
-    // La implementación real requiere configurar credenciales OAuth2 en Google Cloud.
-    this.notificationService.show(
-      'Integración con Google en desarrollo (Requiere OAuth2 en Producción).', 
-      'success'
-    );
-  }
-
   private setRandomAvatar(): void {
     const randomIndex = Math.floor(Math.random() * this.DRACO_AVATARS.length);
     this.currentAvatar = this.DRACO_AVATARS[randomIndex];

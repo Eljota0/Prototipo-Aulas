@@ -202,7 +202,7 @@ def niveles_del_aula(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ) -> Any:
-    """Retorna los 10 niveles disponibles para jugar en el contexto de un aula."""
+    """Retorna los niveles disponibles para jugar en el contexto de un aula."""
     # Verificar que el jugador esté inscrito en el aula
     inscripcion = db.query(AulaJugador).filter(
         AulaJugador.aula_id == aula_id,
@@ -357,8 +357,22 @@ def eliminar_aula(
     # borrarán automáticamente AulaJugador y RetoPersonalizado. 
     # Por seguridad, si no lo están, podemos borrarlas manualmente o dejar que la BD lo maneje si hay ON DELETE CASCADE.
     # Asumimos que los models tienen cascade (o lo borramos manualmente para asegurar):
-    db.query(AulaJugador).filter(AulaJugador.aula_id == aula_id).delete()
-    db.query(RetoPersonalizado).filter(RetoPersonalizado.aula_id == aula_id).delete()
+    ids_retos = [
+        reto_id
+        for (reto_id,) in db.query(RetoPersonalizado.id).filter(
+            RetoPersonalizado.aula_id == aula_id,
+        ).all()
+    ]
+    if ids_retos:
+        db.query(ProgresoAula).filter(
+            ProgresoAula.reto_personalizado_id.in_(ids_retos),
+        ).delete(synchronize_session=False)
+    db.query(RetoPersonalizado).filter(
+        RetoPersonalizado.aula_id == aula_id,
+    ).delete(synchronize_session=False)
+    db.query(AulaJugador).filter(
+        AulaJugador.aula_id == aula_id,
+    ).delete(synchronize_session=False)
     
     db.delete(aula)
     db.commit()

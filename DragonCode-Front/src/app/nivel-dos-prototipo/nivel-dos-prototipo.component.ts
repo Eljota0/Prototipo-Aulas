@@ -198,6 +198,9 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   private retoActualId?: string;
   private esActividadAula = false;
   private solucionesPorFase = new Map<number, string>();
+  private tiempoTresEstrellas = 60;
+  private tiempoDosEstrellas = 120;
+  private maxIntentosSinPenalidad = 3;
 
   constructor(
     private motor: MotorEjecucionService,
@@ -557,9 +560,13 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
 
     // Misma rúbrica configurada para el Nivel 1 en el backend:
     // 3 estrellas hasta 60 s, 2 hasta 120 s y 1 después de ese tiempo.
-    this.calificacion = intentos <= 1 ? 10 : intentos === 2 ? 8 : 6;
-    this.estrellas = this.tiempoSegundos <= 60 ? 3 : this.tiempoSegundos <= 120 ? 2 : 1;
-    if (intentos > 3) this.estrellas = Math.max(1, this.estrellas - 1);
+    this.calificacion = intentos <= 1 ? 10 : intentos <= 3 ? 8 : 6;
+    this.estrellas = this.tiempoSegundos <= this.tiempoTresEstrellas
+      ? 3
+      : this.tiempoSegundos <= this.tiempoDosEstrellas ? 2 : 1;
+    if (intentos > this.maxIntentosSinPenalidad) {
+      this.estrellas = Math.max(1, this.estrellas - 1);
+    }
     this.guardarProgreso();
   }
 
@@ -610,6 +617,9 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     }
 
     this.antiCopiaActivo = parametros?.anti_copia ?? false;
+    this.tiempoTresEstrellas = parametros?.tiempo_3_estrellas ?? 60;
+    this.tiempoDosEstrellas = parametros?.tiempo_2_estrellas ?? 120;
+    this.maxIntentosSinPenalidad = parametros?.intentos_max_sin_penalidad ?? 3;
     const fasesSeleccionadas = parametros?.fases_seleccionadas
       ?.map(Number)
       .filter(numero => Number.isInteger(numero) && numero >= 1 && numero <= 4);

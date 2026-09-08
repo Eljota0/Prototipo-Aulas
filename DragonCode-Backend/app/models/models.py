@@ -22,6 +22,9 @@ class TipoReto(str, enum.Enum):
     laberinto = "laberinto"
     pocion = "pocion"
     eventos = "eventos"
+    variables = "variables"
+    control_flujo = "control_flujo"
+    bucles = "bucles"
 
 class EstadoReto(str, enum.Enum):
     borrador = "borrador"

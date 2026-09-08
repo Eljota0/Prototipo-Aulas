@@ -1,0 +1,501 @@
+:host {
+  display: block;
+}
+
+.escena-magia {
+  isolation: isolate;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, .82) 0 5%, transparent 17% 83%, rgba(0, 0, 0, .82) 95% 100%),
+    linear-gradient(180deg, rgba(10, 2, 21, .04), rgba(2, 1, 4, .58) 94%),
+    url('/assets/images/aventura/nivel1/terreno/fondo-cueva.png') center / cover;
+  image-rendering: pixelated;
+}
+
+.luz-magica {
+  position: absolute;
+  z-index: 1;
+  left: 48%;
+  top: 48%;
+  width: 78%;
+  height: 72%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 190, 78, .34), rgba(91, 61, 131, .13) 50%, transparent 72%);
+  filter: blur(4px);
+  transform: translate(-50%, -50%);
+  transition: opacity .55s ease;
+}
+
+.oscuridad-cueva {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 40% 70%, rgba(7, 11, 17, .72) 0 9%, rgba(0, 0, 0, .96) 48%);
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+
+.cueva-oscura .oscuridad-cueva { opacity: .91; }
+.cueva-oscura .luz-magica { opacity: .08; }
+
+.banco-memoria {
+  position: absolute;
+  z-index: 6;
+  left: 4%;
+  top: 18%;
+  width: 63%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.runa-memoria {
+  --acento-runa: #637471;
+  position: relative;
+  min-width: 0;
+  min-height: 86px;
+  padding: 0 7px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow: hidden;
+  color: #91a09d;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .045) 0 12%, transparent 12% 88%, rgba(0, 0, 0, .34) 88%),
+    repeating-linear-gradient(0deg, rgba(73, 111, 104, .035) 0 2px, transparent 2px 5px),
+    #080d11;
+  border: 3px solid #243732;
+  box-shadow: inset 0 0 0 2px #050708, inset 0 -12px 18px #030506, 4px 4px 0 rgba(0, 0, 0, .78);
+  transition: border-color .25s ease, color .25s ease, box-shadow .25s ease, transform .2s ease;
+}
+
+.runa-memoria[data-tipo='booleano'] { --acento-runa: #64d2af; }
+.runa-memoria[data-tipo='texto'] { --acento-runa: #e2b951; }
+.runa-memoria[data-tipo='entero'] { --acento-runa: #6d96e8; }
+
+.runa-memoria::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: var(--acento-runa);
+  opacity: .45;
+}
+
+.runa-memoria::after {
+  content: '';
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--acento-runa);
+  border-bottom: 2px solid var(--acento-runa);
+  opacity: .45;
+}
+
+.runa-cabecera {
+  min-width: 0;
+  padding: 7px 1px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(149, 190, 181, .18);
+}
+
+.runa-cabecera span {
+  padding: 3px 4px;
+  flex: 0 0 auto;
+  color: #08100e;
+  background: var(--acento-runa);
+  border: 1px solid rgba(255, 255, 255, .26);
+  font-family: 'TuFuentePixel', monospace;
+  font-size: .38rem;
+  line-height: 1;
+  box-shadow: 2px 2px 0 #000;
+}
+
+.runa-cabecera strong {
+  overflow: hidden;
+  color: #d7dfdd;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: .55rem;
+  text-overflow: ellipsis;
+}
+
+.nucleo-memoria {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 13px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+.nucleo-memoria i {
+  width: 10px;
+  height: 10px;
+  background: #25302e;
+  border: 2px solid #43504d;
+  box-shadow: 2px 2px 0 #000;
+  transform: rotate(45deg);
+}
+
+.nucleo-memoria code {
+  overflow: hidden;
+  color: #a6b1af;
+  font-size: .72rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runa-memoria small {
+  padding-left: 19px;
+  color: #596763;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: .38rem;
+  letter-spacing: .04em;
+}
+
+.runa-memoria.requerida {
+  border-color: var(--acento-runa);
+  box-shadow: inset 0 0 0 2px #050708, inset 0 -12px 18px #030506, 0 0 9px color-mix(in srgb, var(--acento-runa) 35%, transparent), 4px 4px 0 rgba(0, 0, 0, .78);
+  transform: translateY(-2px);
+}
+.runa-memoria.requerida::before { opacity: 1; }
+.runa-memoria.llena {
+  color: #8af4df;
+  border-color: #4ecbb1;
+  box-shadow: inset 0 0 13px rgba(52, 203, 175, .18), 0 0 10px rgba(67, 222, 195, .25);
+}
+.runa-memoria.llena .nucleo-memoria i {
+  background: #ffe274;
+  border-color: #fff1a4;
+  box-shadow: 0 0 9px #ffe274, 2px 2px 0 #000;
+}
+.runa-memoria.llena .nucleo-memoria code { color: #ffe274; }
+.runa-memoria.llena small { color: #73cbb9; }
+
+.campo-batalla {
+  position: absolute;
+  z-index: 3;
+  left: 8%;
+  right: 8%;
+  top: 30%;
+  bottom: 18%;
+}
+
+.campo-batalla::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 82%;
+  height: 24%;
+  background: url('/assets/images/aventura/nivel1/terreno/suelo.png') center / 25% 100%;
+  border: 3px solid #17100e;
+  box-shadow: 0 13px 18px #000;
+  image-rendering: pixelated;
+  transform: translateX(-50%) perspective(400px) rotateX(52deg);
+}
+
+.murcielagos {
+  position: absolute;
+  z-index: 4;
+  left: 42%;
+  right: 3%;
+  /* La horda ocupa una franja de combate propia bajo los paneles de memoria. */
+  top: 22%;
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
+}
+
+.murcielago {
+  position: relative;
+  width: clamp(78px, 9vw, 118px);
+  aspect-ratio: 1.5;
+  background: url('/assets/images/aventura/nivel3/murcielago.png') center / contain no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(5px 8px 3px #000) saturate(.92);
+  animation: volar-murcielago 1.05s steps(2) infinite alternate;
+  transition: opacity .35s ease, filter .35s ease, transform .35s ease;
+}
+
+.murcielago:nth-child(2) { top: 28px; animation-delay: -.3s; }
+.murcielago:nth-child(3) { animation-delay: -.65s; }
+
+.murcielagos.con-jefe {
+  left: 46%;
+  right: 0;
+  top: 18%;
+  justify-content: center;
+}
+
+.murcielago-jefe {
+  width: clamp(155px, 18vw, 220px);
+  aspect-ratio: 1.45;
+  filter: drop-shadow(0 0 9px #c31d4e) drop-shadow(8px 11px 4px #000) saturate(1.35) contrast(1.08);
+  animation: vuelo-jefe 1.25s steps(3) infinite alternate;
+}
+
+.murcielago-jefe::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 8% 5%;
+  background: radial-gradient(ellipse, rgba(194, 31, 73, .5), rgba(78, 25, 106, .22) 48%, transparent 72%);
+  filter: blur(5px);
+  animation: pulso-jefe .8s steps(2) infinite alternate;
+}
+
+.murcielago-jefe span {
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  padding: 4px 7px;
+  color: #ffd76b;
+  background: #2a0817;
+  border: 2px solid #a63354;
+  box-shadow: 3px 3px 0 #000;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: .42rem;
+  letter-spacing: .06em;
+  transform: translateX(-50%);
+}
+
+@keyframes vuelo-jefe {
+  from { transform: translateY(-5px) scale(1); }
+  to { transform: translateY(8px) scale(1.035); }
+}
+
+@keyframes pulso-jefe { to { opacity: .48; transform: scale(1.1); } }
+
+.murcielago.derrotado {
+  opacity: 0;
+  filter: brightness(3) drop-shadow(0 0 15px #ff7a2f);
+  transform: scale(.2) rotate(90deg);
+}
+
+.murcielago-jefe.derrotado {
+  animation: caer-jefe .75s steps(5) forwards;
+}
+
+@keyframes caer-jefe {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  55% { opacity: .9; transform: translateY(18px) scale(1.08) rotate(6deg); filter: brightness(2.6) drop-shadow(0 0 20px #ffb431); }
+  100% { opacity: 0; transform: translateY(95px) scale(.35) rotate(28deg); filter: brightness(3); }
+}
+
+@keyframes volar-murcielago {
+  from { transform: translateY(-4px); }
+  to { transform: translateY(7px); }
+}
+
+.drako-hechicero {
+  position: absolute;
+  z-index: 5;
+  left: 2%;
+  bottom: -4%;
+  width: min(41%, 260px);
+  aspect-ratio: 1;
+  filter: drop-shadow(9px 11px 4px #000) saturate(.94);
+  transform-origin: center bottom;
+}
+
+.drako-hechicero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/assets/images/aventura/nivel3/drako-hechicero.png') center / contain no-repeat;
+  image-rendering: pixelated;
+  transform: scaleX(-1);
+}
+
+.orbe {
+  position: absolute;
+  z-index: 8;
+  left: auto;
+  right: 3%;
+  top: 23%;
+  width: 34px;
+  height: 38px;
+  opacity: .24;
+  background: #28566b;
+  clip-path: polygon(41% 0, 66% 0, 66% 17%, 83% 17%, 83% 34%, 100% 34%, 100% 75%, 83% 75%, 83% 91%, 66% 91%, 66% 100%, 33% 100%, 33% 91%, 16% 91%, 16% 75%, 0 75%, 0 42%, 16% 42%, 16% 25%, 33% 25%, 33% 8%, 41% 8%);
+  box-shadow: 3px 3px 0 #071013;
+  transform-origin: center bottom;
+  transition: opacity .15s steps(2), transform .15s steps(2);
+}
+
+.orbe::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  right: 7px;
+  bottom: 5px;
+  height: 22px;
+  background: #78cbd3;
+  clip-path: polygon(42% 0, 72% 0, 72% 25%, 100% 25%, 100% 75%, 72% 75%, 72% 100%, 28% 100%, 28% 88%, 0 88%, 0 50%, 28% 50%, 28% 17%, 42% 17%);
+}
+
+.orbe::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  bottom: 7px;
+  width: 9px;
+  height: 11px;
+  background: #c9f5db;
+  box-shadow: 6px -13px 0 -2px #78cbd3;
+}
+
+.orbe.encendido {
+  opacity: 1;
+  background: #b92b1e;
+  box-shadow: 3px 3px 0 #230704, -2px 0 0 #6c1714;
+  animation: pulso-fuego .4s steps(2) infinite alternate;
+}
+
+.orbe.encendido::before { background: #f27622; }
+.orbe.encendido::after {
+  background: #ffe069;
+  box-shadow: 6px -13px 0 -2px #ff9e2d;
+}
+
+@keyframes pulso-fuego { to { transform: translateY(-2px) scaleX(.92); } }
+.memorizando .drako-hechicero { animation: lectura-runas .35s steps(2) infinite alternate; }
+@keyframes lectura-runas { to { transform: translateY(-3px); } }
+.hechizo-listo .drako-hechicero {
+  filter: drop-shadow(2px 0 0 #d85a24) drop-shadow(8px 9px 0 #000);
+}
+.atacando .drako-hechicero { animation: impulso-drako .8s steps(3) both; }
+@keyframes impulso-drako {
+  0%, 100% { transform: translateX(0) scale(1); }
+  45% { transform: translateX(9px) scale(1.035); }
+}
+
+.proyectiles {
+  position: absolute;
+  z-index: 7;
+  inset: 0;
+  pointer-events: none;
+}
+.proyectiles i {
+  position: absolute;
+  left: 30%;
+  top: 63%;
+  width: 31px;
+  height: 22px;
+  opacity: 0;
+  background: #bd2f1d;
+  clip-path: polygon(0 18%, 22% 18%, 22% 0, 61% 0, 61% 9%, 83% 9%, 83% 27%, 100% 27%, 100% 73%, 83% 73%, 83% 91%, 61% 91%, 61% 100%, 22% 100%, 22% 82%, 0 82%, 14% 64%, 0 55%, 14% 41%);
+  box-shadow: 3px 3px 0 #240705;
+  image-rendering: pixelated;
+}
+
+.proyectiles i::before {
+  content: '';
+  position: absolute;
+  right: 4px;
+  top: 5px;
+  width: 17px;
+  height: 12px;
+  background: #f58525;
+  box-shadow: inset -5px 0 #ffd65c;
+}
+
+.proyectiles i::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 8px;
+  width: 7px;
+  height: 6px;
+  background: #ff9b29;
+  box-shadow: -7px -5px 0 #8e241b, -7px 6px 0 #e34b1d;
+}
+
+.atacando .proyectiles i.visible { animation: proyectil-uno .75s steps(7, end) forwards; }
+.atacando .proyectiles i:nth-child(2).visible { animation-name: proyectil-dos; animation-delay: .12s; }
+.atacando .proyectiles i:nth-child(3).visible { animation-name: proyectil-tres; animation-delay: .24s; }
+.sobrecarga .proyectiles i { opacity: 1; transform: scale(4); box-shadow: 3px 3px 0 #240705, 0 0 0 2px #7b1813; }
+
+@keyframes proyectil-uno {
+  0% { opacity: 1; transform: translate(0, 0) scale(.7); }
+  90% { opacity: 1; transform: translate(210px, -105px) scale(1.25); }
+  100% { opacity: 0; transform: translate(225px, -115px) scale(2); }
+}
+@keyframes proyectil-dos {
+  0% { opacity: 1; transform: translate(0, 0) scale(.7); }
+  90% { opacity: 1; transform: translate(300px, -75px) scale(1.25); }
+  100% { opacity: 0; transform: translate(315px, -80px) scale(2); }
+}
+@keyframes proyectil-tres {
+  0% { opacity: 1; transform: translate(0, 0) scale(.7); }
+  90% { opacity: 1; transform: translate(390px, -105px) scale(1.25); }
+  100% { opacity: 0; transform: translate(405px, -115px) scale(2); }
+}
+
+.sobrecarga .campo-batalla { animation: temblor-magia .12s steps(2) infinite; }
+@keyframes temblor-magia { to { transform: translate(5px, -3px); filter: brightness(1.6) sepia(.7); } }
+
+.diagnostico-magia {
+  width: min(28%, 195px);
+  border-color: #66538c;
+}
+.diagnostico-magia strong { color: #d4b7ff; }
+
+.codigo-variables textarea {
+  padding: 0;
+  color: #84dff1;
+}
+
+.instruccion-trigger {
+  margin-top: 3px;
+  padding-top: 3px;
+  color: #c795ff;
+  border-top: 1px dashed #49385d;
+}
+
+.tarjetas-variables .tarjeta-codigo { position: relative; }
+.tipo-tarjeta {
+  align-self: center;
+  padding: 2px 5px;
+  color: #fff1af;
+  background: rgba(0, 0, 0, .38);
+  border: 1px solid rgba(255, 255, 255, .25);
+  font-family: 'TuFuentePixel', monospace;
+  font-size: .42rem;
+}
+
+.errores-modal {
+  margin: 12px 0;
+  padding: 8px;
+  color: #ffc0c0;
+  background: rgba(74, 14, 18, .55);
+  border: 1px solid #7e343a;
+  text-align: left;
+}
+.errores-modal p { margin: 4px 0; font-size: .75rem; }
+
+.nivel-tres-shell .celebracion-overlay {
+  background: radial-gradient(circle at 50% 32%, rgba(23, 92, 82, .25), transparent 42%), rgba(0, 0, 0, .91);
+}
+
+@media (max-width: 1180px) {
+  .banco-memoria { width: 66%; }
+  .runa-memoria { min-height: 72px; }
+  .drako-hechicero { left: 1%; width: min(39%, 230px); }
+  .murcielagos { left: 37%; }
+}
+
+@media (max-width: 767px) {
+  .banco-memoria { left: 3%; right: 3%; width: auto; top: 17%; }
+  .diagnostico-magia { display: none; }
+  .campo-batalla { top: 33%; }
+  .drako-hechicero { left: 0; width: min(38%, 195px); }
+  .murcielagos { left: 32%; }
+}

@@ -21,6 +21,6 @@ def calcular_calificacion(intentos: int) -> int:
     """Aplica la rúbrica documental: 10, 8 o 6 según los intentos."""
     if intentos <= 1:
         return 10
-    if intentos == 2:
+    if intentos <= 3:
         return 8
     return 6

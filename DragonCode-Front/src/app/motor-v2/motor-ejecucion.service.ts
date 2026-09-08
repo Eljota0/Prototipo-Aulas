@@ -1,11 +1,17 @@
 import { Injectable } from '@angular/core';
 import { EvaluadorVariablesService } from './evaluador-variables.service';
 import {
+  FaseControlCalidad,
+  FaseProduccionMasiva,
   FaseTaladro,
   ReglasFaseVariables,
   ResultadoEvaluacion,
+  ResultadoEvaluacionControlCalidad,
+  ResultadoEvaluacionProduccionMasiva,
   ResultadoEvaluacionTaladro
 } from './evaluador-nivel';
+import { EvaluadorControlCalidadService } from './evaluador-control-calidad.service';
+import { EvaluadorProduccionMasivaService } from './evaluador-produccion-masiva.service';
 import { EvaluadorTaladroService } from './evaluador-taladro.service';
 
 export type TipoMotor = 'variables';
@@ -14,7 +20,9 @@ export type TipoMotor = 'variables';
 export class MotorEjecucionService {
   constructor(
     private evaluadorVariables: EvaluadorVariablesService,
-    private evaluadorTaladro: EvaluadorTaladroService
+    private evaluadorTaladro: EvaluadorTaladroService,
+    private evaluadorControlCalidad: EvaluadorControlCalidadService,
+    private evaluadorProduccionMasiva: EvaluadorProduccionMasivaService
   ) {}
 
   ejecutar(tipo: TipoMotor, codigo: string, reglas: ReglasFaseVariables): ResultadoEvaluacion {
@@ -26,5 +34,19 @@ export class MotorEjecucionService {
 
   evaluarTaladro(codigo: string, fase: FaseTaladro = 1): ResultadoEvaluacionTaladro {
     return this.evaluadorTaladro.evaluar(codigo, fase);
+  }
+
+  evaluarControlCalidad(
+    codigo: string,
+    fase: FaseControlCalidad
+  ): ResultadoEvaluacionControlCalidad {
+    return this.evaluadorControlCalidad.evaluar(codigo, fase);
+  }
+
+  evaluarProduccionMasiva(
+    codigo: string,
+    fase: FaseProduccionMasiva
+  ): ResultadoEvaluacionProduccionMasiva {
+    return this.evaluadorProduccionMasiva.evaluar(codigo, fase);
   }
 }

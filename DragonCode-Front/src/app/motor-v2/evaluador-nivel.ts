@@ -1,4 +1,4 @@
-export type ValorVariable = string | number;
+export type ValorVariable = string | number | boolean;
 
 export interface EstadoEjecucion {
   variables: Record<string, ValorVariable>;
@@ -38,8 +38,28 @@ export interface ResultadoEvaluacion {
   estadoFinal: EstadoEjecucion;
 }
 
-export interface EvaluadorNivel<TReglas> {
-  evaluar(codigo: string, reglas: TReglas): ResultadoEvaluacion;
+export interface EvaluadorNivel<TReglas, TResult = ResultadoEvaluacion> {
+  evaluar(codigo: string, reglas: TReglas): TResult;
+}
+
+export type FaseControlCalidad = 1 | 2 | 3 | 4;
+
+export type TipoMaterialFabrica = 'Diamante' | 'Explosivo' | 'Carbon';
+
+export type AccionFabrica = 'guardar' | 'destruir' | 'quemar';
+
+export interface ResultadoEvaluacionControlCalidad {
+  valido: boolean;
+  codigoSanitizado: string;
+  acciones: Partial<Record<TipoMaterialFabrica, AccionFabrica>>;
+  errores: ErrorEjecucion[];
+}
+
+export type FaseProduccionMasiva = 1 | 2 | 3 | 4;
+
+export interface ResultadoEvaluacionProduccionMasiva
+  extends ResultadoEvaluacionControlCalidad {
+  bucleValido: boolean;
 }
 
 export type FaseTaladro = 1 | 2 | 3 | 4;

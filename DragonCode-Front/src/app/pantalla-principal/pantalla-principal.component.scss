@@ -412,11 +412,15 @@
   position: absolute;
   top: -4px;
   right: -4px;
-  width: 10px;
-  height: 10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
   background-color: #ff3333;
   border: 2px solid #000;
   border-radius: 0; /* Pixel-art puro para el puntito */
+  color: #fff;
+  font: 9px/14px 'TuFuentePixel', monospace;
+  text-align: center;
 }
 
 /* ── VENTANA DESPLEGABLE DE NOTIFICACIONES ── */
@@ -497,7 +501,21 @@
   font-size: 0.85rem;
   padding-bottom: 10px;
   border-bottom: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  cursor: default;
+  opacity: 0.72;
 }
+.notif-list li.no-leida {
+  opacity: 1;
+  cursor: pointer;
+  border-left: 3px solid #FFD700;
+  padding-left: 8px;
+}
+.notif-list li strong { color: #FFD700; font-size: 0.78rem; }
+.notif-list li span { color: #fff; line-height: 1.35; }
+.notif-list li small { color: #82949b; font-size: 0.65rem; }
 .notif-list li:last-child {
   border-bottom: none;
   padding-bottom: 0;
@@ -523,6 +541,7 @@
   transition: color 0.2s;
 }
 .notif-read-btn:hover { color: #FFD700; }
+.notif-read-btn:disabled { color: #666; cursor: default; }
 .notif-read-btn svg { width: 14px; height: 14px; }
 
 

@@ -71,7 +71,7 @@ export class AuthService {
   /**
    * Decodifica el payload del JWT para obtener el rol y el email del usuario.
    */
-  getPayload(): { sub: string; id: number; rol: string } | null {
+  getPayload(): { sub: string; id: string; rol: string } | null {
     const token = this.getToken();
     if (!token) return null;
     try {

@@ -18,8 +18,11 @@ export class AppComponent {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      // Ocultar el pie de página si estamos en un nivel
-      this.mostrarFooter = !event.urlAfterRedirects.includes('/nivel/');
+      // Los niveles usan todo el alto disponible, también en sus rutas locales
+      // de prototipo. El pie global provocaría un desplazamiento innecesario.
+      const esNivel = event.urlAfterRedirects.includes('/nivel/')
+        || event.urlAfterRedirects.includes('/prototipo/nivel-');
+      this.mostrarFooter = !esNivel;
     });
   }
-}
+}

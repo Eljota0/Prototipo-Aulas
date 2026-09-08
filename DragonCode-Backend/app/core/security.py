@@ -4,10 +4,10 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-# Configuración de seguridad (Idealmente estos vendrían del .env)
+# Configuración de seguridad. En despliegue, SECRET_KEY debe definirse en el entorno.
 SECRET_KEY = os.getenv("SECRET_KEY", "dragoncode_super_secret_key_2026")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 días de sesión
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 24 * 7)))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

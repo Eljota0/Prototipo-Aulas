@@ -36,4 +36,18 @@ describe('EvaluadorVariablesService', () => {
     expect(resultado.valido).toBeFalse();
     expect(resultado.errores[0].mensaje).toContain('mana');
   });
+
+  it('distingue booleanos de textos con el mismo contenido', () => {
+    const booleano = evaluador.evaluar('luz = true', {
+      variablesEsperadas: { luz: true }
+    });
+    const texto = evaluador.evaluar('luz = "true"', {
+      variablesEsperadas: { luz: true }
+    });
+
+    expect(booleano.valido).toBeTrue();
+    expect(booleano.estadoFinal.variables['luz']).toBeTrue();
+    expect(texto.valido).toBeFalse();
+    expect(texto.estadoFinal.variables['luz']).toBe('true');
+  });
 });

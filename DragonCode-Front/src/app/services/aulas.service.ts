@@ -60,6 +60,41 @@ export interface RetoPersonalizadoResponse {
   completado: boolean;
 }
 
+export interface SeguimientoJugador {
+  jugador_id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  completado: boolean;
+  estrellas_obtenidas: number;
+  calificacion_numerica: number;
+  intentos: number;
+  tiempo_segundos: number;
+  codigo_solucion?: string | null;
+  fecha_completado?: string | null;
+}
+
+export interface SeguimientoActividad {
+  reto_id: string;
+  reto_nivel_id: number;
+  titulo: string;
+  estado: 'borrador' | 'publicado' | 'vencido' | 'cerrado';
+  fecha_limite?: string | null;
+  fecha_cierre?: string | null;
+  total_jugadores: number;
+  completados: number;
+  pendientes: number;
+  promedio_calificacion: number;
+  jugadores: SeguimientoJugador[];
+}
+
+export interface ReporteAula {
+  aula_id: string;
+  nombre_aula: string;
+  generado_en: string;
+  actividades: SeguimientoActividad[];
+}
+
 // ─────────────────────────────────────────────────────────────────
 
 @Injectable({
@@ -114,6 +149,28 @@ export class AulasService {
    */
   retosDelAula(aulaId: string): Observable<RetoPersonalizadoResponse[]> {
     return this.http.get<RetoPersonalizadoResponse[]>(`/aulas/${aulaId}/retos`);
+  }
+
+  seguimientoDelAula(aulaId: string): Observable<ReporteAula> {
+    return this.http.get<ReporteAula>(`/aulas/${aulaId}/seguimiento`);
+  }
+
+  programarActividad(
+    aulaId: string,
+    retoId: string,
+    fechaLimite: string | null
+  ): Observable<RetoPersonalizadoResponse> {
+    return this.http.patch<RetoPersonalizadoResponse>(
+      `/aulas/${aulaId}/retos/${retoId}/programacion`,
+      { fecha_limite: fechaLimite }
+    );
+  }
+
+  cerrarActividad(aulaId: string, retoId: string): Observable<RetoPersonalizadoResponse> {
+    return this.http.post<RetoPersonalizadoResponse>(
+      `/aulas/${aulaId}/retos/${retoId}/cerrar`,
+      {}
+    );
   }
 
   /**

@@ -26,7 +26,7 @@ class CalcularEstrellasTests(unittest.TestCase):
 
 class CalcularCalificacionTests(unittest.TestCase):
     def test_aplica_la_rubrica_documentada(self):
-        casos = {1: 10, 2: 8, 3: 6, 10: 6}
+        casos = {1: 10, 2: 8, 3: 8, 4: 6, 10: 6}
         for intentos, esperada in casos.items():
             with self.subTest(intentos=intentos):
                 self.assertEqual(calcular_calificacion(intentos), esperada)

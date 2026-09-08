@@ -1,0 +1,268 @@
+<div class="nivel-dos-shell nivel-cuatro-shell" [class.nivel-cinco-shell]="esNivelCinco">
+  <app-game-header (salir)="salir()"></app-game-header>
+
+  <main class="juego-layout">
+    <section class="tablero-juego" [attr.aria-label]="esNivelCinco ? 'Fábrica minera de producción continua' : 'Fábrica minera de control de calidad'">
+      <div class="hud-juego">
+        <div class="vidas" aria-label="Vidas disponibles">
+          <span *ngFor="let vida of [1, 2, 3]" [class.perdida]="vida > vidas">♥</span>
+        </div>
+
+        <div class="contador-reparacion" aria-label="Fases superadas">
+          <span class="icono-herramienta">◆</span>
+          <strong>{{ fasesSuperadas }} / {{ fases.length }}</strong>
+        </div>
+
+        <div class="contador-fase">{{ faseActualIndice + 1 }} — {{ fases.length }}</div>
+      </div>
+
+      <div class="escena-maquina escena-fabrica" [class.produccion-masiva]="esNivelCinco"
+           [class.analizando]="estadoEscena === 'analizando'"
+           [class.transportando]="estadoEscena === 'transportando'"
+           [class.guardando]="estadoEscena === 'guardando'"
+           [class.destruyendo]="estadoEscena === 'destruyendo'"
+           [class.quemando]="estadoEscena === 'quemando'"
+           [class.explosion]="estadoEscena === 'explosion'"
+           [class.victoria]="estadoEscena === 'victoria'">
+        <div class="resplandor-fabrica"></div>
+        <div class="tuberias-fabrica" aria-hidden="true"><i></i><i></i><i></i></div>
+
+        <img class="maquina-principal-fabrica"
+             [src]="spriteMaquinaPrincipal"
+             [alt]="esNivelCinco ? 'Motor goblin de producción continua' : 'Clasificador mecánico de materiales'">
+
+        <div class="personaje-fabrica"
+             [class.personaje-operaria]="esNivelCinco"
+             [attr.aria-label]="nombrePersonajeFabrica + ' supervisando la fábrica'">
+          <img [src]="spritePersonajeFabrica" [alt]="nombrePersonajeFabrica">
+          <span>{{ nombrePersonajeFabrica }}</span>
+        </div>
+
+        <div class="estaciones-fabrica" aria-label="Salidas de clasificación">
+          <div class="estacion estacion-cofre" [class.activa]="estadoEscena === 'guardando'">
+            <span>COFRE</span>
+            <img src="assets/images/aventura/fabrica/cofre-v2.png" alt="Cofre de diamantes">
+            <b>{{ diamantesGuardados }}</b>
+          </div>
+          <div class="estacion estacion-trituradora" [class.activa]="estadoEscena === 'destruyendo'">
+            <span>TRITURADORA</span>
+            <img src="assets/images/aventura/fabrica/trituradora-v2.png" alt="Trituradora blindada">
+            <b>{{ explosivosDestruidos }}</b>
+          </div>
+          <div class="estacion estacion-horno" [class.activa]="estadoEscena === 'quemando'">
+            <span>HORNO</span>
+            <img src="assets/images/aventura/fabrica/horno-v2.png" alt="Horno de carbón">
+            <b>{{ carbonQuemado }}</b>
+          </div>
+        </div>
+
+        <div class="cinta-transportadora" aria-label="Materiales del turno">
+          <div class="banda" aria-hidden="true"></div>
+          <div class="fila-materiales">
+            <div *ngFor="let material of materialesEnCinta; let indice = index"
+                 class="material"
+                 [class.material-diamante]="material.tipo === 'Diamante'"
+                 [class.material-explosivo]="material.tipo === 'Explosivo'"
+                 [class.material-carbon]="material.tipo === 'Carbon'"
+                 [class.activo]="material.estado === 'activo'"
+                 [class.guardado]="material.estado === 'guardado'"
+                 [class.destruido]="material.estado === 'destruido'"
+                 [class.quemado]="material.estado === 'quemado'"
+                 [class.error]="material.estado === 'error'"
+                 [attr.aria-label]="material.tipo === 'Carbon' ? 'Carbón' : material.tipo">
+              <img [src]="spriteMaterial(material.tipo)"
+                   [alt]="material.tipo === 'Carbon' ? 'Carbón' : material.tipo">
+            </div>
+          </div>
+        </div>
+
+        <div class="mision-flotante" aria-live="polite">
+          <span class="mision-etapa">FASE {{ faseActualIndice + 1 }}/{{ fases.length }}</span>
+          <div class="mision-contenido">
+            <small>{{ faseActual.concepto }}</small>
+            <strong>{{ faseActual.titulo }}</strong>
+            <p>{{ faseActual.objetivo }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-derecho">
+      <article class="consola-codigo">
+        <div class="titulo-archivo">
+          <span>pergamino.drg</span>
+          <small>{{ esNivelCinco ? 'REPETIR CON MIENTRAS' : 'DECIDIR CON SI / SINO' }}</small>
+        </div>
+
+        <div class="editor-codigo">
+          <div class="numeros-linea" aria-hidden="true">
+            <span *ngFor="let numero of numerosLinea">{{ numero }}</span>
+          </div>
+
+          <div class="codigo-estructurado codigo-control">
+            <code class="linea-fija" *ngIf="!esNivelCinco">evento(fabrica.nuevoMaterial) {{ '{' }}</code>
+            <textarea
+              [(ngModel)]="codigoUsuario"
+              [rows]="filasCodigoUsuario"
+              [disabled]="ejecutando || falloFase || gameOver || nivelCompletado"
+              (paste)="bloquearTransferencia($event)"
+              (drop)="bloquearTransferencia($event)"
+              spellcheck="false"
+              autocomplete="off"
+              [attr.aria-label]="esNivelCinco ? 'Bucle de producción masiva' : 'Condiciones de control de calidad'"
+              [placeholder]="esNivelCinco ? '// Construye aquí el bucle mientras' : '  // Inserta aquí las decisiones'"></textarea>
+            <code class="linea-fija" *ngIf="!esNivelCinco">{{ '}' }}</code>
+          </div>
+
+          <div class="errores-panel" *ngIf="errores.length > 0">
+            <p *ngFor="let error of errores">⚠ {{ error }}</p>
+          </div>
+        </div>
+
+        <div class="acciones-editor">
+          <div class="acciones-limpieza">
+            <button type="button" class="btn-borrar" (click)="borrarLinea()"
+                    [disabled]="ejecutando || falloFase || gameOver">Borrar Línea</button>
+            <button type="button" class="btn-borrar" (click)="limpiarPergamino()"
+                    [disabled]="ejecutando || falloFase || gameOver">Limpiar Todo</button>
+          </div>
+
+          <button type="button" class="btn-ejecutar" (click)="ejecutarCodigo()"
+                  [disabled]="ejecutando || falloFase || gameOver || nivelCompletado">
+            {{ ejecutando ? (esNivelCinco ? '◆ PRODUCIENDO...' : '◆ CLASIFICANDO...') : '▶ Ejecutar' }}
+          </button>
+        </div>
+      </article>
+
+      <article class="inventario" id="inventario-fabrica">
+        <div class="titulo-inventario">INVENTARIO</div>
+
+        <div class="tabs-inventario">
+          <button type="button" [class.activa]="pestanaInventario === 'acciones'"
+                   (click)="pestanaInventario = 'acciones'">
+            ACCIONES
+          </button>
+          <button type="button" [class.activa]="pestanaInventario === 'objetos'"
+                  (click)="pestanaInventario = 'objetos'">OBJETOS</button>
+        </div>
+
+        <div class="contenido-inventario tarjetas-control"
+             [class.fase-final]="faseActual.numero === 4"
+             *ngIf="pestanaInventario === 'acciones'; else objetos">
+          <button type="button" *ngFor="let tarjeta of faseActual.tarjetas"
+                  class="tarjeta-codigo" [attr.data-tono]="tarjeta.tono"
+                  [attr.aria-label]="tarjeta.etiqueta + '. Inserta: ' + tarjeta.codigo"
+                  (click)="insertarTarjeta(tarjeta)"
+                  [disabled]="ejecutando || falloFase || gameOver || nivelCompletado">
+            <strong>{{ tarjeta.etiqueta }}</strong>
+            <code>{{ tarjeta.codigo }}</code>
+          </button>
+        </div>
+
+        <ng-template #objetos>
+          <div class="contenido-objetos objetos-fabrica">
+            <p class="objetos-instruccion">OBJETOS MÁGICOS</p>
+            <div class="objetos-grid">
+            <button type="button" class="objeto-socket objeto-libro" (click)="usarObjeto('libro')"
+                    title="Tomo de los Ancestros. Explica el concepto de esta misión.">
+              <img src="assets/images/aventura/objetos/libro-ayuda.png" alt="Abrir el Grimorio">
+              <span>Grimorio</span>
+            </button>
+            <button type="button" class="objeto-socket objeto-clarividencia"
+                    [class.consumido]="estadoObjetos.clarividencia"
+                    [disabled]="estadoObjetos.clarividencia"
+                    (click)="usarObjeto('clarividencia')"
+                    title="Esencia de Visión Verdadera. Revela una pista del código una sola vez.">
+              <img src="assets/images/aventura/objetos/pocion-clarividencia.png" alt="Poción de clarividencia">
+              <span>Clarividencia</span>
+            </button>
+            <button type="button" class="objeto-socket objeto-vida"
+                    [class.consumido]="estadoObjetos.vida"
+                    [disabled]="estadoObjetos.vida"
+                    (click)="usarObjeto('vida')"
+                    title="Sangre de Dragón Cristalizada. Restaura un corazón una sola vez.">
+              <img src="assets/images/aventura/objetos/pocion-vida.png" alt="Poción de vida">
+              <span>Vida</span>
+            </button>
+            <button type="button" class="objeto-socket objeto-tiempo"
+                    [class.consumido]="estadoObjetos.tiempo"
+                    [disabled]="estadoObjetos.tiempo"
+                    (click)="usarObjeto('tiempo')"
+                    title="Arena de Reloj Líquida. Recupera treinta segundos una sola vez.">
+              <img src="assets/images/aventura/objetos/pocion-tiempo.png" alt="Poción de tiempo">
+              <span>Tiempo</span>
+            </button>
+            </div>
+            <p class="mensaje-objeto" *ngIf="mensajeObjeto">{{ mensajeObjeto }}</p>
+          </div>
+        </ng-template>
+      </article>
+    </section>
+  </main>
+
+  <div class="modal-overlay" *ngIf="falloFase || gameOver">
+    <section class="modal-resultado">
+      <span class="modal-icono">!</span>
+      <h2>{{ gameOver ? (esNivelCinco ? 'DUENDES EN HUELGA' : 'FÁBRICA CLAUSURADA') : (estadoEscena === 'explosion' ? 'CIERRE DE EMERGENCIA' : (esNivelCinco ? 'BUCLE INTERRUMPIDO' : 'REGLA INCORRECTA')) }}</h2>
+      <p>{{ bitacora }}</p>
+      <div class="errores-modal" *ngIf="errores.length">
+        <p *ngFor="let error of errores">{{ error }}</p>
+      </div>
+      <p class="vidas-restantes">Vidas restantes: {{ vidas }}</p>
+      <button type="button" *ngIf="!gameOver" (click)="reintentarFase()">Reintentar fase</button>
+      <button type="button" *ngIf="gameOver" (click)="reiniciarNivel()">Reiniciar nivel</button>
+    </section>
+  </div>
+
+  <div class="celebracion-overlay" *ngIf="nivelCompletado">
+    <div class="particulas-victoria" aria-hidden="true">
+      <i *ngFor="let particula of [1,2,3,4,5,6,7,8,9,10,11,12]"></i>
+    </div>
+
+    <section class="celebracion-panel nivel-final">
+      <img src="/assets/images/exprecionsedraco/feliz.png" class="draco-feliz"
+           [alt]="esNivelCinco ? 'Drako celebrando la producción automática' : 'Drako celebrando el control de la fábrica'">
+
+      <h1>¡MISIÓN COMPLETADA!</h1>
+      <p class="mensaje-recompensa">{{ mensajeRecompensa }}</p>
+      <div class="estrellas-celebracion" [attr.aria-label]="estrellas + ' estrellas obtenidas'">
+        <span *ngFor="let estrella of estrellasAnimadas; let indice = index"
+              [style.animation-delay.ms]="350 + indice * 260">★</span>
+      </div>
+
+      <div class="resultado-grid resultado-final">
+        <div><strong>{{ calificacion }}</strong><span>calificación</span></div>
+        <div><strong>{{ tiempoSegundos }}s</strong><span>tiempo</span></div>
+        <div><strong>{{ intentosCalificables }}</strong><span>intentos</span></div>
+      </div>
+      <p class="detalle-final">
+        {{ mensajeSincronizacion || (esNivelCinco ? 'Automatizaste toda la producción con un bucle mientras seguro.' : 'Dominaste las rutas si, sino si y sino para mantener segura la fábrica.') }}
+      </p>
+
+      <div class="botones-celebracion">
+        <button type="button" class="btn-secundario" (click)="reiniciarNivel()">REINICIAR NIVEL</button>
+        <button type="button" class="btn-victoria" (click)="salir()">SALIR DE LA MISIÓN</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" *ngIf="ayudaVisible">
+    <section class="modal-resultado modal-ayuda">
+      <span class="modal-icono">▣</span>
+      <h2>{{ esNivelCinco ? 'GRIMORIO DE BUCLES' : 'GRIMORIO DE DECISIONES' }}</h2>
+      <ng-container *ngIf="esNivelCinco; else ayudaDecisiones">
+        <p><strong>MIENTRAS</strong> significa: “repite estas instrucciones mientras todavía queden materiales”.</p>
+        <p>Las instrucciones que quieres repetir deben quedar entre la llave de apertura <strong>{{ '{' }}</strong> y la llave de cierre <strong>{{ '}' }}</strong>.</p>
+        <p>Cuando la cinta queda vacía, <strong>tieneMateriales</strong> cambia automáticamente a falso y la repetición termina.</p>
+        <code>mientras (queden materiales) {{ '{' }}<br>&nbsp;&nbsp;clasificar el material;<br>{{ '}' }}</code>
+      </ng-container>
+      <ng-template #ayudaDecisiones>
+        <p><strong>SI</strong> hace una pregunta. Cuando la respuesta es verdadera, ejecuta la acción que está dentro de sus llaves.</p>
+        <p><strong>SINO SI</strong> hace una segunda pregunta únicamente cuando la primera fue falsa.</p>
+        <p><strong>SINO</strong> no pregunta nada: se ocupa de cualquier material que no coincidió antes.</p>
+        <code>si (es diamante) {{ '{' }} guardar; {{ '}' }}<br>sino si (es explosivo) {{ '{' }} destruir; {{ '}' }}<br>sino {{ '{' }} quemar; {{ '}' }}</code>
+      </ng-template>
+      <button type="button" (click)="ayudaVisible = false">Cerrar grimorio</button>
+    </section>
+  </div>
+</div>

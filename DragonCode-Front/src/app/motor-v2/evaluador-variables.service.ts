@@ -135,6 +135,8 @@ export class EvaluadorVariablesService implements EvaluadorNivel<ReglasFaseVaria
     linea: number,
     errores: ErrorEjecucion[]
   ): ValorVariable | undefined {
+    if (/^(true|false)$/.test(operando)) return operando === 'true';
+
     if (/^-?\d+(\.\d+)?$/.test(operando)) return Number(operando);
 
     const texto = operando.match(/^(["'])(.*)\1$/);

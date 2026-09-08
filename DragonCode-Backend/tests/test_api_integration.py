@@ -21,6 +21,7 @@ from app.models.models import (
     AulaVirtual,
     EstadoReto,
     ProgresoAula,
+    ProgresoJugador,
     RetoNivel,
     RetoPersonalizado,
     Usuario,
@@ -151,6 +152,41 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
             },
         )
         self.assertEqual(vencida.status_code, 409, vencida.text)
+
+    def test_nivel_tres_se_publica_y_guarda_progreso_de_variables(self):
+        type(self).usuario_actual_id = self.jugador_id
+        respuesta_niveles = self.client.get(f"/api/aulas/{self.aula_id}/niveles")
+        self.assertEqual(respuesta_niveles.status_code, 200, respuesta_niveles.text)
+
+        nivel_tres = next(
+            nivel for nivel in respuesta_niveles.json() if nivel["orden"] == 3
+        )
+        self.assertEqual(nivel_tres["tipo_reto"], "variables")
+
+        entrega = self.client.post(
+            "/api/progreso/guardar",
+            json={
+                "reto_nivel_id": nivel_tres["id"],
+                "tiempo_segundos": 58,
+                "intentos": 1,
+                "codigo_solucion": (
+                    'luz = true\n'
+                    'elemento = "Fuego"\n'
+                    'cantidad = 3\n'
+                    'drako.iniciarCombate(luz, elemento, cantidad);'
+                ),
+            },
+        )
+        self.assertEqual(entrega.status_code, 200, entrega.text)
+        self.assertEqual(entrega.json()["estrellas_obtenidas"], 3)
+
+        with SessionLocal() as db:
+            progreso = db.query(ProgresoJugador).filter(
+                ProgresoJugador.jugador_id == self.jugador_id,
+                ProgresoJugador.reto_nivel_id == nivel_tres["id"],
+            ).first()
+            self.assertIsNotNone(progreso)
+            self.assertIn("elemento = \"Fuego\"", progreso.codigo_solucion)
 
 
 if __name__ == "__main__":

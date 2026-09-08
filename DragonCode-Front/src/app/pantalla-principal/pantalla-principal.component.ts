@@ -12,11 +12,17 @@ import {
   AulaResponse,
   RetoPersonalizadoCreate,
   RetoPersonalizadoResponse,
-  ParametrosEvaluacion
+  ParametrosEvaluacion,
+  ReporteAula,
+  SeguimientoActividad
 } from '../services/aulas.service';
 import { ProgresoService } from '../services/progreso.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import {
+  NotificacionInterna,
+  NotificacionesService
+} from '../services/notificaciones.service';
 
 // ─── MODELOS DE DATOS ───────────────────────────────────────────
 interface Rune {
@@ -52,6 +58,7 @@ export class PantallaPrincipalComponent implements OnInit {
   private authService         = inject(AuthService);
   private aulasService        = inject(AulasService);
   private progresoService     = inject(ProgresoService);
+  private notificacionesService = inject(NotificacionesService);
   private loaderService       = inject(LoaderService);
   private router              = inject(Router);
 
@@ -60,7 +67,11 @@ export class PantallaPrincipalComponent implements OnInit {
 
   // ── ESTADO: Notificaciones ──────────────────────────────────────
   isNotifOpen   = false;
-  notifications: string[] = [];
+  notifications: NotificacionInterna[] = [];
+
+  get notificacionesNoLeidas(): number {
+    return this.notifications.filter(notificacion => !notificacion.leida).length;
+  }
 
   // ── ESTADO: Modal Salir ─────────────────────────────────────────
   isLogoutModalOpen = false;
@@ -82,7 +93,7 @@ export class PantallaPrincipalComponent implements OnInit {
   isStarsModalOpen = false;
 
   // ── DATOS: Mundos y progreso de estrellas ────────────────────────
-  worldsProgress: WorldProgress[] = Array.from({ length: 10 }, (_, i) => ({
+  worldsProgress: WorldProgress[] = Array.from({ length: 5 }, (_, i) => ({
     level: i + 1,
     name:  `Mundo ${i + 1}`,
     stars: 0
@@ -91,6 +102,7 @@ export class PantallaPrincipalComponent implements OnInit {
   // ── ESTADO: Formulario de Creación (Parte 1) ─────────────────
   tituloReto         = '';
   nivelSeleccionado  = 1;             // ID del nivel oficial (El Ogro = 1)
+  fechaLimiteActividad = '';
   cargandoCrearAula  = false;
   aulaCreada: AulaResponse | null = null;
 
@@ -103,7 +115,10 @@ export class PantallaPrincipalComponent implements OnInit {
   // Catálogo de niveles disponibles para reutilizar
   nivelesDisponibles = [
     { id: 1, nombre: 'Nivel 1: El Ogro', descripcion: 'Programación secuencial con movimiento' },
-    { id: 2, nombre: 'Nivel 2: Taladro a Vapor', descripcion: 'Eventos y condicionales básicos' }
+    { id: 2, nombre: 'Nivel 2: Taladro a Vapor', descripcion: 'Eventos y condicionales básicos' },
+    { id: 3, nombre: 'Nivel 3: La Cueva de las Variables', descripcion: 'Variables y tipos de datos básicos' },
+    { id: 4, nombre: 'Nivel 4: Control de Calidad', descripcion: 'Control de flujo con si, sino si y sino' },
+    { id: 5, nombre: 'Nivel 5: Producción en Masa', descripcion: 'Bucles mientras combinados con decisiones' }
   ];
 
   // ── ESTADO: Modal Unirse a Aula ──────────────────────────────────
@@ -142,6 +157,7 @@ export class PantallaPrincipalComponent implements OnInit {
 
     // Cargar el progreso real de estrellas desde la BD
     this.cargarMiProgreso();
+    this.cargarNotificaciones();
   }
 
   /** Consulta el backend y actualiza las estrellas reales de cada mundo. */
@@ -149,7 +165,7 @@ export class PantallaPrincipalComponent implements OnInit {
     this.progresoService.miProgreso().subscribe({
       next: (progresos) => {
         // El backend retorna lista de { reto_nivel_id, estrellas_obtenidas, ... }
-        // reto_nivel_id coincide con el número de nivel (1-10)
+        // reto_nivel_id coincide con el número de nivel (1-5)
         progresos.forEach(p => {
           const mundo = this.worldsProgress.find(w => w.level === p.reto_nivel_id);
           if (mundo) {
@@ -252,9 +268,40 @@ export class PantallaPrincipalComponent implements OnInit {
   }
 
   // ── ACCIONES: Notificaciones ─────────────────────────────────────
-  toggleNotif():    void { this.isNotifOpen = !this.isNotifOpen; }
+  toggleNotif(): void {
+    this.isNotifOpen = !this.isNotifOpen;
+    if (this.isNotifOpen) this.cargarNotificaciones();
+  }
   closeNotif():     void { this.isNotifOpen = false;             }
-  markAllAsRead():  void { this.notifications = [];              }
+  markAllAsRead(): void {
+    if (this.notificacionesNoLeidas === 0) return;
+    this.notificacionesService.marcarTodasComoLeidas().subscribe({
+      next: () => {
+        this.notifications = this.notifications.map(notificacion => ({
+          ...notificacion,
+          leida: true
+        }));
+      }
+    });
+  }
+
+  marcarNotificacionComoLeida(notificacion: NotificacionInterna): void {
+    if (notificacion.leida) return;
+    this.notificacionesService.marcarComoLeida(notificacion.id).subscribe({
+      next: actualizada => {
+        this.notifications = this.notifications.map(item =>
+          item.id === actualizada.id ? actualizada : item
+        );
+      }
+    });
+  }
+
+  private cargarNotificaciones(): void {
+    this.notificacionesService.misNotificaciones().subscribe({
+      next: notificaciones => { this.notifications = notificaciones; },
+      error: () => { this.notifications = []; }
+    });
+  }
 
   // ── ACCIONES: Salir ──────────────────────────────────────────────
   openLogout():  void { this.isLogoutModalOpen = true;  }
@@ -275,6 +322,8 @@ export class PantallaPrincipalComponent implements OnInit {
     this.aulaCreada        = null;
     this.aulaSeleccionadaAdmin = null;
     this.jugadoresAulaLista = [];
+    this.reporteAulaAdmin = null;
+    this.fechaLimiteActividad = '';
     this.mostrarAgregarActividad = false;
     this.aulaParaActividad = null;
     this.parametrosReto    = { 
@@ -329,6 +378,18 @@ export class PantallaPrincipalComponent implements OnInit {
     this.pasoCrearAula = 3;
   }
 
+  actividadDisponible(actividad: RetoPersonalizadoResponse): boolean {
+    if (actividad.fecha_cierre) return false;
+    if (!actividad.fecha_limite) return true;
+    return new Date(actividad.fecha_limite).getTime() > Date.now();
+  }
+
+  estadoVisibleActividad(actividad: RetoPersonalizadoResponse): string {
+    if (actividad.fecha_cierre) return 'CERRADA';
+    if (!this.actividadDisponible(actividad)) return 'PLAZO VENCIDO';
+    return actividad.completado ? 'COMPLETADA' : 'PENDIENTE';
+  }
+
   toggleFase(fase: number): void {
     const idx = this.parametrosReto.fases_seleccionadas!.indexOf(fase);
     if (idx > -1) {
@@ -344,6 +405,11 @@ export class PantallaPrincipalComponent implements OnInit {
       this.notificationService.show('El tiempo para 3⭐ debe ser menor al de 2⭐.', 'error');
       return;
     }
+    const fechaLimite = this.fechaLimiteComoIso();
+    if (this.fechaLimiteActividad && !fechaLimite) {
+      this.notificationService.show('La fecha límite no es válida.', 'error');
+      return;
+    }
     this.cargandoCrearAula = true;
 
     // A: Crear el aula
@@ -354,7 +420,8 @@ export class PantallaPrincipalComponent implements OnInit {
           reto_nivel_id:        this.nivelSeleccionado,
           titulo:               `${this.nuevoNombreAula} - Nivel ${this.nivelSeleccionado}`,
           recompensa_estrellas: 5,
-          parametros:           { ...this.parametrosReto }
+          parametros:           { ...this.parametrosReto },
+          fecha_limite:         fechaLimite
         };
         this.aulasService.crearRetoEnAula(aula.id, datosReto).subscribe({
           next: () => {
@@ -420,6 +487,9 @@ export class PantallaPrincipalComponent implements OnInit {
 
   verActividades(aula: AulaResponse): void {
     this.aulaActividadesSeleccionada = aula;
+    this.isCrearAulaOpen = false;
+    this.isAdminAulasOpen = false;
+    this.isUnirseAulaOpen = true;
     this.cargandoActividadesAula = true;
     this.aulasService.retosDelAula(aula.id).subscribe({
       next: (retos) => {
@@ -438,6 +508,10 @@ export class PantallaPrincipalComponent implements OnInit {
 
   jugarReto(actividad: RetoPersonalizadoResponse): void {
     if (!this.aulaActividadesSeleccionada) return;
+    if (!this.actividadDisponible(actividad)) {
+      this.notificationService.show('Esta actividad ya no está disponible.', 'error');
+      return;
+    }
     localStorage.setItem('aulaActiva', this.aulaActividadesSeleccionada.id);
     localStorage.setItem('retoActivo', actividad.id);
     this.isUnirseAulaOpen = false;
@@ -496,6 +570,8 @@ export class PantallaPrincipalComponent implements OnInit {
   aulaSeleccionadaAdmin: string | null = null;
   jugadoresAulaLista: any[] = [];
   cargandoJugadores = false;
+  reporteAulaAdmin: ReporteAula | null = null;
+  cargandoSeguimiento = false;
 
   // Sub-panel agregar actividad
   mostrarAgregarActividad = false;
@@ -510,6 +586,7 @@ export class PantallaPrincipalComponent implements OnInit {
     this.isAdminAulasOpen       = true;
     this.aulaSeleccionadaAdmin  = null;
     this.jugadoresAulaLista     = [];
+    this.reporteAulaAdmin       = null;
     this.mostrarAgregarActividad = false;
     this.aulaParaActividad      = null;
 
@@ -534,13 +611,16 @@ export class PantallaPrincipalComponent implements OnInit {
       // Toggle off if already selected
       this.aulaSeleccionadaAdmin = null;
       this.jugadoresAulaLista = [];
+      this.reporteAulaAdmin = null;
       return;
     }
 
     this.aulaSeleccionadaAdmin   = aulaId;
     this.mostrarAgregarActividad = false;
     this.cargandoJugadores       = true;
+    this.cargandoSeguimiento     = true;
     this.jugadoresAulaLista      = [];
+    this.reporteAulaAdmin        = null;
 
     this.aulasService.jugadoresDelAula(aulaId).subscribe({
       next: (jugadores) => {
@@ -550,6 +630,22 @@ export class PantallaPrincipalComponent implements OnInit {
       error: () => {
         this.notificationService.show('Error al cargar alumnos', 'error');
         this.cargandoJugadores = false;
+      }
+    });
+
+    this.cargarSeguimientoAula(aulaId);
+  }
+
+  private cargarSeguimientoAula(aulaId: string): void {
+    this.cargandoSeguimiento = true;
+    this.aulasService.seguimientoDelAula(aulaId).subscribe({
+      next: reporte => {
+        this.reporteAulaAdmin = reporte;
+        this.cargandoSeguimiento = false;
+      },
+      error: () => {
+        this.cargandoSeguimiento = false;
+        this.notificationService.show('No se pudo cargar el seguimiento académico', 'error');
       }
     });
   }
@@ -566,6 +662,7 @@ export class PantallaPrincipalComponent implements OnInit {
         if (this.aulaSeleccionadaAdmin === aulaId) {
           this.aulaSeleccionadaAdmin = null;
           this.jugadoresAulaLista = [];
+          this.reporteAulaAdmin = null;
         }
       },
       error: () => {
@@ -587,6 +684,7 @@ export class PantallaPrincipalComponent implements OnInit {
       anti_copia: true,
       fases_seleccionadas: [1, 2, 3, 4]
     };
+    this.fechaLimiteActividad = '';
   }
 
   confirmarAgregarActividad(): void {
@@ -599,12 +697,18 @@ export class PantallaPrincipalComponent implements OnInit {
       this.notificationService.show('El tiempo para 3⭐ debe ser menor al de 2⭐.', 'error');
       return;
     }
+    const fechaLimite = this.fechaLimiteComoIso();
+    if (this.fechaLimiteActividad && !fechaLimite) {
+      this.notificationService.show('La fecha límite no es válida.', 'error');
+      return;
+    }
     this.cargandoCrearAula = true;
     const datosReto: RetoPersonalizadoCreate = {
       reto_nivel_id:        this.nivelSeleccionado,
       titulo:               `${this.aulaParaActividad.nombre_aula} - Actividad`,
       recompensa_estrellas: 5,
-      parametros:           { ...this.parametrosReto }
+      parametros:           { ...this.parametrosReto },
+      fecha_limite:         fechaLimite
     };
     this.aulasService.crearRetoEnAula(this.aulaParaActividad.id, datosReto).subscribe({
       next: () => {
@@ -614,5 +718,25 @@ export class PantallaPrincipalComponent implements OnInit {
       },
       error: () => { this.cargandoCrearAula = false; }
     });
+  }
+
+  cerrarActividad(aulaId: string, actividad: SeguimientoActividad): void {
+    if (actividad.estado === 'cerrado') return;
+    if (!confirm(`¿Cerrar la actividad "${actividad.titulo}"? Los alumnos pendientes ya no podrán entregarla.`)) {
+      return;
+    }
+
+    this.aulasService.cerrarActividad(aulaId, actividad.reto_id).subscribe({
+      next: () => {
+        this.notificationService.show('Actividad cerrada correctamente', 'success');
+        this.cargarSeguimientoAula(aulaId);
+      }
+    });
+  }
+
+  private fechaLimiteComoIso(): string | null {
+    if (!this.fechaLimiteActividad.trim()) return null;
+    const fecha = new Date(this.fechaLimiteActividad);
+    return Number.isNaN(fecha.getTime()) ? null : fecha.toISOString();
   }
 }

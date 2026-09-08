@@ -1,28 +1,42 @@
 <div class="lobby-container">
-  <!-- Cabecera del Lobby -->
   <header class="lobby-header">
-    <h1 class="lobby-title">MODO AVENTURA</h1>
-    <p class="lobby-subtitle">Selecciona tu próximo desafío, Maestro Dragón</p>
     <a routerLink="/pantalla-principal" class="btn-back">
       <span class="back-icon">◄</span> VOLVER
     </a>
+    <div class="title-group">
+      <span class="title-eyebrow">RUTA DE APRENDIZAJE</span>
+      <h1 class="lobby-title">MODO AVENTURA</h1>
+      <p class="lobby-subtitle">Selecciona tu próximo desafío, Maestro Dragón</p>
+    </div>
   </header>
 
-  <!-- Cuadrícula de Niveles -->
+  <section class="progress-panel" aria-label="Progreso del modo aventura">
+    <div class="progress-copy">
+      <span>PROGRESO DE LA AVENTURA</span>
+      <strong>{{ nivelesCompletados }} / {{ totalNiveles }} NIVELES</strong>
+    </div>
+    <div class="progress-track" aria-hidden="true">
+      <i [style.width.%]="porcentajeProgreso"></i>
+    </div>
+    <p>Completa cada misión para desbloquear el siguiente desafío.</p>
+  </section>
+
   <main class="levels-grid">
     @for (level of niveles; track level.id) {
       @if (level.bloqueado) {
-        <!-- Renderizado de nivel bloqueado (estático, sin routerLink) -->
         <article class="level-card locked-level">
+          <span class="level-kicker">DESAFÍO 0{{ level.id }}</span>
           <div class="level-icon-wrapper">
             <div class="padlock-icon"></div>
           </div>
           <h3 class="level-number">{{ level.id }}</h3>
-          <p class="level-title">BLOQUEADO</p>
+          <p class="level-title">POR DESCUBRIR</p>
+          <span class="level-status">BLOQUEADO</span>
         </article>
       } @else {
-        <!-- Renderizado de nivel desbloqueado (interactivo, con routerLink) -->
-        <a [routerLink]="['/aventura/nivel', level.id]" class="level-card unlocked-level">
+        <a [routerLink]="['/aventura/nivel', level.id]" class="level-card unlocked-level"
+           [class.completed-level]="level.completado">
+          <span class="level-kicker">DESAFÍO 0{{ level.id }}</span>
           <div class="level-icon-wrapper">
             <div class="dragon-icon"></div>
           </div>
@@ -30,6 +44,8 @@
           <p class="level-title">{{ level.titulo }}</p>
           @if (level.completado) {
             <span class="badge-completed">COMPLETADO</span>
+          } @else {
+            <span class="level-status available">DISPONIBLE</span>
           }
         </a>
       }

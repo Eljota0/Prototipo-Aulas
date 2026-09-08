@@ -13,14 +13,8 @@ export const routes: Routes = [
     path: 'crear-cuenta',
     loadComponent: () => import('./crear-cuenta/crear-cuenta.component').then(m => m.CrearCuentaComponent)
   },
-  {
-    path: 'recuperar-cuenta',
-    loadComponent: () => import('./recuperar-cuenta/recuperar-cuenta.component').then(m => m.RecuperarCuentaComponent)
-  },
-  {
-    path: 'cambiar-contrasena',
-    loadComponent: () => import('./cambiar-contrasena/cambiar-contrasena.component').then(m => m.CambiarContrasenaComponent)
-  },
+  { path: 'recuperar-cuenta', redirectTo: '/login', pathMatch: 'full' },
+  { path: 'cambiar-contrasena', redirectTo: '/login', pathMatch: 'full' },
   {
     path: 'pantalla-principal',
     canActivate: [authGuard],
@@ -44,6 +38,37 @@ export const routes: Routes = [
   {
     path: 'prototipo/nivel-2',
     loadComponent: () => import('./nivel-dos-prototipo/nivel-dos-prototipo.component').then(m => m.NivelDosPrototipoComponent)
+  },
+  {
+    path: 'aventura/nivel/3',
+    canActivate: [authGuard],
+    loadComponent: () => import('./nivel-tres-prototipo/nivel-tres-prototipo.component').then(m => m.NivelTresPrototipoComponent)
+  },
+  {
+    path: 'prototipo/nivel-3',
+    loadComponent: () => import('./nivel-tres-prototipo/nivel-tres-prototipo.component').then(m => m.NivelTresPrototipoComponent)
+  },
+  {
+    path: 'aventura/nivel/4',
+    canActivate: [authGuard],
+    data: { nivelId: 4 },
+    loadComponent: () => import('./nivel-cuatro-prototipo/nivel-cuatro-prototipo.component').then(m => m.NivelCuatroPrototipoComponent)
+  },
+  {
+    path: 'prototipo/nivel-4',
+    data: { nivelId: 4 },
+    loadComponent: () => import('./nivel-cuatro-prototipo/nivel-cuatro-prototipo.component').then(m => m.NivelCuatroPrototipoComponent)
+  },
+  {
+    path: 'aventura/nivel/5',
+    canActivate: [authGuard],
+    data: { nivelId: 5 },
+    loadComponent: () => import('./nivel-cuatro-prototipo/nivel-cuatro-prototipo.component').then(m => m.NivelCuatroPrototipoComponent)
+  },
+  {
+    path: 'prototipo/nivel-5',
+    data: { nivelId: 5 },
+    loadComponent: () => import('./nivel-cuatro-prototipo/nivel-cuatro-prototipo.component').then(m => m.NivelCuatroPrototipoComponent)
   },
   {
     path: 'crear-aula/ogro',

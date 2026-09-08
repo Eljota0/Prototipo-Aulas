@@ -134,7 +134,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   cofresSnapshot: number = 0; // Cofres que tenía antes de empezar el intento
   perdidaCofresEfecto: boolean = false; // Trigger para el HUD
 
-  // Caché temporal para guardar los diseños de los 10 niveles
+  // Caché temporal para guardar los diseños de los 5 niveles
   borradoresNiveles: Record<number, any> = {};
 
   esModoProfesor: boolean = false;
@@ -484,7 +484,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   inicializarEditor() {
     if (this.inputTotalNiveles < 1) this.inputTotalNiveles = 1;
-    if (this.inputTotalNiveles > 10) this.inputTotalNiveles = 10;
+    if (this.inputTotalNiveles > 5) this.inputTotalNiveles = 5;
     
     this.totalNiveles = this.inputTotalNiveles;
     this.editorInicializado = true;

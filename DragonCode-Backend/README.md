@@ -17,7 +17,9 @@ alembic upgrade head
 ```
 
 La inicialización automática registra los niveles oficiales que todavía no existan. Actualmente incluye
-el Nivel 1 (El Ogro) y el Nivel 2 (Taladro a Vapor), sin duplicarlos si la aplicación vuelve a iniciar.
+el Nivel 1 (El Ogro), el Nivel 2 (Taladro a Vapor), el Nivel 3 (La Cueva de las Variables),
+el Nivel 4 (Control de Calidad) y el Nivel 5 (Producción en Masa), sin duplicarlos si la
+aplicación vuelve a iniciar.
 
 Todas las fechas académicas se normalizan a UTC. El frontend puede enviar una fecha con zona,
 por ejemplo `2026-08-24T18:00:00-05:00` para Ecuador.

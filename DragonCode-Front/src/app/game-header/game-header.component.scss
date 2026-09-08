@@ -13,7 +13,7 @@
   --logo-offset-y: 15px; /* Ajusta este valor para bajar/subir el logo */
   
   /* Dimensiones de los botones */
-  --btn-size: 38px;
+  --btn-size: 44px;
   --icon-size: 1.2rem;
   
   /* Colores base y latido */
@@ -28,7 +28,7 @@
   :host {
     --header-height: 50px;
     --logo-height: 110px;
-    --btn-size: 32px;
+    --btn-size: 44px;
     --icon-size: 1rem;
     --logo-offset-y: 10px; /* <-- Control para BAJAR el logo en celulares. Sube este valor (ej. 15px) para bajarlo más. Valores negativos (ej. -5px) lo suben. */
   }
@@ -131,6 +131,7 @@
   align-items: center;
   font-size: var(--icon-size);
   cursor: pointer;
+  touch-action: manipulation;
   transition: all 0.2s ease-in-out;
   
   /* Botón de Abandonar (Rojo) */
@@ -157,6 +158,17 @@
       background-color: rgba(255, 255, 255, 0.05);
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
     }
+  }
+}
+
+.header-btn:focus-visible {
+  outline: 3px solid #ffe066;
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .game-header {
+    padding-inline: .5rem;
   }
 }
 

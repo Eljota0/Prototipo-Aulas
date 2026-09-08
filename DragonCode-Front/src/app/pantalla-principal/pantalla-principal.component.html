@@ -23,8 +23,10 @@
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
-        @if (notifications.length > 0) {
-          <span class="notif-badge"></span>
+        @if (notificacionesNoLeidas > 0) {
+          <span class="notif-badge" [attr.aria-label]="notificacionesNoLeidas + ' notificaciones sin leer'">
+            {{ notificacionesNoLeidas }}
+          </span>
         }
       </button>
       @if (isNotifOpen) {
@@ -39,12 +41,19 @@
               </div>
             } @else {
               <ul class="notif-list">
-                @for (n of notifications; track $index) { <li>{{ n }}</li> }
+                @for (n of notifications; track n.id) {
+                  <li [class.no-leida]="!n.leida" (click)="marcarNotificacionComoLeida(n)">
+                    <strong>{{ n.titulo }}</strong>
+                    <span>{{ n.mensaje }}</span>
+                    <small>{{ n.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}</small>
+                  </li>
+                }
               </ul>
             }
           </div>
           <footer class="notif-footer">
-            <button class="notif-read-btn" (click)="markAllAsRead()">
+            <button class="notif-read-btn" (click)="markAllAsRead()"
+                    [disabled]="notificacionesNoLeidas === 0">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
               MARCAR TODAS COMO LEÍDAS
             </button>
@@ -289,6 +298,53 @@
                             }
                           </div>
                         }
+
+                        <h4 style="color:#82F4E0; font-family:'TuFuentePixel',monospace; font-size:0.8rem; margin:14px 0 8px; text-align:center;">
+                          SEGUIMIENTO DE ACTIVIDADES:
+                        </h4>
+                        @if (cargandoSeguimiento) {
+                          <p style="color:#aaa; text-align:center; font-family:'TuFuentePixel',monospace; font-size:0.8rem;">Calculando resultados...</p>
+                        } @else if (reporteAulaAdmin?.actividades?.length === 0) {
+                          <p style="color:#aaa; text-align:center; font-family:'TuFuentePixel',monospace; font-size:0.8rem;">Aún no hay actividades asignadas.</p>
+                        } @else {
+                          <div style="display:flex; flex-direction:column; gap:8px;">
+                            @for (actividad of reporteAulaAdmin?.actividades ?? []; track actividad.reto_id) {
+                              <div style="background:rgba(130,244,224,0.06); border:1px solid rgba(130,244,224,0.25); padding:8px;">
+                                <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
+                                  <div>
+                                    <strong style="color:#fff; font-family:'TuFuentePixel',monospace; font-size:0.75rem;">{{ actividad.titulo }}</strong>
+                                    <p style="margin:5px 0 0; color:#a3bac2; font-size:0.7rem;">
+                                      {{ actividad.completados }}/{{ actividad.total_jugadores }} entregas · Promedio {{ actividad.promedio_calificacion }}
+                                    </p>
+                                    @if (actividad.fecha_limite) {
+                                      <small style="color:#FFD700; font-size:0.65rem;">Límite: {{ actividad.fecha_limite | date:'dd/MM/yyyy HH:mm' }}</small>
+                                    }
+                                  </div>
+                                  <span style="color:#d946ef; font-family:'TuFuentePixel',monospace; font-size:0.65rem;">{{ actividad.estado | uppercase }}</span>
+                                </div>
+                                @if (actividad.jugadores.length > 0) {
+                                  <div style="margin-top:7px; display:flex; flex-direction:column; gap:4px;">
+                                    @for (alumno of actividad.jugadores; track alumno.jugador_id) {
+                                      <div style="display:flex; justify-content:space-between; color:#ddd; font-size:0.68rem;">
+                                        <span>{{ alumno.nombre }} {{ alumno.apellido }}</span>
+                                        <span [style.color]="alumno.completado ? '#4ade80' : '#f87171'">
+                                          {{ alumno.completado ? (alumno.calificacion_numerica + '/10') : 'PENDIENTE' }}
+                                        </span>
+                                      </div>
+                                    }
+                                  </div>
+                                }
+                                @if (actividad.estado !== 'cerrado') {
+                                  <button class="cyber-glow-btn glow-red"
+                                          style="font-size:0.62rem; padding:4px 8px; margin-top:7px;"
+                                          (click)="cerrarActividad(aula.id, actividad)">
+                                    CERRAR ACTIVIDAD
+                                  </button>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
                       </div>
                     }
 
@@ -308,7 +364,7 @@
                            [style.background]="nivelSeleccionado === nivel.id ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.02)'">
                         <p style="margin:0; color:#FFD700; font-size:0.78rem; font-weight:bold;">{{ nivel.nombre }}</p>
                       </div>
-                      @if (nivelSeleccionado === nivel.id && nivel.id <= 2) {
+                      @if (nivelSeleccionado === nivel.id && nivel.id <= 4) {
                         <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; margin-bottom:8px; border:1px solid rgba(130,244,224,0.2);">
                           <span style="color:#82F4E0; font-family: 'TuFuentePixel', monospace; font-size: 0.75rem;">Fases a impartir:</span>
                           <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
@@ -337,6 +393,11 @@
                         <input type="number" [(ngModel)]="parametrosReto.tiempo_2_estrellas" min="20" max="600" class="cyber-input" style="padding:4px 7px;">
                       </label>
                     </div>
+                    <label style="display:flex; flex-direction:column; gap:3px; font-size:0.72rem; font-family:'TuFuentePixel',monospace; margin-top:8px;">
+                      <span style="color:#FFD700;">FECHA LÍMITE (OPCIONAL)</span>
+                      <input type="datetime-local" [(ngModel)]="fechaLimiteActividad"
+                             class="cyber-input" style="padding:4px 7px;">
+                    </label>
                     
                     <div (click)="parametrosReto.anti_copia = !parametrosReto.anti_copia"
                          style="display:flex; align-items:center; gap:8px; font-size:0.75rem; font-family:'TuFuentePixel',monospace; margin-top:10px; cursor:pointer;">
@@ -400,7 +461,7 @@
                 <p style="margin:6px 0 0; font-family:'TuFuentePixel',monospace; font-size:0.85rem; color:#a3bac2;">{{ nivel.descripcion }}</p>
               </div>
               
-              @if (nivelSeleccionado === nivel.id && nivel.id <= 2) {
+              @if (nivelSeleccionado === nivel.id && nivel.id <= 4) {
                 <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px;
                             margin-top: -4px; margin-bottom: 8px; border: 1px solid rgba(130,244,224,0.2);
                             display: flex; flex-direction: column; gap: 8px; text-align: left;">
@@ -450,6 +511,11 @@
             <label style="display:flex; flex-direction:column; gap:4px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace;">
               <span style="color:#a3bac2;">🔄 Intentos sin penalidad de estrella</span>
               <input type="number" [(ngModel)]="parametrosReto.intentos_max_sin_penalidad" min="1" max="10"
+                     class="cyber-input" style="width:100%; box-sizing:border-box;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:4px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace;">
+              <span style="color:#FFD700;">FECHA LÍMITE (OPCIONAL)</span>
+              <input type="datetime-local" [(ngModel)]="fechaLimiteActividad"
                      class="cyber-input" style="width:100%; box-sizing:border-box;">
             </label>
             <div (click)="parametrosReto.anti_copia = !parametrosReto.anti_copia"
@@ -530,17 +596,21 @@
                 @for (actividad of actividadesAulaEstudiante; track actividad.id) {
                   <div class="cyber-glow-card" style="display:flex; align-items:center; justify-content:space-between; padding:14px; border-color: {{ actividad.completado ? '#4ade80' : '#82F4E0' }}; box-shadow: inset 0 0 10px {{ actividad.completado ? 'rgba(74, 222, 128, 0.2)' : 'rgba(130, 244, 224, 0.1)' }};">
                     <div>
-                      <p style="color:#ffffff; font-family:'TuFuentePixel',monospace; font-size:1.1rem; text-shadow: 2px 2px 0 #000; margin:0 0 6px 0;">Reto Nivel {{ actividad.reto_nivel_id }}</p>
+                      <p style="color:#ffffff; font-family:'TuFuentePixel',monospace; font-size:1rem; text-shadow: 2px 2px 0 #000; margin:0 0 6px 0;">{{ actividad.titulo }}</p>
                       @if (actividad.completado) {
-                        <span style="color:#4ade80; font-size:0.8rem; font-family:'TuFuentePixel',monospace; text-shadow: 0 0 5px rgba(74, 222, 128, 0.4);">✔️ COMPLETADO</span>
+                        <span style="color:#4ade80; font-size:0.8rem; font-family:'TuFuentePixel',monospace; text-shadow: 0 0 5px rgba(74, 222, 128, 0.4);">✔ COMPLETADA</span>
                       } @else {
-                        <span style="color:#f87171; font-size:0.8rem; font-family:'TuFuentePixel',monospace; text-shadow: 0 0 5px rgba(248,113,113,0.5);">❗ PENDIENTE</span>
+                        <span style="color:#f87171; font-size:0.8rem; font-family:'TuFuentePixel',monospace; text-shadow: 0 0 5px rgba(248,113,113,0.5);">{{ estadoVisibleActividad(actividad) }}</span>
+                      }
+                      @if (actividad.fecha_limite) {
+                        <small style="display:block; color:#FFD700; font-size:0.68rem; margin-top:5px;">Hasta {{ actividad.fecha_limite | date:'dd/MM/yyyy HH:mm' }}</small>
                       }
                     </div>
                     <button class="cyber-glow-btn" [class.glow-green]="!actividad.completado" [class.glow-purple]="actividad.completado"
                             style="padding:8px 16px; flex:none;"
+                            [disabled]="!actividadDisponible(actividad)"
                             (click)="jugarReto(actividad)">
-                      {{ actividad.completado ? 'REPETIR' : 'JUGAR' }}
+                      {{ !actividadDisponible(actividad) ? 'CERRADA' : (actividad.completado ? 'REPETIR' : 'JUGAR') }}
                     </button>
                   </div>
                 }

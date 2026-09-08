@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base, SessionLocal
@@ -15,10 +17,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS config - En producción cambiar allow_origins por el dominio de Vercel
+origenes_permitidos = [
+    origen.strip()
+    for origen in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:4300,https://dragoncode-front.vercel.app",
+    ).split(",")
+    if origen.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origenes_permitidos,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

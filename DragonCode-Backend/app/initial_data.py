@@ -36,7 +36,67 @@ NIVEL_DOS = {
     "recompensa_estrellas": 5,
 }
 
-NIVELES_OFICIALES = (NIVEL_UNO, NIVEL_DOS)
+NIVEL_TRES = {
+    "orden": 3,
+    "titulo": "La Cueva de las Variables",
+    "descripcion": (
+        "Resuelve cuatro fases almacenando booleanos, textos y enteros para "
+        "preparar el combate de Drako contra los murciélagos."
+    ),
+    "tipo_reto": TipoReto.variables,
+    "parametros_evaluacion": {
+        "tiempo_3_estrellas": 60,
+        "tiempo_2_estrellas": 120,
+        "intentos_max_sin_penalidad": 3,
+        "anti_copia": False,
+        "fases_seleccionadas": [1, 2, 3, 4],
+    },
+    "recompensa_estrellas": 5,
+}
+
+NIVEL_CUATRO = {
+    "orden": 4,
+    "titulo": "Control de Calidad",
+    "descripcion": (
+        "Resuelve cuatro fases clasificando materiales con decisiones si, "
+        "sino si y sino dentro de una fábrica minera."
+    ),
+    "tipo_reto": TipoReto.control_flujo,
+    "parametros_evaluacion": {
+        "tiempo_3_estrellas": 75,
+        "tiempo_2_estrellas": 150,
+        "intentos_max_sin_penalidad": 3,
+        "anti_copia": False,
+        "fases_seleccionadas": [1, 2, 3, 4],
+    },
+    "recompensa_estrellas": 5,
+}
+
+NIVEL_CINCO = {
+    "orden": 5,
+    "titulo": "Producción en Masa",
+    "descripcion": (
+        "Resuelve cuatro fases automatizando la fábrica con bucles mientras "
+        "y decisiones anidadas hasta vaciar el stock."
+    ),
+    "tipo_reto": TipoReto.bucles,
+    "parametros_evaluacion": {
+        "tiempo_3_estrellas": 100,
+        "tiempo_2_estrellas": 200,
+        "intentos_max_sin_penalidad": 3,
+        "anti_copia": False,
+        "fases_seleccionadas": [1, 2, 3, 4],
+    },
+    "recompensa_estrellas": 5,
+}
+
+NIVELES_OFICIALES = (
+    NIVEL_UNO,
+    NIVEL_DOS,
+    NIVEL_TRES,
+    NIVEL_CUATRO,
+    NIVEL_CINCO,
+)
 
 
 def seed_initial_data(db: Session) -> bool:

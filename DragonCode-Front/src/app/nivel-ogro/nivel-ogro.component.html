@@ -149,8 +149,8 @@
   <!-- FASE 1: CONFIGURACIÓN INICIAL (WIZARD) -->
   <div *ngIf="!editorInicializado" style="padding-top: 10px; border-top: 1px solid #77DDCA;">
     <label style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-      Cant. de Niveles (1-10): 
-      <input type="number" min="1" max="10" [value]="inputTotalNiveles" (change)="inputTotalNiveles = +$any($event.target).value" style="width: 50px; color: black;">
+      Cant. de Niveles (1-5):
+      <input type="number" min="1" max="5" [value]="inputTotalNiveles" (change)="inputTotalNiveles = +$any($event.target).value" style="width: 50px; color: black;">
     </label>
     <button (click)="inicializarEditor()" style="width: 100%; background: #77DDCA; color: black; font-weight: bold; padding: 5px;">Crear Set de Niveles</button>
   </div>
