@@ -13,7 +13,7 @@ button, textarea { font: inherit; }
 
 .nivel-dos-shell {
   width: 100%;
-  min-height: 100dvh;
+  min-height: 100vh;
   overflow: hidden;
   background: #0b0f19;
 }
@@ -107,15 +107,59 @@ button, textarea { font: inherit; }
   text-shadow: 3px 3px 0 #000;
 }
 
+/* ========================================================
+   PANEL DE CONTROL: FONDO NIVEL 2
+   Ajusta este valor para controlar el zoom del fondo.
+   Ejemplos: 
+   'cover' (por defecto, llena la pantalla adaptï¿½ndose)
+   '150%' (aumenta el tamaÃ±o, mï¿½s zoom in)
+   '100%' (tamaï¿½o original de la imagen)
+   ======================================================== */
+$zoom-fondo-nivel: cover;
+
+/* ========================================================
+   PANEL DE CONTROL: SUELO ROCOSO (NIVEL 2)
+   Ajusta este valor para controlar el 'zoom' (tamaÃ±o) de las rocas del suelo.
+   - Modificar este valor NO harÃ¡ que las rocas pasen por encima de la lï¿½nea blanca,
+     solo crecerÃ³n hacia abajo.
+   - Ejemplos: '45%' (pequeÃ±o), '58%' (30% zoom), '75%' (grande)
+   ======================================================== */
+$zoom-nuevo-suelo: 70%;
+
+/* ========================================================
+   PANEL DE CONTROL: ILUMINACIÃ“N Y SOMBRAS (NIVEL 2)
+   Ajusta estos valores para calibrar visualmente la escena al ojo.
+   ======================================================== */
+$intensidad-sombra-maquina: 0.70; /* 0 (invisible) a 1 (negro puro). Sombra en los pies. */
+$opacidad-maquina: 1;             /* 0 (invisible) a 1 (solido). Opacidad de taladro-vapor.png */
+$brillo-maquina: 0.68;            /* Brillo de la maquina. Original era 0.78. Usa 1 para brillo total. */
+$intensidad-efecto-tunel: 0.95;      /* 0 (sin sombras) a 1 (muy oscuro). Efecto tunel SUPERPUESTO (afecta suelo y fondo). */
+$intensidad-tunel-fondo: 0.1;       /* 0 (invisible) a 1 (oscuro). Efecto tunel ORIGINAL de la pared (solo afecta la cueva). */
+$velocidad-temblor: 0.13s;        /* Velocidad a la que tiembla la maquina (perforando). Original: 0.08s */       /* 0 (invisible) a 1 (oscuro). Efecto tunel ORIGINAL de la pared (solo afecta la cueva). */      /* 0 (sin sombras laterales) a 1 (muy oscuro). Efecto tunel de la cueva. */
+
 .escena-maquina {
+  flex-grow: 1;
   position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
   background:
-    linear-gradient(90deg, #000 0 8%, transparent 20% 80%, #000 92% 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.12), #020202 92%),
-    url('/assets/images/aventura/nivel1/terreno/fondo-cueva.png') center / cover;
+    linear-gradient(90deg, rgba(0,0,0, $intensidad-tunel-fondo) 0 8%, transparent 20% 80%, rgba(0,0,0, $intensidad-tunel-fondo) 92% 100%),
+    linear-gradient(180deg, rgba(0,0,0, 0.12), rgba(2,2,2, $intensidad-tunel-fondo) 92%),
+    url('/assets/images/aventura/nivel2/fondo-nivel-2.png') center / $zoom-fondo-nivel;
+  background-repeat: no-repeat;
+}
+
+.escena-maquina::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: 
+    linear-gradient(90deg, rgba(0,0,0,0.95) 0 8%, transparent 20% 80%, rgba(0,0,0,0.95) 92% 100%),
+    linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.8) 95%);
+  opacity: $intensidad-efecto-tunel;
+  pointer-events: none;
 }
 
 .escena-maquina::before {
@@ -137,49 +181,156 @@ button, textarea { font: inherit; }
   background: radial-gradient(ellipse, rgba(60, 167, 151, 0.13), rgba(34, 18, 15, 0.04) 52%, transparent 72%);
 }
 
-.plataforma {
+.nuevo-suelo-contenedor {
   position: absolute;
   left: 50%;
-  bottom: 10%;
-  width: min(67%, 525px);
-  height: 22%;
-  transform: translateX(-50%) perspective(500px) rotateX(54deg);
-  transform-origin: center bottom;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border: 3px solid #17100e;
-  box-shadow: 0 18px 22px #000;
+  top: 46%;
+  width: min(58%, 440px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  /* z-index removido para liberar contexto */
+  pointer-events: none;
 }
 
-.plataforma span {
-  background: url('/assets/images/aventura/nivel1/terreno/suelo.png') center / cover;
-  border: 1px solid rgba(44, 24, 16, 0.7);
+.nuevo-suelo-relleno {
+  position: absolute;
+  top: 95%; /* Empieza mï¿½s abajo para no asomarse por las rocas transparentes superiores */
+  left: -100vw;
+  right: -100vw;
+  height: 200vh;
+  background-color: #110D13;
+  z-index: 0;
+ /* Detras de la maquina y de la imagen del suelo */
+  pointer-events: none;
+}
+
+.sombra-maquina-suelo {
+  position: absolute;
+  top: 97%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 115%; /* Mas ancha que las patas de la maquina */
+  height: 14%;
+  background: rgba(0, 0, 0, $intensidad-sombra-maquina);
+  border-radius: 50%;
+  filter: blur(8px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+
+
+
+
+.sombra-maquina-frontal {
+  position: absolute;
+  top: 77%;
+  left: 0;
+  width: 100%;
+  height: $zoom-nuevo-suelo;
+  z-index: 5;
+  pointer-events: none;
+  
+  /* Mascara que hace invisible la sombra en las areas transparentes de la roca */
+  -webkit-mask-image: url('/assets/images/aventura/nivel2/suelo-superior-nivel-2.png');
+  -webkit-mask-position: top center;
+  -webkit-mask-size: auto 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-image: url('/assets/images/aventura/nivel2/suelo-superior-nivel-2.png');
+  mask-position: top center;
+  mask-size: auto 100%;
+  mask-repeat: no-repeat;
+}
+
+.sombra-maquina-frontal::before {
+  content: '';
+  position: absolute;
+  top: 28.57%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 38%;
+  height: 20%;
+  background: rgba(0, 0, 0, $intensidad-sombra-maquina);
+  border-radius: 50%;
+  filter: blur(8px);
+}
+
+.nuevo-suelo-imagen {
+  position: absolute;
+  top: 77%;
+  left: -100vw;
+  right: -100vw;
+  height: $zoom-nuevo-suelo;
+  background-image: url('/assets/images/aventura/nivel2/suelo-nivel-2.png');
+  background-position: top center;
+  background-repeat: repeat-x;
+  background-size: auto 100%;
   image-rendering: pixelated;
+  z-index: 1;
+ /* Detras de la maquina */
+  pointer-events: none;
 }
 
+
+.nuevo-suelo-superior {
+  position: absolute;
+  top: 77%;
+  left: -100vw;
+  right: -100vw;
+  height: $zoom-nuevo-suelo;
+  background-image: url('/assets/images/aventura/nivel2/suelo-superior-nivel-2.png');
+  background-position: top center;
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+  image-rendering: pixelated;
+  z-index: 4;
+  filter: brightness(0.4);
+  pointer-events: none;
+}
 .taladro-wrap {
   position: absolute;
   left: 50%;
   top: 46%;
-  z-index: 3;
   width: min(58%, 440px);
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
+  z-index: 3;
 }
 
-.taladro-wrap img {
+.taladro-wrap img.maquina-base {
+  position: relative;
+  z-index: 3;
   width: 100%;
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
-  filter: brightness(.78) saturate(.9) drop-shadow(0 12px 8px #000);
+  opacity: $opacidad-maquina;
+  filter: brightness($brillo-maquina) saturate(.9);
   transition: filter 0.65s ease, transform 0.45s ease;
 }
 
-.perforando .taladro-wrap img { animation: vibracion-maquina 0.16s steps(2) infinite; }
-.liberando-vapor .taladro-wrap img { filter: brightness(1.05) saturate(1.2) drop-shadow(0 0 20px #6ef6e2); }
-.estable .taladro-wrap img { filter: brightness(1) saturate(1.12) drop-shadow(0 0 22px #51d8c5); }
-.explosion .taladro-wrap img { animation: explosion-taladro .12s steps(2) infinite; filter: sepia(1) saturate(4) brightness(1.35) drop-shadow(0 0 35px #ff3b16); }
+.perforando .taladro-wrap img.maquina-base {
+  position: relative;
+  z-index: 3;
+  animation: vibracion-maquina $velocidad-temblor infinite;
+}
+.liberando-vapor .taladro-wrap img.maquina-base {
+  position: relative;
+  z-index: 3;
+  filter: brightness($brillo-maquina) saturate(.9) drop-shadow(0 0 10px rgba(110, 246, 226, 0.4));
+  animation: vibracion-maquina 0.35s infinite; /* Ralentiza el temblor en lugar de detenerlo */
+}
+.estable .taladro-wrap img.maquina-base {
+  position: relative;
+  z-index: 3;
+  filter: brightness(1) saturate(1.12) drop-shadow(0 0 22px #51d8c5);
+}
+.explosion .taladro-wrap img.maquina-base {
+  position: relative;
+  z-index: 3;
+  animation: explosion-taladro 0.15s steps(2) infinite;
+  filter: brightness(1.2) drop-shadow(0 0 30px #ff6b00);
+}
 
 @keyframes vibracion-maquina {
   0% { transform: translateX(-2px); }
@@ -250,13 +401,17 @@ button, textarea { font: inherit; }
 .recargando .brillo-carbon { opacity: 1; animation: fuego-carbon .45s alternate infinite; }
 @keyframes fuego-carbon { to { transform: scale(1.25) translateY(-5px); filter: brightness(1.5); } }
 
-.banda-rota .taladro-wrap img {
+.banda-rota .taladro-wrap img.maquina-base {
+  position: relative;
+  z-index: 3;
   transform: rotate(-3deg) translateY(8px);
-  filter: grayscale(.45) brightness(.65) drop-shadow(0 10px 10px #000);
+  filter: grayscale(.45) brightness(.65);
 }
 
-.sin-combustible .taladro-wrap img {
-  filter: grayscale(.75) brightness(.28) drop-shadow(0 10px 10px #000);
+.sin-combustible .taladro-wrap img.maquina-base {
+  position: relative;
+  z-index: 3;
+  filter: grayscale(.75) brightness(.28);
 }
 
 .sin-combustible .caverna-luz { opacity: .12; }
@@ -364,28 +519,33 @@ button, textarea { font: inherit; }
 
 .medidor-profundidad-wrapper {
   position: absolute;
-  z-index: 5;
-  left: 60px;
-  top: 50%;
+  left: clamp(5px, 2vw, 15px);
+  top: 45%;
+  bottom: auto;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  height: clamp(150px, calc(100% - 180px), 450px);
+  z-index: 5;
 }
 
 .medidor-profundidad {
   position: relative;
   width: 24px;
-  height: 450px;
+  height: 100%;
   background: rgba(6, 9, 9, 0.88);
-  border: 2px solid #ffffff;
+  border: 2px solid #ffffff !important;
+  box-sizing: border-box;
   border-radius: 4px;
-  overflow: visible;
+  overflow: hidden;
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  z-index: 5;
 }
 
 .lago-subterraneo {
   position: absolute;
+  bottom: 0;
   width: 100%;
   background-color: #3b82f6;
   transition: background-color 0.5s ease;
@@ -398,10 +558,10 @@ button, textarea { font: inherit; }
 .escala-marca {
   position: absolute;
   left: 100%;
-  margin-left: 10px;
+  margin-left: clamp(8px, 1.5vw, 20px);
   transform: translateY(-50%);
   color: white;
-  font-size: 0.6rem;
+  font-size: clamp(0.35rem, 1vw, 0.6rem);
   font-family: 'Press Start 2P', 'Courier New', monospace;
   z-index: 5;
   white-space: nowrap;
@@ -419,24 +579,22 @@ button, textarea { font: inherit; }
 
 .indicador-taladro {
   position: absolute;
-  right: 100%;
-  margin-right: 5px;
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: #ffd700;
-  font-weight: bold;
-  text-align: right;
+  font-size: clamp(0.7rem, 2vw, 1.2rem);
   font-family: 'Press Start 2P', 'Courier New', monospace;
-  font-size: 1rem;
   z-index: 10;
+  text-shadow: 0px 2px 2px rgba(0,0,0,0.8);
   transition: top 0.24s linear;
-  white-space: nowrap;
 }
 
 .agua-extrayendose {
   position: absolute;
+  bottom: 0;
   width: 100%;
-  background-color: #00ffff;
-  z-index: 6;
+  background-color: #3b82f6;
+  z-index: 2;
   animation: extraerAguaArriba 2s ease forwards;
 }
 
@@ -446,19 +604,21 @@ button, textarea { font: inherit; }
 }
 
 .profundidad-texto {
-  color: #a9b8b5;
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffd700;
   font-family: 'Press Start 2P', 'Courier New', monospace;
-  font-size: 0.85rem;
+  font-size: clamp(0.5rem, 1.5vw, 0.8rem);
   font-weight: bold;
-  background: rgba(6, 9, 9, 0.8);
-  padding: 4px 8px;
-  border: 1px solid #315a55;
-  border-radius: 4px;
+  text-shadow: 2px 2px 0px #000;
+  white-space: nowrap;
 }
 
 .medidores {
   position: absolute;
-  z-index: 6;
+  z-index: 10;
   left: 4%;
   top: 19%;
   width: min(27%, 190px);
@@ -468,7 +628,7 @@ button, textarea { font: inherit; }
 
 .medidor {
   position: relative;
-  padding: 7px 8px;
+  padding: clamp(4px, 1vw, 7px) clamp(5px, 1.2vw, 8px);
   color: #cad8d5;
   background: rgba(6, 9, 9, .9);
   border: 2px solid #315a55;
@@ -480,7 +640,7 @@ button, textarea { font: inherit; }
   justify-content: space-between;
   gap: 5px;
   font-family: 'Press Start 2P', 'Courier New', monospace;
-  font-size: .48rem;
+  font-size: clamp(0.35rem, 1vw, .48rem);
 }
 
 .medidor-titulo strong { color: #ffe36a; }
@@ -995,7 +1155,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
 .celebracion-panel {
   position: relative;
-  z-index: 2;
+  z-index: 10;
   width: min(720px, 94vw);
   max-height: calc(100dvh - 12px);
   display: flex;
@@ -1130,7 +1290,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
 @media (max-width: 1050px) {
   .mision-flotante p { font-size: .64rem; }
-  .taladro-wrap { width: min(66%, 390px); }
+  .taladro-wrap, .nuevo-suelo-contenedor { width: min(66%, 390px); }
   .contenido-inventario { gap: 6px; padding: 7px; }
   .contenido-inventario.fase-final { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .memoria-protocolos { grid-template-columns: 1fr; }
@@ -1139,7 +1299,12 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 @media (max-width: 767px) {
-  .nivel-dos-shell { overflow: hidden; }
+  .nivel-dos-shell {
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #0b0f19;
+}
   .juego-layout {
     height: calc(100dvh - 60px);
     padding: 1rem;
@@ -1154,7 +1319,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .inventario { height: 244px; }
   .hud-juego { inset: 14px 5% auto; }
   .contador-reparacion { min-width: 116px; padding: 7px 9px; }
-  .taladro-wrap { width: min(61%, 280px); top: 44%; }
+  .taladro-wrap, .nuevo-suelo-contenedor { width: min(61%, 280px); top: 44%; }
   .mision-flotante { padding: 8px 9px; }
   .mision-flotante p { margin-right: 0; padding-right: 0; }
   .mision-flotante button { top: auto; bottom: 8px; }
@@ -1174,8 +1339,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .mision-flotante { padding: 7px 10px; }
   .mision-flotante p { margin-top: 3px; }
 }
-.escena-maquina.anim-descompuesto .taladro-wrap img {
-  animation: descompuestoTemblor 0.1s infinite;
+.escena-maquina.anim-descompuesto .taladro-wrap img.maquina-base {
+  position: relative;
+  z-index: 3;
+  animation: descompuestoTemblor 0.18s infinite;
   filter: grayscale(100%) contrast(120%);
 }
 @keyframes descompuestoTemblor {
@@ -1190,7 +1357,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.9) !important;
   filter: brightness(0.2);
 }
-.escena-maquina.anim-ahogo .taladro-wrap img {
+.escena-maquina.anim-ahogo .taladro-wrap img.maquina-base {
+  position: relative;
+  z-index: 3;
   animation: ahogo 1s ease;
   filter: brightness(0.7);
 }
@@ -1212,7 +1381,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   40%, 80% { transform: scale(0.95) translateX(5px); }
 }
 
-.escena-maquina.anim-desestabilizado .taladro-wrap img {
+.escena-maquina.anim-desestabilizado .taladro-wrap img.maquina-base {
+  position: relative;
+  z-index: 3;
   animation: desestabilizacion 0.15s steps(2) infinite;
   filter: sepia(0.3) brightness(1.1) drop-shadow(0 0 15px #ff9800);
 }
@@ -1291,15 +1462,15 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
 .hud-titulo-centro {
   position: absolute;
-  top: 15px;
+  top: clamp(10px, 2vw, 15px);
   left: 50%;
   transform: translateX(-50%);
   background-color: #000000;
   border: 2px solid #ffd700;
-  padding: 10px 20px;
+  padding: clamp(5px, 1.5vw, 10px) clamp(10px, 3vw, 20px);
   font-family: 'Press Start 2P', 'Courier New', monospace;
   text-align: center;
-  font-size: 0.85rem;
+  font-size: clamp(0.5rem, 2.5vw, 0.85rem);
   font-weight: bold;
   color: #ffffff;
   white-space: nowrap;
@@ -1309,11 +1480,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
 .hud-contador-der {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: clamp(10px, 2vw, 15px);
+  right: clamp(10px, 2vw, 15px);
   color: #ffffff;
   font-weight: bold;
-  font-size: 1rem;
+  font-size: clamp(0.6rem, 2.5vw, 1rem);
   font-family: 'Press Start 2P', 'Courier New', monospace;
   z-index: 50;
   text-shadow: 2px 2px 0px #000;
@@ -1321,42 +1492,35 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
 .hud-inferior-wrapper {
   position: absolute;
-  bottom: 0;
+  bottom: clamp(5px, 2vw, 15px);
   left: 0;
+  z-index: 50;
   display: flex;
-  gap: 20px;
+  gap: clamp(5px, 2vw, 20px);
   align-items: stretch;
   width: 100%;
-  margin-top: 15px;
-  padding: 10px;
+  padding: 0 clamp(5px, 2vw, 15px);
   box-sizing: border-box;
-  z-index: 50;
-}
-
-@media (max-width: 768px) {
-  .hud-inferior-wrapper {
-    flex-direction: column;
-  }
 }
 
 .hud-panel-medidores, .hud-panel-mision {
   background-color: #000000;
   border: 2px solid #ffffff;
-  padding: 20px;
+  padding: clamp(8px, 2vw, 20px);
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .hud-panel-medidores {
-  gap: 10px;
-  min-width: 250px;
+  gap: clamp(5px, 1.5vw, 10px);
+  min-width: clamp(140px, 20vw, 250px);
 }
 
 .hud-panel-mision {
   flex-grow: 1;
   font-family: 'Press Start 2P', 'Courier New', monospace;
-  font-size: 0.85rem;
+  font-size: clamp(0.45rem, 1.5vw, 0.85rem);
   line-height: 1.6;
   color: #ffffff;
   text-shadow: 1px 1px 0px #000;
@@ -1366,3 +1530,229 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   color: #56b6c2;
   font-weight: bold;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.linea-suelo-temporal {
+  position: absolute;
+  bottom: 23%;
+  left: -25%;
+  right: -25%;
+  height: 4px;
+  background-color: #ffffff;
+  border-top: 2px dashed red;
+  z-index: 2;
+  pointer-events: none;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.taladro-wrap .sprite-capa {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: $opacidad-maquina;
+  filter: brightness($brillo-maquina) saturate(.9);
+}
+
+.taladro-wrap .maquina-base { z-index: 1 !important; }
+
+
+/* =========================================================================
+   PANEL DE CONTROL DE ANIMACIONES (TUBO Y BROCA)
+========================================================================= */
+/* 1. Corte del tubo telescópico */
+$corte-inicial-tubo: 31.5%;
+$distancia-perforacion: 35%; /* Distancia que viaja el taladro */
+$corte-final-tubo: $corte-inicial-tubo - $distancia-perforacion;
+
+/* 2. Intensidad de vibración (Temblor) */
+$fuerza-temblor-broca: 2px;  /* Original: 1px. Aumenta para más violencia */
+$fuerza-temblor-tubo: 1.2px;  /* Original: 0.5px. Aumenta para más violencia */
+$velocidad-broca: 0.08s;     /* Original: 0.08s. Menor = más rápido */
+$velocidad-tubo: 0.12s;      /* Original: 0.12s. Menor = más rápido */
+
+
+.taladro-wrap .capa-tubo { 
+  z-index: 2 !important; 
+  clip-path: inset(0 0 $corte-inicial-tubo 0);
+  transition: filter 0.65s ease, transform 0.45s ease, clip-path 1.5s ease-in;
+}
+.taladro-wrap .capa-tubo.perforando-profundo {
+  clip-path: inset(0 0 $corte-final-tubo 0);
+}
+
+.taladro-wrap .capa-punta { 
+  z-index: 3 !important; 
+  transition: top 1.5s ease-in;
+}
+
+.taladro-wrap .capa-punta.perforando-profundo {
+  top: $distancia-perforacion;
+  animation: vibracion-rapida $velocidad-broca steps(2) infinite;
+}
+
+
+.taladro-wrap .estado-apagado {
+  filter: grayscale(100%) brightness(40%) contrast(1.2);
+  animation: none;
+}
+
+.taladro-wrap .estado-sobrepresion {
+  filter: sepia(0.8) saturate(4) hue-rotate(-20deg) brightness(1.2) drop-shadow(0 0 10px rgba(255, 0, 0, 0.6));
+  animation: vibracion-salvaje 0.05s steps(2) infinite;
+}
+
+.taladro-wrap .estado-ahogado {
+  filter: grayscale(80%) sepia(20%) brightness(70%);
+  animation: vibracion-lenta-agonica 0.4s steps(2) infinite;
+}
+
+.taladro-wrap .estado-desestabilizado {
+  filter: sepia(0.5) saturate(3) hue-rotate(-10deg) brightness(1.2) drop-shadow(0 0 10px #ff9800);
+  animation: vibracion-desestabilizada 0.15s steps(2) infinite;
+}
+
+.taladro-wrap .capa-punta.estado-perforando {
+  animation: vibracion-rapida $velocidad-broca steps(2) infinite;
+}
+
+.taladro-wrap .capa-tubo.estado-perforando {
+  animation: vibracion-sutil $velocidad-tubo steps(2) infinite;
+}
+
+@keyframes vibracion-salvaje {
+  0% { transform: translate(-3px, 2px) rotate(-2deg); }
+  50% { transform: translate(3px, -2px) rotate(2deg); }
+  100% { transform: translate(-3px, 2px) rotate(-2deg); }
+}
+
+@keyframes vibracion-lenta-agonica {
+  0% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+  50% { transform: translate(1px, -1px) rotate(0.5deg); }
+  100% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+}
+
+@keyframes vibracion-desestabilizada {
+  0% { transform: translate(-4px, 2px) rotate(-1deg); }
+  50% { transform: translate(4px, -2px) rotate(1deg); }
+  100% { transform: translate(-4px, 2px) rotate(-1deg); }
+}
+
+
+@keyframes vibracion-rapida {
+  0% { transform: translateY(calc(-1 * $fuerza-temblor-broca)); }
+  100% { transform: translateY($fuerza-temblor-broca); }
+}
+
+@keyframes vibracion-sutil {
+  0% { transform: translateY(calc(-1 * $fuerza-temblor-tubo)); }
+  100% { transform: translateY($fuerza-temblor-tubo); }
+}
+
+.overlay-humo {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: radial-gradient(circle, transparent 20%, rgba(50, 50, 50, 0.8) 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.escena-maquina.anim-ahogo .overlay-humo {
+  opacity: 1;
+}
+
+.particulas-exito {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 100px; height: 100px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(160, 32, 240, 0.8) 0%, transparent 70%);
+  animation: estallido-morado 0.5s ease-out forwards;
+  z-index: 5;
+  pointer-events: none;
+}
+
+@keyframes estallido-morado {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

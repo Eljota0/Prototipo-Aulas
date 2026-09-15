@@ -43,7 +43,7 @@ export class EvaluadorTaladroService {
 
   evaluarAndamiajeFase2(codigo: string): { valido: boolean, tipoFallo: string, operador: string, valor: number, accion: string } {
     const defaultRes = { valido: false, tipoFallo: 'DESESTABILIZACION', operador: '', valor: 0, accion: '' };
-    const andamiajeRegex = /si\s*\(\s*taladro\.presion\s*(==|!=)\s*(\d+)\s*\)\s*\{\s*taladro\.(mantenerFuerza|apagarMotor)\(\);?\s*\}/i;
+    const andamiajeRegex = /si\s*\(\s*taladro\.presion\s*(==|!=)\s*(\d+)\s*\)\s*\{\s*taladro\.(mantenerFuerza|apagarMotor|aumentarFuerza|liberarVapor)\(\);?\s*\}/i;
     const match = codigo.match(andamiajeRegex);
 
     if (!match) return defaultRes;
@@ -203,3 +203,4 @@ export class EvaluadorTaladroService {
   }
 
 }
+

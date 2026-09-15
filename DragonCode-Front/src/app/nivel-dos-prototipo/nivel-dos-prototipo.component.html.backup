@@ -1,10 +1,7 @@
 <div class="nivel-dos-shell">
   <div class="fade-overlay" [class.activo]="transicionando"></div>
 
-
-
-
-<app-layout-juego class="juego-area"
+<div class="escala-wrapper" [style.transform]="'scale(' + escalaProporcional + ')'" style="transform-origin: center center; width: 1200px; height: 800px; margin: 0 auto; display: flex;">  <app-layout-juego class="juego-area" style="flex: 1; width: 100%; height: 100%;"
   [configuracionTarjetas]="configuracionTarjetasActual"
   [estadoObjetos]="inventarioNivel"
   [antiCopiaActivo]="antiCopiaActivo"
@@ -40,8 +37,6 @@
          [class.anim-descompuesto]="estadoTaladro === 'descompuesto'"
          [class.anim-desestabilizado]="estadoTaladro === 'desestabilizado'">
          
-      <div class="overlay-humo"></div>
-
       <!-- TÃ­tulo Centro -->
       <div class="hud-titulo-centro">
         {{ tituloFaseCorto }}
@@ -53,31 +48,117 @@
       </div>
 
       <div class="caverna-luz"></div>
-      
-
-      <div class="nuevo-suelo-contenedor">
-        <div class="nuevo-suelo-relleno"></div>
-        <div class="nuevo-suelo-imagen"></div>
-<div class="sombra-maquina-suelo"></div>
+      <div class="plataforma">
+        <span *ngFor="let baldosa of [1, 2, 3, 4, 5, 6]"></span>
       </div>
+
       <div class="taladro-wrap">
-        <img src="assets/images/aventura/nivel2/taladro-vapor.png" alt="Máquina base" class="maquina-base">
-        <!-- 2. CAPA MEDIA: El tubo -->
-        <img src="assets/images/aventura/nivel2/tubo.png" alt="Tubo" class="sprite-capa capa-tubo" [ngClass]="'estado-' + estadoPunta" [class.perforando-profundo]="faseActual.numero === 3 && (ejecutando || faseCompletada || nivelCompletado || falloFase)">
-        <!-- 3. CAPA SUPERIOR: La punta -->
-        <img src="assets/images/aventura/nivel2/taladro-punta.png" alt="Punta" class="sprite-capa capa-punta" [ngClass]="'estado-' + estadoPunta" [class.perforando-profundo]="faseActual.numero === 3 && (ejecutando || faseCompletada || nivelCompletado || falloFase)">
-          <div class="nuevo-suelo-superior"></div>
-          <div class="sombra-maquina-frontal"></div>
-        <div class="particulas-exito" *ngIf="mostrarParticulasMoradas"></div>
+        <img src="assets/images/aventura/nivel2/taladro-vapor.png"
+             alt="Taladro a vapor mÃ¡gico funcionando en la mina">
         <span class="vapor vapor-a"></span>
         <span class="vapor vapor-b"></span>
         <span class="cristales-empacados">â—† â—† â—†</span>
         <span class="brillo-carbon"></span>
         <span class="onda-explosion"></span>
-        
       </div>
 
+      <div class="medidor-profundidad-wrapper" *ngIf="faseActual.numero >= 3">
+        <div class="medidor-profundidad">
+          <!-- 1. El Lago SubterrÃ¡neo (Fondo desde el nivel del agua hasta abajo) -->
+          <div class="lago-subterraneo" 
+               [class.contaminado]="aguaContaminada"
+               [style.top.%]="(profundidadAgua / profundidadMaxima) * 100"
+               [style.height.%]="100 - ((profundidadAgua / profundidadMaxima) * 100)">
+          </div>
+
+          <!-- 4. ExtracciÃ³n de agua (AnimaciÃ³n subiendo hacia la superficie) -->
+          <div class="agua-extrayendose" 
+               *ngIf="extrayendoAgua"
+               [style.bottom.%]="100 - ((profundidadActual / profundidadMaxima) * 100)">
+          </div>
+        </div>
+
+        <!-- 2. Marcas de Escala (50m, 100m...) a la derecha -->
+        <div *ngFor="let marca of escalasProfundidad" 
+             class="escala-marca" 
+             [style.top.%]="(marca / profundidadMaxima) * 100">
+          <span>{{ marca }}m</span>
+        </div>
+
+        <!-- 3. Indicador del Taladro -->
+        <div class="indicador-taladro" 
+             [style.top.%]="(profundidadActual / profundidadMaxima) * 100">
+          ?
+        </div>
+        <div class="profundidad-texto">{{ profundidadActual }}m</div>
+      </div>
       
+    </div>
+
+    <div class="hud-inferior-wrapper">
+      <!-- Panel Izquierdo: Telemetría (Medidores) -->
+      <div class="hud-panel-medidores">
+        <div class="medidor temperatura-medidor">
+          <div class="medidor-titulo"><span>TEMPERATURA</span><strong>{{ temperatura }}°/300°</strong></div>
+          <div class="medidor-barra"><i [style.width.%]="temperaturaPorcentaje"></i></div>
+        </div>
+        <div class="medidor" *ngIf="faseActual.numero >= 2">
+          <div class="medidor-titulo"><span>PRESIÓN</span><strong>{{ pesoCristales }}/100</strong></div>
+          <div class="medidor-barra peso"><i [style.width.%]="pesoPorcentaje"></i></div>
+        </div>
+      </div>
+
+      <!-- Panel Derecho: Misión Activa -->
+      <div class="hud-panel-mision" [ngSwitch]="faseActual.numero">
+        <p *ngSwitchCase="1">Configura la temperatura a <span class="dato-clave">100°</span> para liberar vapor.</p>
+        <p *ngSwitchCase="2">Mantén la presión estable en <span class="dato-clave">50</span>.</p>
+        <p *ngSwitchCase="3">Detén el taladro exactamente a los <span class="dato-clave">500m</span> y extrae el agua sin ensuciarla.</p>
+      </div>
+    </div>
+  </section>
+
+    <div class="hud-juego">
+      <!-- HUD elements (vidas, fase) remotos por Fase 1 de Limpieza -->
+    </div>
+
+    <div class="escena-maquina"
+         [class.perforando]="estadoTaladro === 'perforando'"
+         [class.liberando-vapor]="estadoTaladro === 'liberando-vapor'"
+         [class.empacando]="estadoTaladro === 'empacando'"
+         [class.recargando]="estadoTaladro === 'recargando'"
+         [class.explosion]="estadoTaladro === 'explosion'"
+         [class.banda-rota]="estadoTaladro === 'banda-rota'"
+         [class.sin-combustible]="estadoTaladro === 'sin-combustible'"
+         [class.estable]="estadoTaladro === 'estable'"
+         [class.anim-ahogo]="estadoTaladro === 'ahogo'"
+         [class.anim-descompuesto]="estadoTaladro === 'descompuesto'"
+         [class.anim-desestabilizado]="estadoTaladro === 'desestabilizado'">
+         
+      <!-- TÃ­tulo Centro -->
+      <div class="hud-titulo-centro">
+        {{ tituloFaseCorto }}
+      </div>
+
+      <!-- Contador Derecha (Estilo Ogro) -->
+      <div class="hud-contador-der">
+        {{ faseActual.numero }} - 3
+      </div>
+
+      <div class="caverna-luz"></div>
+      <div class="plataforma">
+        <span *ngFor="let baldosa of [1, 2, 3, 4, 5, 6]"></span>
+      </div>
+
+      <div class="taladro-wrap">
+        <img src="assets/images/aventura/nivel2/taladro-vapor.png"
+             alt="Taladro a vapor mÃ¡gico funcionando en la mina">
+        <span class="vapor vapor-a"></span>
+        <span class="vapor vapor-b"></span>
+        <span class="cristales-empacados">â—† â—† â—†</span>
+        <span class="brillo-carbon"></span>
+        <span class="onda-explosion"></span>
+      </div>
+
       <div class="medidor-profundidad-wrapper" *ngIf="faseActual.numero >= 3">
         <div class="medidor-profundidad">
           <!-- 1. El Lago SubterrÃ¡neo (Fondo desde el nivel del agua hasta abajo) -->
@@ -133,9 +214,7 @@
     </div>
   </section>
 
-
-
-<div class="modal-game-over" *ngIf="falloFase || gameOver">
+</app-layout-juego>
   <img src="/assets/images/exprecionsedraco/lloro.png" class="draco-llorando" alt="Draco triste">
   <h1>GAME OVER</h1>
   <p class="subtitulo-derrota">{{ bitacora }}</p>
@@ -192,27 +271,7 @@
   </section>
 </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+</div>
 
 
 

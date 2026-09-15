@@ -121,6 +121,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   pistaVisible = false;
   ayudaVisible = false;
   estadoTaladro: EstadoTaladro = 'detenido';
+  estadoPunta: 'inactivo' | 'apagado' | 'sobrepresion' | 'ahogado' | 'perforando' | 'desestabilizado' | 'extrayendo' = 'inactivo';
+  mostrarParticulasMoradas = false;
   errores: string[] = [];
   bitacora = 'Motor detenido. Construye la estrategia dentro del evento.';
   estrellas = 0;
@@ -400,6 +402,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    
     this.cargarContextoInicial();
   }
 
@@ -666,35 +669,43 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
 
   private fallarFase3Andamiaje(tipoFallo: string) {
     this.detenerGameLoop();
-    this.ejecutando = false;
+    /* this.ejecutando = false; */
     this.erroresAcumulados++;
-    this.errores = ['Configuración incorrecta del andamiaje.'];
+    this.errores = ['Configuracion incorrecta del andamiaje.'];
 
-    let msg = '¡El taladro pasó de largo y se estrelló contra el fondo! Faltó extraer el agua a la profundidad correcta.';
+    let msg = 'El taladro paso de largo y se estrello contra el fondo! Falto extraer el agua a la profundidad correcta.';
     
     if (tipoFallo === 'ANTES_DE_AGUA') {
       this.estadoTaladro = 'detenido';
+      this.estadoPunta = 'apagado';
       msg = 'Te detuviste antes de llegar al agua.';
     } else if (tipoFallo === 'PROFUNDIDAD_INCORRECTA') {
       this.estadoTaladro = 'explosion';
       this.aguaContaminada = true;
-      msg = '¡El taladro perforó la reserva, rompió la piedra base y ensució el agua pura! Has arruinado la misión.';
+      this.estadoPunta = 'sobrepresion';
+      msg = 'El taladro perforo la reserva, rompio la piedra base y ensucio el agua pura! Has arruinado la mision.';
     } else if (tipoFallo === 'APAGADO') {
       this.estadoTaladro = 'descompuesto' as any;
-      msg = 'Apagaste el motor. Ahora la máquina no tiene energía para extraer el agua.';
+      this.estadoPunta = 'apagado';
+      msg = 'Apagaste el motor. Ahora la maquina no tiene energia para extraer el agua.';
     } else if (tipoFallo === 'CONTAMINACION') {
       this.estadoTaladro = 'explosion';
       this.aguaContaminada = true;
-      msg = '¡El taladro perforó la reserva, rompió la piedra base y ensució el agua pura! Has arruinado la misión.';
+      this.estadoPunta = 'sobrepresion';
+      msg = 'El taladro perforo la reserva, rompio la piedra base y ensucio el agua pura! Has arruinado la mision.';
     } else if (tipoFallo === 'NO_EXTRAER') {
       this.estadoTaladro = 'detenido';
-      msg = 'Llegaste al agua, pero le dijiste a la máquina que NO la extraiga (false).';
+      this.estadoPunta = 'apagado';
+      msg = 'Llegaste al agua, pero le dijiste a la maquina que NO la extraiga (false).';
     } else {
       this.estadoTaladro = 'explosion';
       this.aguaContaminada = true;
+      this.estadoPunta = 'sobrepresion';
     }
-
-    this.dispararModalGameOver(msg);
+    
+    setTimeout(() => {
+      this.dispararModalGameOver(msg);
+    }, 1500);
   }
 
   private resolverEvento(tipo: TipoEventoTaladro): void {
@@ -717,11 +728,15 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     }
     if (tipo === 'peso') {
       this.estadoTaladro = 'empacando';
+      this.estadoPunta = 'perforando';
+      this.mostrarParticulasMoradas = true;
+      setTimeout(() => { this.mostrarParticulasMoradas = false; }, 500);
       this.pesoCristales = 0;
-      this.bitacora = 'La banda empacó los cristales antes de romperse.';
+      this.bitacora = 'La banda empac los cristales antes de romperse.';
     }
     if (tipo === 'agua') {
       this.estadoTaladro = 'estable';
+      this.estadoPunta = 'extrayendo';
       this.extrayendoAgua = true;
       this.bitacora = 'El taladro se detuvo a la profundidad exacta y extrajo el agua.';
     }
@@ -775,30 +790,37 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
 
   fallarFase1Andamiaje(tipoFallo: string): void {
     this.detenerGameLoop();
-    this.ejecutando = false;
+    /* this.ejecutando = false; */
     this.erroresAcumulados++;
-    this.errores = ['Configuración incorrecta del andamiaje.'];
+    this.errores = ['Configuracion incorrecta del andamiaje.'];
 
     let msg = '';
     if (tipoFallo === 'AHOGO') {
       this.estadoTaladro = 'ahogo' as any;
-      msg = 'El motor se ahogó por liberar vapor antes de tiempo.';
+      msg = 'El motor se ahogo por liberar vapor antes de tiempo.';
+      this.estadoPunta = 'ahogado';
     } else if (tipoFallo === 'SOBRECALENTAMIENTO') {
       this.estadoTaladro = 'explosion';
-      msg = 'El taladro se sobrecalentó.';
+      msg = 'El taladro se sobrecalento.';
+      this.estadoPunta = 'sobrepresion';
     } else if (tipoFallo === 'DESCOMPUESTO') {
       this.estadoTaladro = 'descompuesto' as any;
-      msg = 'Apagar el motor de golpe dañó los engranajes.';
+      msg = 'Apagar el motor de golpe dano los engranajes.';
+      this.estadoPunta = 'apagado';
     } else {
       this.estadoTaladro = 'explosion';
-      msg = 'El taladro explotó por configuración incorrecta.';
+      msg = 'El taladro exploto por configuracion incorrecta.';
+      this.estadoPunta = 'sobrepresion';
     }
-    this.dispararModalGameOver(msg);
+    
+    setTimeout(() => {
+      this.dispararModalGameOver(msg);
+    }, 1500);
   }
 
   fallarFase2Andamiaje(tipoFallo: string): void {
     this.detenerGameLoop();
-    this.ejecutando = false;
+    /* this.ejecutando = false; */
     this.erroresAcumulados++;
     this.errores = ['La presion debe ser exactamente 50 para no desestabilizar la maquina.'];
 
@@ -806,33 +828,52 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     if (tipoFallo === 'DESCOMPUESTO') {
       this.estadoTaladro = 'descompuesto' as any;
       msg = 'Apagar el motor de golpe desestabilizo la maquina.';
+      this.estadoPunta = 'apagado';
+    } else if (tipoFallo === 'SOBRECALENTAMIENTO') {
+      this.estadoTaladro = 'explosion';
+      msg = 'Aumentar la fuerza causo presion alta y exploto el taladro.';
+      this.estadoPunta = 'sobrepresion';
+    } else if (tipoFallo === 'AHOGO') {
+      this.estadoTaladro = 'ahogo' as any;
+      msg = 'Liberar vapor causo presion baja y ahogo la maquina.';
+      this.estadoPunta = 'ahogado';
     } else {
       this.estadoTaladro = 'desestabilizado';
       msg = 'La presion no se estabilizo y la maquina se sacudio bruscamente.';
+      this.estadoPunta = 'desestabilizado';
     }
-    this.dispararModalGameOver(msg);
+    
+    setTimeout(() => {
+      this.dispararModalGameOver(msg);
+    }, 1500);
   }
 
   private fallarFase(tipo: TipoEventoTaladro): void {
     this.detenerGameLoop();
-    this.ejecutando = false;
+    /* this.ejecutando = false; */
     this.erroresAcumulados++;
     this.errores = this.erroresPendientes.length > 0
       ? this.erroresPendientes
-      : ['El evento no tenía una estrategia válida.'];
+      : ['El evento no tenia una estrategia valida.'];
 
     let msg = '';
     if (tipo === 'temperatura') {
       this.estadoTaladro = 'explosion';
-      msg = 'La temperatura llegó al límite y el taladro explotó.';
+      msg = 'La temperatura llego al limite y el taladro exploto.';
+      this.estadoPunta = 'sobrepresion';
     } else if (tipo === 'peso') {
       this.estadoTaladro = 'banda-rota';
-      msg = 'La carga superó el límite y rompió la banda transportadora.';
+      msg = 'La carga supero el limite y rompio la banda transportadora.';
+      this.estadoPunta = 'apagado';
     } else if (tipo === 'agua') {
       this.estadoTaladro = 'explosion';
-      msg = '¡El taladro pasó de largo y se estrelló contra el fondo! Faltó extraer el agua a la profundidad correcta.';
+      msg = 'El taladro paso de largo y se estrello contra el fondo! Falto extraer el agua a la profundidad correcta.';
+      this.estadoPunta = 'sobrepresion';
     }
-    this.dispararModalGameOver(msg);
+    
+    setTimeout(() => {
+      this.dispararModalGameOver(msg);
+    }, 1500);
   }
 
   private prepararFaseActual(): void {
@@ -852,6 +893,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     this.erroresPendientes = [];
     this.estrategias = this.banderasVacias();
     this.estadoTaladro = 'detenido';
+    this.estadoPunta = this.faseActual.numero === 3 ? 'perforando' : 'inactivo';
     this.bitacora = `Fase ${this.faseActual.numero} preparada. Construye la estrategia dentro del evento.`;
     this.pestanaInventario = 'acciones';
     
@@ -1051,3 +1093,29 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
