@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-game-header',
@@ -8,6 +8,9 @@ import { Component, Output, EventEmitter, OnInit } from '@angular/core';
   styleUrl: './game-header.component.scss'
 })
 export class GameHeaderComponent implements OnInit {
+  @Input() mostrarAyudaDraco = true;
+  @Input() mostrarAjustes = true;
+
   @Output() salir = new EventEmitter<void>();
 
   @Output() onToggleDraco = new EventEmitter<boolean>();

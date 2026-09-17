@@ -1,6 +1,9 @@
-<div class="modo-creador-wrapper" [class.es-creador]="esModoProfesor">
+<div class="modo-creador-wrapper"
+     [class.es-creador]="esModoProfesor"
+     [class.en-edicion]="esModoProfesor && modoEditor"
+     [class.en-prueba]="esModoProfesor && jugando">
     <!-- === TUTORIAL OVERLAY === -->
-  <div class="tutorial-overlay" *ngIf="mostrarTutorial" (click)="clickDialogo()" (mousedown)="$event.preventDefault()">
+  <div class="tutorial-overlay" *ngIf="mostrarTutorial && !esAulaActiva && !esModoProfesor" (click)="clickDialogo()" (mousedown)="$event.preventDefault()">
     <!-- &Iacute;tem destacado flotando en el centro -->
     <img *ngIf="dialogosTutorial[dialogoActualIndex].itemCentro" 
          [src]="'/assets/images/aventura/objetos/' + dialogosTutorial[dialogoActualIndex].itemCentro + '.png'" 
@@ -18,7 +21,27 @@
     </div>
   </div>
 
-<app-layout-juego class="juego-area" [configuracionTarjetas]="configTarjetasOgro" [estadoObjetos]="inventarioNivel" [antiCopiaActivo]="antiCopiaActivo" [ejecutando]="ejecutandoComandos" [nivelActual]="nivelActual" (ejecutarJuego)="compilarYEjecutar($event)" (onUsarItem)="manejarUsoPocion($event)" (onToggleDraco)="manejarToggleDraco($event)" (onUsarTarjeta)="ayudasUsadas = true">
+  <!-- El diálogo nativo no queda recortado por el tablero y mantiene el foco dentro. -->
+  <dialog *ngIf="pantallaNivelCompletado" #dialogoVictoria class="modal-victoria"
+          aria-labelledby="titulo-victoria" aria-describedby="mensaje-victoria"
+          (cancel)="$event.preventDefault()">
+    <img src="/assets/images/exprecionsedraco/feliz.png" class="victoria-drako" alt="Draco feliz">
+    <div class="victoria-contenido">
+      <h1 id="titulo-victoria" tabindex="-1" autofocus>{{ esAulaActiva ? '¡ACTIVIDAD COMPLETADA!' : '¡MISIÓN COMPLETADA!' }}</h1>
+      <p id="mensaje-victoria">{{ mensajePuntaje }}</p>
+      <div *ngIf="arrayEstrellas.length" class="victoria-estrellas" role="img"
+           [attr.aria-label]="arrayEstrellas.length + (arrayEstrellas.length === 1 ? ' estrella de 3 en este intento' : ' estrellas de 3 en este intento')">
+        <span *ngFor="let estrella of arrayEstrellas; let idx = index" class="victoria-estrella"
+              aria-hidden="true" [style.animation-delay]="(idx * 0.3) + 's'">&#11088;</span>
+      </div>
+      <button type="button" class="victoria-volver"
+              (click)="esAulaActiva ? volverAlAula() : salirMenuPrincipal()">
+        {{ esAulaActiva ? 'VOLVER AL AULA' : 'SALIR DE LA MISIÓN' }}
+      </button>
+    </div>
+  </dialog>
+
+<app-layout-juego class="juego-area" [configuracionTarjetas]="configTarjetasOgro" [estadoObjetos]="inventarioNivel" [antiCopiaActivo]="antiCopiaActivo" [ejecutando]="ejecutandoComandos" [nivelActual]="nivelActual" [modoJuego]="esAulaActiva ? 'aula' : 'aventura'" [modoEdicion]="esModoProfesor && modoEditor" [mostrarAjustes]="!esModoProfesor" (ejecutarJuego)="compilarYEjecutar($event)" (onUsarItem)="manejarUsoPocion($event)" (onToggleDraco)="manejarToggleDraco($event)">
   
   <!-- Contenido Inyectado en ng-content (El Tablero) -->
   <div class="escenario-container" #contenedor>
@@ -40,34 +63,7 @@
       <div class="botones-modal">
         <button class="btn-verde" (click)="reiniciarNivelGameOver()">INTENTAR DE NUEVO</button>
         <!-- Botón del editor eliminado por seguridad de roles -->
-        <button class="btn-rojo" (click)="salirMenuPrincipal()">SALIR</button>
-      </div>
-    </div>
-
-        <!-- PANTALLA NIVEL COMPLETADO -->
-    <div class="modal-game-over" *ngIf="pantallaNivelCompletado">
-      <img src="/assets/images/exprecionsedraco/feliz.png" class="draco-llorando" alt="Draco feliz" style="filter: drop-shadow(0 0 15px rgba(255,215,0,0.8));">
-      
-      <!-- T&Iacute;TULO DIN&Aacute;MICO -->
-      <h1 *ngIf="esAulaActiva" style="color: #FFD700; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(255,215,0,0.5);">&iexcl;ACTIVIDAD COMPLETADA!</h1>
-      <h1 *ngIf="!esAulaActiva" style="color: #FFD700; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(255,215,0,0.5);">&iexcl;MISI&Oacute;N COMPLETADA!</h1>
-      
-      <p class="subtitulo-derrota" style="color: #82F4E0; margin-top: 10px; font-size: 0.95rem;">{{ mensajePuntaje }}</p>
-      
-      <div class="contenedor-estrellas-victoria">
-        <div class="estrellas-ganadas">
-          <ng-container *ngFor="let i of arrayEstrellas; let idx = index">
-            <span class="estrella-victoria animacion-pop" [style.animation-delay]="(idx * 0.3) + 's'" style="font-size: 3rem; text-shadow: 2px 2px 0 #000, 0 0 20px rgba(255,215,0,0.8);">
-              &#11088;
-            </span>
-          </ng-container>
-        </div>
-      </div>
-      
-      <div class="botones-modal">
-        <!-- BOT&Oacute;N DIN&Aacute;MICO -->
-        <button *ngIf="esAulaActiva" class="btn-verde" style="width: 100%; font-size: 1.1rem; padding: 15px;" (click)="volverAlAula()">VOLVER AL AULA</button>
-        <button *ngIf="!esAulaActiva" class="btn-verde" style="width: 100%; font-size: 1.1rem; padding: 15px;" (click)="salirMenuPrincipal()">SALIR DE LA MISI&Oacute;N</button>
+        <button class="btn-rojo" (click)="salirMenuPrincipal()">{{ esAulaActiva ? 'VOLVER AL AULA' : 'SALIR' }}</button>
       </div>
     </div>
 
@@ -167,71 +163,159 @@
   </div>
 </app-layout-juego>
 
-<!-- DEV TOOLS FLOTANTE -->
-<div class="dev-toolbar" *ngIf="esModoProfesor && modoEditor">
-  <h4>Constructor de Aulas</h4>
-  
-  <!-- FASE 1: CONFIGURACIÓN INICIAL (WIZARD) -->
-  <div *ngIf="!editorInicializado" style="padding-top: 10px; border-top: 1px solid #77DDCA;">
-    <label style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-      Cant. de Niveles (1-5):
-      <input type="number" min="1" max="5" [value]="inputTotalNiveles" (change)="inputTotalNiveles = +$any($event.target).value" style="width: 50px; color: black;">
+<!-- Panel del constructor. La lógica del nivel se mantiene en el componente. -->
+<aside class="dev-toolbar" *ngIf="esModoProfesor && modoEditor" aria-label="Herramientas del constructor de niveles">
+  <header class="editor-header">
+    <span class="editor-badge">MODO EDICIÓN</span>
+    <h2>Constructor de desafíos</h2>
+    <p>Diseña el recorrido que resolverá el estudiante.</p>
+  </header>
+
+  <!-- Paso inicial: define cuántos mapas tendrá el desafío. -->
+  <section class="editor-section editor-setup" *ngIf="!editorInicializado">
+    <div class="editor-step">
+      <span>1</span>
+      <div>
+        <h3>Prepara el desafío</h3>
+        <p>Elige cuántos mapas consecutivos tendrá esta actividad.</p>
+      </div>
+    </div>
+
+    <label class="editor-field">
+      <span>Cantidad de mapas</span>
+      <input type="number" min="1" max="5" inputmode="numeric"
+             [value]="inputTotalNiveles"
+             (change)="inputTotalNiveles = +$any($event.target).value"
+             aria-describedby="ayuda-cantidad-mapas">
     </label>
-    <button (click)="inicializarEditor()" style="width: 100%; background: #77DDCA; color: black; font-weight: bold; padding: 5px;">Crear Set de Niveles</button>
-  </div>
+    <small id="ayuda-cantidad-mapas">Puedes crear entre 1 y 5 mapas.</small>
 
-  <!-- FASE 2: EDITOR Y NAVEGACIÓN -->
-  <div *ngIf="editorInicializado">
-    <!-- Navegador de Paginación -->
-    <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 5px; border-radius: 4px; margin-bottom: 10px;">
-      <button (click)="navegarNivel(-1)" [disabled]="nivelActual === 1" style="padding: 2px 10px; cursor: pointer; color: black;">◀</button>
-      <span style="font-weight: bold; font-size: 13px;">Nivel {{nivelActual}} de {{totalNiveles}}</span>
-      <button (click)="navegarNivel(1)" [disabled]="nivelActual === totalNiveles" style="padding: 2px 10px; cursor: pointer; color: black;">▶</button>
-    </div>
+    <button type="button" class="editor-btn editor-btn-primary" (click)="inicializarEditor()">
+      COMENZAR A DISEÑAR
+    </button>
+  </section>
 
-    <!-- Controles de Dimensiones -->
-    <div class="controles-dimensiones" style="margin-bottom: 10px; display: grid; gap: 5px; font-size: 12px;">
-      <label style="display: flex; justify-content: space-between;">Columnas: <input type="number" min="2" max="10" [value]="inputColumnas" (change)="inputColumnas = +$any($event.target).value" style="width: 50px; color: black;"></label>
-      <label style="display: flex; justify-content: space-between;">Filas: <input type="number" min="2" max="5" [value]="inputFilas" (change)="inputFilas = +$any($event.target).value" style="width: 50px; color: black;"></label>
-      <label style="display: flex; justify-content: space-between; border-top: 1px solid #444; padding-top: 5px; margin-top: 5px;">
-        Vidas Máx: <input type="number" min="1" max="10" [value]="maxVidas" (change)="maxVidas = +$any($event.target).value; vidasActuales = maxVidas;" style="width: 50px; color: black;">
-      </label>
-      <button (click)="aplicarDimensiones()" style="background: #e6a822; color: black; font-weight: bold; margin-top: 5px;">Aplicar Nuevo Tamaño</button>
-    </div>
+  <!-- Herramientas activas una vez creado el conjunto de mapas. -->
+  <div class="editor-workspace" *ngIf="editorInicializado">
+    <nav class="editor-level-nav" aria-label="Cambiar mapa del desafío">
+      <button type="button" (click)="navegarNivel(-1)" [disabled]="nivelActual === 1" aria-label="Mapa anterior">&#9664;</button>
+      <div>
+        <span>MAPA ACTUAL</span>
+        <strong>{{nivelActual}} de {{totalNiveles}}</strong>
+      </div>
+      <button type="button" (click)="navegarNivel(1)" [disabled]="nivelActual === totalNiveles" aria-label="Mapa siguiente">&#9654;</button>
+    </nav>
 
-    <!-- Pinceles de Edición -->
-    <div class="herramientas">
-      <button (click)="seleccionarPincel('suelo-ogro', 'terreno')" [class.activo]="pincelActual === 'suelo-ogro'">Spawn Ogro</button>
-      
-      <!-- BOTÓN META DINÁMICO -->
-      <button (click)="seleccionarPincel('meta-dinamica', 'terreno')" [class.activo]="pincelActual === 'meta-dinamica'">Meta</button>
-      
-      <!-- TERRENO BASICO -->
-      <div class="grupo-herramientas" style="border: 2px solid #555; padding: 10px; margin-top: 10px;">
-        <h3 style="margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase;">Terreno Base</h3>
-        <button (click)="seleccionarPincel('suelo', 'terreno')" [class.activo]="pincelActual === 'suelo'" style="background-color: #8B4513;">Suelo</button>
-        <button (click)="seleccionarPincel('sueloroto', 'terreno')" [class.activo]="pincelActual === 'sueloroto'" style="background-color: #d35400;">Suelo Roto</button>
-        <button (click)="seleccionarPincel('vacio', 'terreno')" [class.activo]="pincelActual === 'vacio'" style="background-color: #ff4444;">Borrar</button>
+    <section class="editor-section">
+      <div class="editor-step compact">
+        <span>1</span>
+        <div>
+          <h3>Tamaño y dificultad</h3>
+          <p>Ajusta el espacio disponible antes de pintar.</p>
+        </div>
       </div>
 
-      <button (click)="seleccionarPincel('roca', 'objeto')" [class.activo]="pincelActual === 'roca'">Roca</button>
-      <button (click)="seleccionarPincel('cofre', 'objeto')" [class.activo]="pincelActual === 'cofre'">Cofre</button>
-    </div>
+      <div class="editor-dimensions">
+        <label class="editor-field">
+          <span>Columnas</span>
+          <input type="number" min="2" max="10" inputmode="numeric" [value]="inputColumnas"
+                 (change)="inputColumnas = +$any($event.target).value">
+        </label>
+        <label class="editor-field">
+          <span>Filas jugables</span>
+          <input type="number" min="2" max="5" inputmode="numeric" [value]="inputFilas"
+                 (change)="inputFilas = +$any($event.target).value">
+        </label>
+        <label class="editor-field">
+          <span>Vidas</span>
+          <input type="number" min="1" max="10" inputmode="numeric" [value]="maxVidas"
+                 (change)="maxVidas = +$any($event.target).value; vidasActuales = maxVidas;">
+        </label>
+      </div>
 
-    <button (click)="alternarModoJuego()" style="width: 100%; margin-top: 10px; background: #9b59b6; color: white; font-weight: bold; padding: 8px;">
-      ▶ PROBAR NIVEL
-    </button>
+      <button type="button" class="editor-btn editor-btn-secondary" (click)="aplicarDimensiones()">
+        APLICAR TAMAÑO
+      </button>
+      <p class="editor-warning">Aplicar el tamaño reinicia el mapa que estás editando.</p>
+    </section>
 
-    <button (click)="guardarNivelOficial()" style="width: 100%; margin-top: 10px; background: #4CAF50; color: white; font-weight: bold; padding: 8px;">
-      💾 EXPORTAR AVENTURA COMPLETA
-    </button>
+    <section class="editor-section">
+      <div class="editor-step compact">
+        <span>2</span>
+        <div>
+          <h3>Construye el recorrido</h3>
+          <p>Elige una herramienta y luego toca una casilla del tablero.</p>
+        </div>
+      </div>
+
+      <div class="editor-tool-group">
+        <h4>Elementos obligatorios</h4>
+        <div class="editor-tools two-columns" role="toolbar" aria-label="Inicio y meta">
+          <button type="button" class="editor-tool tool-spawn"
+                  (click)="seleccionarPincel('suelo-ogro', 'terreno')"
+                  [class.activo]="pincelActual === 'suelo-ogro'"
+                  [attr.aria-pressed]="pincelActual === 'suelo-ogro'">
+            <span class="tool-preview"></span><strong>Inicio del ogro</strong><small>Punto de partida</small>
+          </button>
+          <button type="button" class="editor-tool tool-goal"
+                  (click)="seleccionarPincel('meta-dinamica', 'terreno')"
+                  [class.activo]="pincelActual === 'meta-dinamica'"
+                  [attr.aria-pressed]="pincelActual === 'meta-dinamica'">
+            <span class="tool-preview"></span><strong>Meta</strong><small>Fila inferior</small>
+          </button>
+        </div>
+      </div>
+
+      <div class="editor-tool-group">
+        <h4>Terreno y objetos</h4>
+        <div class="editor-tools" role="toolbar" aria-label="Terreno y objetos">
+          <button type="button" class="editor-tool tool-floor"
+                  (click)="seleccionarPincel('suelo', 'terreno')"
+                  [class.activo]="pincelActual === 'suelo'" [attr.aria-pressed]="pincelActual === 'suelo'">
+            <span class="tool-preview"></span><strong>Suelo</strong>
+          </button>
+          <button type="button" class="editor-tool tool-broken"
+                  (click)="seleccionarPincel('sueloroto', 'terreno')"
+                  [class.activo]="pincelActual === 'sueloroto'" [attr.aria-pressed]="pincelActual === 'sueloroto'">
+            <span class="tool-preview"></span><strong>Suelo frágil</strong>
+          </button>
+          <button type="button" class="editor-tool tool-rock"
+                  (click)="seleccionarPincel('roca', 'objeto')"
+                  [class.activo]="pincelActual === 'roca'" [attr.aria-pressed]="pincelActual === 'roca'">
+            <span class="tool-preview"></span><strong>Roca</strong>
+          </button>
+          <button type="button" class="editor-tool tool-chest"
+                  (click)="seleccionarPincel('cofre', 'objeto')"
+                  [class.activo]="pincelActual === 'cofre'" [attr.aria-pressed]="pincelActual === 'cofre'">
+            <span class="tool-preview"></span><strong>Cofre</strong>
+          </button>
+          <button type="button" class="editor-tool tool-erase"
+                  (click)="seleccionarPincel('vacio', 'terreno')"
+                  [class.activo]="pincelActual === 'vacio'" [attr.aria-pressed]="pincelActual === 'vacio'">
+            <span class="tool-preview"></span><strong>Borrador</strong>
+          </button>
+        </div>
+      </div>
+
+      <div class="editor-tip">
+        <strong>Cómo usarlo:</strong> coloca suelo antes de añadir rocas o cofres. El borrador elimina primero el objeto y después el terreno.
+      </div>
+    </section>
+
+    <footer class="editor-actions">
+      <button type="button" class="editor-btn editor-btn-test" (click)="alternarModoJuego()">
+        PROBAR ESTE MAPA
+      </button>
+      <button type="button" class="editor-btn editor-btn-save" (click)="guardarNivelOficial()">
+        {{ edicionDesdeAula ? 'GUARDAR DISEÑO EN EL AULA' : 'EXPORTAR DISEÑO COMPLETO' }}
+      </button>
+    </footer>
   </div>
-</div>
+</aside>
 
-<!-- BOTÓN PARA SALIR DEL MODO JUEGO -->
-<button *ngIf="esModoProfesor && jugando" (click)="alternarModoJuego()" 
-        style="position: absolute; top: 15px; right: 20px; z-index: 100; background: #ff4444; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px; cursor: pointer; border: 2px solid white;">
-  ⏹ DETENER PRUEBA
+<!-- Durante la prueba solo queda visible la interfaz normal del juego. -->
+<button type="button" *ngIf="esModoProfesor && jugando" class="btn-detener-prueba" (click)="alternarModoJuego()">
+  VOLVER A EDITAR
 </button>
 
 <!-- MANUAL DEL PROGRAMADOR -->
@@ -279,7 +363,7 @@
               </div>
               <div class="item-estrella">
                 <div class="icono-estrella-manual" style="font-size: 1.5rem; text-shadow: 1px 1px 0 #000, 0 0 10px rgba(255,215,0,0.8);">&#11088;</div>
-                <p class="texto-manual"><strong>2. Recolecci&oacute;n:</strong> Aseg&uacute;rate de que el ogro recoja todos los cofres esparcidos en el laberinto antes de la meta.</p>
+                <p class="texto-manual"><strong>2. Vidas restantes:</strong> Tres corazones dan tres estrellas; dos dan dos y uno da una. Usar una poción o revelar una pista resta una estrella, sin bajar de una al ganar.</p>
               </div>
             </div>
           </ng-container>
@@ -326,13 +410,13 @@
 
           <!-- P&Aacute;GINA 6 (&Iacute;ndice 5): Estrella 3 (Copia M&oacute;vil) -->
           <ng-container *ngSwitchCase="5">
-            <h2 class="titulo-prototipo">El C&oacute;digo Puro</h2>
-            <p class="texto-manual">La tercera estrella est&aacute; reservada solo para los verdaderos hechiceros del c&oacute;digo:</p>
+            <h2 class="titulo-prototipo">Las Tres Estrellas</h2>
+            <p class="texto-manual">Puedes aprender a tu ritmo: el tiempo no reduce tus estrellas.</p>
             
             <div class="manual-lista-estrellas">
               <div class="item-estrella">
                 <div class="icono-estrella-manual" style="font-size: 1.5rem; text-shadow: 1px 1px 0 #000, 0 0 10px rgba(255,215,0,0.8);">&#11088;</div>
-                <p class="texto-manual"><strong>3. Sin Ayudas:</strong> Supera el nivel sin usar las Tarjetas de Acci&oacute;n ni Pociones M&aacute;gicas. Deber&aacute;s tipear cada l&iacute;nea a mano.</p>
+                <p class="texto-manual"><strong>3. Sin pociones ni pistas:</strong> Conserva los tres corazones para obtener tres estrellas. Puedes escribir los comandos o usar las Tarjetas de Acción; ninguna de esas opciones penaliza.</p>
               </div>
             </div>
             
@@ -383,13 +467,13 @@
 
           <!-- P&Aacute;GINA 6 (&Iacute;ndice 5): Estrella 3 -->
           <ng-container *ngSwitchCase="5">
-            <h2 class="titulo-prototipo">El C&oacute;digo Puro</h2>
-            <p class="texto-manual">La tercera estrella est&aacute; reservada solo para los verdaderos hechiceros del c&oacute;digo:</p>
+            <h2 class="titulo-prototipo">Las Tres Estrellas</h2>
+            <p class="texto-manual">Puedes aprender a tu ritmo: el tiempo no reduce tus estrellas.</p>
             
             <div class="manual-lista-estrellas">
               <div class="item-estrella">
                 <div class="icono-estrella-manual" style="font-size: 1.5rem; text-shadow: 1px 1px 0 #000, 0 0 10px rgba(255,215,0,0.8);">&#11088;</div>
-                <p class="texto-manual"><strong>3. Sin Ayudas:</strong> Supera el nivel sin usar las Tarjetas de Acci&oacute;n ni Pociones M&aacute;gicas. Deber&aacute;s tipear cada l&iacute;nea a mano.</p>
+                <p class="texto-manual"><strong>3. Sin pociones ni pistas:</strong> Conserva los tres corazones para obtener tres estrellas. Puedes escribir los comandos o usar las Tarjetas de Acción; ninguna de esas opciones penaliza.</p>
               </div>
             </div>
             

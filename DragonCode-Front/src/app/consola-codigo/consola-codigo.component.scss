@@ -387,7 +387,21 @@
 
 ::ng-deep .placeholder-parpadeo {
   animation: blink-cursor 1s step-end infinite !important;
+  color: #fff;
+  font-weight: bold;
 }
+
+/* Clases generadas por el resaltador. Angular conserva estas etiquetas y
+   sanitiza cualquier HTML que pudiera venir desde una tarjeta configurable. */
+::ng-deep .syntax-comment { color: #5c6370; font-style: italic; }
+::ng-deep .syntax-keyword { color: #c678dd; }
+::ng-deep .syntax-object { color: #e06c75; }
+::ng-deep .syntax-method { color: #61afef; }
+::ng-deep .syntax-property,
+::ng-deep .syntax-operator { color: #56b6c2; }
+::ng-deep .syntax-number { color: #e5c07b; }
+::ng-deep .syntax-boolean { color: #d19a66; font-weight: bold; }
+::ng-deep .placeholder-inactivo { color: #5c6370; }
 
 .glow-retro {
   animation: blinkRetro 0.8s steps(2, end) infinite;

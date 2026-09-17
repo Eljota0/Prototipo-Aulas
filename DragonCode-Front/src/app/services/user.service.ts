@@ -1,6 +1,17 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { ERROR_GESTIONADO_EN_FORMULARIO } from '../core/interceptors/api.interceptor';
+
+export interface ActualizarPerfilRequest {
+  nombre?: string;
+  apellido?: string;
+}
+
+export interface CambiarPasswordRequest {
+  password_actual: string;
+  password_nueva: string;
+}
 
 export interface UserProfile {
   id?: string;
@@ -57,9 +68,26 @@ export class UserService {
     );
   }
 
-  /**
-   * Actualiza el perfil de forma optimista (primero UI, luego server, o similar)
-   */
+  /** Guarda los nombres y publica el perfil confirmado por el servidor. */
+  actualizarPerfil(datos: ActualizarPerfilRequest): Observable<UserProfile> {
+    return this.http.patch<UserProfile>('/usuarios/me', datos, {
+      context: new HttpContext().set(ERROR_GESTIONADO_EN_FORMULARIO, true)
+    }).pipe(
+      tap(perfil => this.userProfileSubject.next(perfil))
+    );
+  }
+
+  cambiarPassword(datos: CambiarPasswordRequest): Observable<void> {
+    return this.http.patch<void>('/auth/password', datos, {
+      context: new HttpContext().set(ERROR_GESTIONADO_EN_FORMULARIO, true)
+    });
+  }
+
+  limpiarPerfil(): void {
+    this.userProfileSubject.next(this.initialState);
+  }
+
+  /** Actualiza solo la copia en memoria; no persiste cambios en el servidor. */
   updateProfileState(newData: Partial<UserProfile>): void {
     const currentData = this.userProfileSubject.getValue();
     const updatedData = { ...currentData, ...newData };

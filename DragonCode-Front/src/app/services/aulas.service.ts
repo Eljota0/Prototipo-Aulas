@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { ConfiguracionNivelAula } from '../core/configuracion-niveles-aula';
 
 // ── Interfaces que reflejan exactamente los schemas de FastAPI ─────
 
@@ -34,7 +35,9 @@ export interface ParametrosEvaluacion {
   tiempo_2_estrellas: number;       // Segundos para 2 estrellas
   intentos_max_sin_penalidad: number; // Intentos sin penalidad
   anti_copia?: boolean;
+  ayudas_habilitadas?: boolean;
   fases_seleccionadas?: number[];
+  configuracion_nivel?: ConfiguracionNivelAula;
 }
 
 export interface RetoPersonalizadoCreate {
@@ -138,7 +141,7 @@ export class AulasService {
 
   /**
    * Crea un reto personalizado en un aula reutilizando un nivel oficial.
-   * El profesor configura solo los parámetros de evaluación (tiempos, intentos).
+   * El profesor configura la evaluación y los parámetros seguros del nivel.
    */
   crearRetoEnAula(aulaId: string, datos: RetoPersonalizadoCreate): Observable<RetoPersonalizadoResponse> {
     return this.http.post<RetoPersonalizadoResponse>(`/aulas/${aulaId}/retos`, datos);

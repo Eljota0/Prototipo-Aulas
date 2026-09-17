@@ -1,6 +1,6 @@
 # Avance del Nivel 2 — Taladro a Vapor
 
-Fecha de actualización: 31 de agosto de 2026
+Fecha de actualización: 15 de septiembre de 2026
 
 ## Objetivo del prototipo
 
@@ -8,14 +8,13 @@ El Nivel 2 introduce programación orientada a eventos y condicionales básicos.
 
 ## Funcionalidad incorporada
 
-- Cuatro fases progresivas:
+- Tres fases progresivas definidas por el rediseño actual:
   1. Liberación de vapor por sobrecalentamiento.
-  2. Empaque de cristales por exceso de peso.
-  3. Recarga de carbón cuando el combustible llega a cero.
-  4. Coordinación de los tres protocolos durante un mismo ciclo automático.
+  2. Estabilización de la presión exactamente en 50.
+  3. Detención y extracción de agua a 500 metros.
 - Motor V2 separado del componente visual.
 - Evaluación por patrones sanitizados y banderas de estrategia.
-- Tarjetas correctas y distractoras con posiciones variadas por fase.
+- Andamiaje progresivo con tarjetas correctas y distractoras en las tres primeras fases.
 - Simulación autónoma mediante un ciclo de juego.
 - Retroalimentación visual para éxito y fallo.
 - Sistema de vidas, intentos, tiempo, calificación y estrellas.
@@ -33,8 +32,8 @@ El Nivel 2 introduce programación orientada a eventos y condicionales básicos.
 La simulación supera realmente los límites antes de activar los protocolos:
 
 - Temperatura: alcanza 110 grados y evalúa `> 100`.
-- Peso: alcanza 55 unidades y evalúa `> 50`.
-- Carbón: llega a 0 y evalúa `== 0`.
+- Presión: alcanza exactamente 50 y evalúa `== 50`.
+- Profundidad: llega a 500 metros, detiene el taladro y activa la extracción de agua.
 
 Esto mantiene correspondencia entre el código enseñado, el evaluador y el estado visual del juego.
 
@@ -43,12 +42,12 @@ Esto mantiene correspondencia entre el código enseñado, el evaluador y el esta
 1. Iniciar el frontend de Angular.
 2. Abrir `http://localhost:4300/prototipo/nivel-2` o el puerto configurado localmente.
 3. Completar cada fase seleccionando la condición y la acción correspondientes.
-4. Confirmar el avance automático y la recompensa al terminar la fase 4.
+4. Confirmar el avance automático y la recompensa al terminar la fase 3.
 
 ## Verificación realizada
 
 - Compilación de producción de Angular completada correctamente.
-- Flujo local de las cuatro fases comprobado hasta la recompensa final.
+- Flujo automático de las tres fases cubierto por pruebas hasta la recompensa final.
 - Evaluadores del Motor V2 cubiertos por pruebas unitarias.
 - El motor y los archivos visuales del Nivel 1 no fueron modificados.
 - La ruta oficial rechaza correctamente el acceso sin autenticación.
@@ -58,6 +57,7 @@ Esto mantiene correspondencia entre el código enseñado, el evaluador y el esta
 
 - Aplicar `alembic upgrade head` en la base PostgreSQL del entorno que se vaya a usar.
 - Ejecutar una prueba integral con frontend, API y PostgreSQL levantados y usuarios reales de anfitrión/jugador.
+- Confirmar visualmente las tres fases en escritorio y móvil.
 - Ajustar los umbrales de tiempo después de una prueba corta con usuarios.
 
 El Nivel 2 está completo como prototipo funcional y su integración vertical local con Aventura,

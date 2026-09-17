@@ -6,45 +6,80 @@ import {
   ResultadoEvaluacionProduccionMasiva,
   TipoMaterialFabrica
 } from './evaluador-nivel';
+import {
+  analizarCadenaCondicional,
+  coincideEstructura,
+  extraerBloqueRaiz,
+  mapearAcciones,
+  normalizarCodigoControl,
+  RamaCondicional
+} from './parser-control-flujo';
 
 @Injectable({ providedIn: 'root' })
 export class EvaluadorProduccionMasivaService implements EvaluadorNivel<
   FaseProduccionMasiva,
   ResultadoEvaluacionProduccionMasiva
 > {
-  private readonly abrirBucle =
-    'mientras(fabrica.tieneMateriales==verdadero){';
-  private readonly diamante =
-    'si(fabrica.materialActual=="Diamante"){fabrica.guardar();}';
-  private readonly explosivo =
-    'si(fabrica.materialActual=="Explosivo"){fabrica.destruir();}';
-  private readonly explosivoAlternativo =
-    'sinosi(fabrica.materialActual=="Explosivo"){fabrica.destruir();}';
-  private readonly carbon = 'sino{fabrica.quemar();}';
+  private readonly aperturaMientras =
+    /^mientras\(+fabrica\.tieneMateriales(?:===|==)(?:verdadero|true)\)+\{/;
 
-  private readonly soluciones: Record<FaseProduccionMasiva, string> = {
-    1: `${this.abrirBucle}${this.diamante}}`,
-    2: `${this.abrirBucle}${this.explosivo}${this.carbon}}`,
-    3: `${this.abrirBucle}${this.diamante}${this.explosivoAlternativo}}`,
-    4: `${this.abrirBucle}${this.diamante}${this.explosivoAlternativo}${this.carbon}}`
+  private readonly estructuras: Record<FaseProduccionMasiva, RamaCondicional[]> = {
+    1: [{ tipo: 'si', material: 'Diamante', accion: 'guardar' }],
+    2: [
+      { tipo: 'si', material: 'Explosivo', accion: 'destruir' },
+      { tipo: 'sino', accion: 'quemar' }
+    ],
+    3: [
+      { tipo: 'si', material: 'Diamante', accion: 'guardar' },
+      { tipo: 'sino-si', material: 'Explosivo', accion: 'destruir' }
+    ],
+    4: [
+      { tipo: 'si', material: 'Diamante', accion: 'guardar' },
+      { tipo: 'sino-si', material: 'Explosivo', accion: 'destruir' },
+      { tipo: 'sino', accion: 'quemar' }
+    ]
+  };
+
+  private readonly ordenTarjetas: Record<FaseProduccionMasiva, string> = {
+    1: 'MIENTRAS queden materiales → SI es Diamante → guardar → FIN de MIENTRAS.',
+    2: 'MIENTRAS queden materiales → SI es Explosivo → destruir → SINO → quemar → FIN de MIENTRAS.',
+    3: 'MIENTRAS queden materiales → SI es Diamante → guardar → SINO SI es Explosivo → destruir → FIN de MIENTRAS.',
+    4: 'MIENTRAS queden materiales → SI es Diamante → guardar → SINO SI es Explosivo → destruir → SINO → quemar → FIN de MIENTRAS.'
   };
 
   evaluar(
     codigo: string,
     fase: FaseProduccionMasiva
   ): ResultadoEvaluacionProduccionMasiva {
-    const codigoSanitizado = this.sanitizar(codigo);
-    const acciones = this.extraerAcciones(codigoSanitizado);
-    const bucleValido = codigoSanitizado.startsWith(this.abrirBucle)
-      && this.llavesBalanceadas(codigoSanitizado);
+    const codigoSanitizado = normalizarCodigoControl(codigo);
+    const bloque = extraerBloqueRaiz(codigoSanitizado, this.aperturaMientras);
+    const bucleValido = bloque.aperturaValida && bloque.cierreValido;
+    const cadena = bucleValido
+      ? analizarCadenaCondicional(bloque.interior)
+      : { valida: false, ramas: [] as RamaCondicional[] };
+    const acciones = mapearAcciones(cadena.ramas);
     const errores: Array<{ mensaje: string }> = [];
 
-    if (!bucleValido) {
+    if (!codigoSanitizado) {
       errores.push({
-        mensaje: 'Encierra las decisiones en mientras (fabrica.tieneMateriales == verdadero) y cierra el bloque.'
+        mensaje: `Aún no hay instrucciones. Coloca las tarjetas así: ${this.ordenTarjetas[fase]}`
       });
-    } else if (codigoSanitizado !== this.soluciones[fase]) {
-      errores.push({ mensaje: this.explicarError(codigoSanitizado, fase, acciones) });
+    } else if (!bloque.aperturaValida) {
+      errores.push({
+        mensaje: `Te falta abrir la repetición. Coloca primero “MIENTRAS queden materiales”. Usa estas tarjetas en orden: ${this.ordenTarjetas[fase]}`
+      });
+    } else if (!bloque.cierreValido) {
+      errores.push({
+        mensaje: `Falta cerrar el bucle. Coloca “FIN de MIENTRAS” como última tarjeta. Orden completo: ${this.ordenTarjetas[fase]}`
+      });
+    } else {
+      if (!cadena.valida || !coincideEstructura(cadena.ramas, this.estructuras[fase])) {
+        errores.push({
+          mensaje: cadena.valida
+            ? this.explicarError(bloque.interior, fase, acciones)
+            : `Las tarjetas están fuera de orden. Usa: ${this.ordenTarjetas[fase]}`
+        });
+      }
     }
 
     return {
@@ -56,60 +91,29 @@ export class EvaluadorProduccionMasivaService implements EvaluadorNivel<
     };
   }
 
-  private sanitizar(codigo: string): string {
-    return codigo
-      .replace(/\s+/g, '')
-      .replace(/'([^']*)'/g, '"$1"');
-  }
-
-  private llavesBalanceadas(codigo: string): boolean {
-    let profundidad = 0;
-    for (const caracter of codigo) {
-      if (caracter === '{') profundidad++;
-      if (caracter === '}') profundidad--;
-      if (profundidad < 0) return false;
-    }
-    return profundidad === 0;
-  }
-
-  private extraerAcciones(
-    codigo: string
-  ): Partial<Record<TipoMaterialFabrica, AccionFabrica>> {
-    const acciones: Partial<Record<TipoMaterialFabrica, AccionFabrica>> = {};
-    const condicion = /(?:si|sinosi)\(fabrica\.materialActual=="(Diamante|Explosivo|Carbon)"\)\{fabrica\.(guardar|destruir|quemar)\(\);\}/g;
-    let coincidencia: RegExpExecArray | null;
-
-    while ((coincidencia = condicion.exec(codigo)) !== null) {
-      acciones[coincidencia[1] as TipoMaterialFabrica] = coincidencia[2] as AccionFabrica;
-    }
-    if (/sino\{fabrica\.quemar\(\);\}/.test(codigo)) acciones.Carbon = 'quemar';
-    return acciones;
-  }
-
   private explicarError(
-    codigo: string,
+    interior: string,
     fase: FaseProduccionMasiva,
     acciones: Partial<Record<TipoMaterialFabrica, AccionFabrica>>
   ): string {
-    if (!codigo.endsWith('}')) return 'El bucle mientras necesita una llave de cierre.';
     if (fase === 1 && acciones.Diamante !== 'guardar') {
-      return 'Dentro del bucle, cada diamante debe enviarse a guardar().';
+      return 'Dentro de MIENTRAS coloca “SI es Diamante → guardar”. Después termina con “FIN de MIENTRAS”.';
     }
     if (fase === 2) {
-      if (acciones.Explosivo !== 'destruir') return 'El explosivo debe ejecutar destruir() dentro del bucle.';
-      if (acciones.Carbon !== 'quemar') return 'La rama sino debe quemar el carbón dentro del bucle.';
+      if (acciones.Explosivo !== 'destruir') return 'Después de MIENTRAS coloca “SI es Explosivo → destruir”.';
+      if (acciones.Carbon !== 'quemar') return 'Después de destruir el explosivo coloca “SINO → quemar” y termina con “FIN de MIENTRAS”.';
     }
     if (fase === 3) {
-      if (!codigo.includes('sinosi(')) return 'Conecta la segunda decisión mediante sino si.';
-      if (acciones.Diamante !== 'guardar' || acciones.Explosivo !== 'destruir') {
-        return 'Relaciona Diamante con guardar() y Explosivo con destruir(), dentro del mismo bucle.';
+      if (acciones.Diamante !== 'guardar') return 'Después de MIENTRAS coloca “SI es Diamante → guardar”.';
+      if (!interior.includes('sinosi(') || acciones.Explosivo !== 'destruir') {
+        return 'Después del diamante coloca “SINO SI es Explosivo → destruir”; no uses otro SI separado.';
       }
     }
     if (fase === 4) {
-      if (acciones.Diamante !== 'guardar') return 'Falta guardar los diamantes.';
-      if (acciones.Explosivo !== 'destruir') return 'Falta destruir los explosivos.';
-      if (acciones.Carbon !== 'quemar') return 'Falta quemar el carbón con la rama sino.';
+      if (acciones.Diamante !== 'guardar') return 'Primero, dentro de MIENTRAS, coloca “SI es Diamante → guardar”.';
+      if (!interior.includes('sinosi(') || acciones.Explosivo !== 'destruir') return 'Luego coloca “SINO SI es Explosivo → destruir”.';
+      if (acciones.Carbon !== 'quemar') return 'Después coloca “SINO → quemar” para el carbón restante.';
     }
-    return 'El orden debe ser: mientras, si, sino si, sino y la llave final del bucle.';
+    return `Las tarjetas están fuera de orden. Usa: ${this.ordenTarjetas[fase]}`;
   }
 }

@@ -29,15 +29,13 @@ export class TiendaComponent implements OnInit, OnDestroy {
   isConfirmModalOpen = false;
   avatarToBuy: Avatar | null = null;
   cargandoCompra = false;
+  cargandoEquipamiento = false;
+  cargandoCatalogo = false;
+  errorCatalogo = false;
+  avatars: Avatar[] = [];
 
-  /**
-   * Catálogo visual temporal.
-   *
-   * Los personajes permanecen en el frontend hasta que se decida activar la
-   * persistencia de compras y equipamiento en Supabase.
-   */
-  readonly catalogoSoloVisual = true;
-  avatars: Avatar[] = [
+  // Solo aporta descripciones: precios, identificadores y propiedad vienen de la API.
+  private readonly descripcionesVisuales: Avatar[] = [
     {
       id: 1,
       nombre_skin: 'Drako Base',
@@ -93,10 +91,6 @@ export class TiendaComponent implements OnInit, OnDestroy {
       descripcion: 'Velocidad máxima para avanzar en el código.'
     }
   ];
-  readonly totalEstrellasCatalogo = this.avatars.reduce(
-    (total, avatar) => total + avatar.precio_estrellas,
-    0
-  );
   userProfile: UserProfile | null = null;
   private sub?: Subscription;
 
@@ -107,9 +101,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.sub = this.userService.getProfile().subscribe(p => this.userProfile = p);
-    if (!this.catalogoSoloVisual) {
-      this.cargarCatalogo();
-    }
+    this.cargarCatalogo();
   }
 
   ngOnDestroy(): void {
@@ -117,18 +109,30 @@ export class TiendaComponent implements OnInit, OnDestroy {
   }
 
   cargarCatalogo(): void {
+    this.cargandoCatalogo = true;
+    this.errorCatalogo = false;
     this.userService.getAvatares().subscribe({
-      next: (data) => this.avatars = data,
-      error: () => this.notificationService.show('Error al cargar la tienda', 'error')
+      next: (data) => {
+        this.avatars = data.map(avatar => ({ ...avatar, descripcion:
+          this.descripcionesVisuales.find(visual => visual.url_imagen === avatar.url_imagen)?.descripcion
+        }));
+        this.cargandoCatalogo = false;
+      },
+      error: () => {
+        this.cargandoCatalogo = false;
+        this.errorCatalogo = true;
+        this.notificationService.show('Error al cargar la tienda', 'error');
+      }
     });
   }
 
   onClose(): void {
+    if (this.cargandoCompra || this.cargandoEquipamiento) return;
     this.closeModal.emit();
   }
 
   selectAvatar(avatar: Avatar): void {
-    if (this.catalogoSoloVisual) return;
+    if (this.cargandoCompra || this.cargandoEquipamiento || this.isConfirmModalOpen) return;
     if (this.avatarActual === avatar.url_imagen) return;
     
     if (avatar.desbloqueado || avatar.precio_estrellas === 0) {
@@ -142,34 +146,36 @@ export class TiendaComponent implements OnInit, OnDestroy {
   }
 
   equipar(avatar: Avatar): void {
+    if (this.cargandoEquipamiento) return;
+    this.cargandoEquipamiento = true;
     this.userService.equiparAvatar(avatar.id).subscribe({
       next: () => {
+        this.cargandoEquipamiento = false;
+        this.userService.updateProfileState({ avatar_actual_id: avatar.id });
         this.avatarChanged.emit(avatar.url_imagen);
         this.notificationService.show('Avatar equipado exitosamente', 'success');
         this.closeModal.emit();
       },
-      error: () => this.notificationService.show('Error al equipar el avatar', 'error')
+      error: () => {
+        this.cargandoEquipamiento = false;
+        this.notificationService.show('No se pudo equipar. Tu avatar sigue desbloqueado; selecciónalo para reintentar.', 'error');
+      }
     });
   }
 
   confirmPurchase(): void {
-    if (!this.avatarToBuy) return;
+    if (!this.avatarToBuy || this.cargandoCompra || this.cargandoEquipamiento) return;
+    const avatar = this.avatarToBuy;
     this.cargandoCompra = true;
-    this.userService.comprarAvatar(this.avatarToBuy.id).subscribe({
+    this.userService.comprarAvatar(avatar.id).subscribe({
       next: (resp) => {
         this.cargandoCompra = false;
         this.isConfirmModalOpen = false;
-        this.notificationService.show(resp.mensaje || '¡Compra exitosa!', 'success');
-        
-        // Actualizamos estado de estrellas optimista
-        if (this.userProfile) {
-           this.userService.updateProfileState({
-             estrellas_totales: resp.estrellas_restantes,
-             avatar_actual_id: this.avatarToBuy!.id
-           });
-        }
-        this.avatarChanged.emit(this.avatarToBuy!.url_imagen);
-        this.closeModal.emit();
+        this.avatarToBuy = null;
+        avatar.desbloqueado = true;
+        this.userService.updateProfileState({ estrellas_totales: resp.estrellas_restantes });
+        // Comprar y equipar son operaciones distintas: no anunciar equipamiento sin confirmarlo.
+        this.equipar(avatar);
       },
       error: (err) => {
         this.cargandoCompra = false;
@@ -181,6 +187,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
   }
 
   cancelPurchase(): void {
+    if (this.cargandoCompra) return;
     this.isConfirmModalOpen = false;
     this.avatarToBuy = null;
   }

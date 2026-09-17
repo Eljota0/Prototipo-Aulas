@@ -1,7 +1,20 @@
 <div class="nivel-dos-shell nivel-cuatro-shell" [class.nivel-cinco-shell]="esNivelCinco">
-  <app-game-header (salir)="salir()"></app-game-header>
-
-  <main class="juego-layout">
+  <app-layout-juego class="juego-area"
+    [configuracionTarjetas]="configuracionTarjetasActual"
+    [estadoObjetos]="inventarioNivel"
+    [antiCopiaActivo]="antiCopiaActivo"
+    [ejecutando]="ejecutando"
+    [nivelActual]="esNivelCinco ? 5 : 4"
+    [modoJuego]="modoJuegoActual"
+    [modoPlantilla]="true"
+    [listoParaEjecutar]="codigoUsuario.trim().length > 0"
+    [controlManualTarjetas]="true"
+    (ejecutarJuego)="ejecutarCodigo($event)"
+    (onLimpiarPlantilla)="limpiarPergamino()"
+    (onBorrarLineaPlantilla)="borrarLinea()"
+    (onDeshacerPaso)="retrocederPaso($event)"
+    (onUsarItem)="manejarUsoPocion($event)"
+    (onUsarTarjeta)="manejarUsoTarjeta($event)">
     <section class="tablero-juego" [attr.aria-label]="esNivelCinco ? 'Fábrica minera de producción continua' : 'Fábrica minera de control de calidad'">
       <div class="hud-juego">
         <div class="vidas" aria-label="Vidas disponibles">
@@ -86,131 +99,17 @@
         </div>
       </div>
     </section>
-
-    <section class="panel-derecho">
-      <article class="consola-codigo">
-        <div class="titulo-archivo">
-          <span>pergamino.drg</span>
-          <small>{{ esNivelCinco ? 'REPETIR CON MIENTRAS' : 'DECIDIR CON SI / SINO' }}</small>
-        </div>
-
-        <div class="editor-codigo">
-          <div class="numeros-linea" aria-hidden="true">
-            <span *ngFor="let numero of numerosLinea">{{ numero }}</span>
-          </div>
-
-          <div class="codigo-estructurado codigo-control">
-            <code class="linea-fija" *ngIf="!esNivelCinco">evento(fabrica.nuevoMaterial) {{ '{' }}</code>
-            <textarea
-              [(ngModel)]="codigoUsuario"
-              [rows]="filasCodigoUsuario"
-              [disabled]="ejecutando || falloFase || gameOver || nivelCompletado"
-              (paste)="bloquearTransferencia($event)"
-              (drop)="bloquearTransferencia($event)"
-              spellcheck="false"
-              autocomplete="off"
-              [attr.aria-label]="esNivelCinco ? 'Bucle de producción masiva' : 'Condiciones de control de calidad'"
-              [placeholder]="esNivelCinco ? '// Construye aquí el bucle mientras' : '  // Inserta aquí las decisiones'"></textarea>
-            <code class="linea-fija" *ngIf="!esNivelCinco">{{ '}' }}</code>
-          </div>
-
-          <div class="errores-panel" *ngIf="errores.length > 0">
-            <p *ngFor="let error of errores">⚠ {{ error }}</p>
-          </div>
-        </div>
-
-        <div class="acciones-editor">
-          <div class="acciones-limpieza">
-            <button type="button" class="btn-borrar" (click)="borrarLinea()"
-                    [disabled]="ejecutando || falloFase || gameOver">Borrar Línea</button>
-            <button type="button" class="btn-borrar" (click)="limpiarPergamino()"
-                    [disabled]="ejecutando || falloFase || gameOver">Limpiar Todo</button>
-          </div>
-
-          <button type="button" class="btn-ejecutar" (click)="ejecutarCodigo()"
-                  [disabled]="ejecutando || falloFase || gameOver || nivelCompletado">
-            {{ ejecutando ? (esNivelCinco ? '◆ PRODUCIENDO...' : '◆ CLASIFICANDO...') : '▶ Ejecutar' }}
-          </button>
-        </div>
-      </article>
-
-      <article class="inventario" id="inventario-fabrica">
-        <div class="titulo-inventario">INVENTARIO</div>
-
-        <div class="tabs-inventario">
-          <button type="button" [class.activa]="pestanaInventario === 'acciones'"
-                   (click)="pestanaInventario = 'acciones'">
-            ACCIONES
-          </button>
-          <button type="button" [class.activa]="pestanaInventario === 'objetos'"
-                  (click)="pestanaInventario = 'objetos'">OBJETOS</button>
-        </div>
-
-        <div class="contenido-inventario tarjetas-control"
-             [class.fase-final]="faseActual.numero === 4"
-             *ngIf="pestanaInventario === 'acciones'; else objetos">
-          <button type="button" *ngFor="let tarjeta of faseActual.tarjetas"
-                  class="tarjeta-codigo" [attr.data-tono]="tarjeta.tono"
-                  [attr.aria-label]="tarjeta.etiqueta + '. Inserta: ' + tarjeta.codigo"
-                  (click)="insertarTarjeta(tarjeta)"
-                  [disabled]="ejecutando || falloFase || gameOver || nivelCompletado">
-            <strong>{{ tarjeta.etiqueta }}</strong>
-            <code>{{ tarjeta.codigo }}</code>
-          </button>
-        </div>
-
-        <ng-template #objetos>
-          <div class="contenido-objetos objetos-fabrica">
-            <p class="objetos-instruccion">OBJETOS MÁGICOS</p>
-            <div class="objetos-grid">
-            <button type="button" class="objeto-socket objeto-libro" (click)="usarObjeto('libro')"
-                    title="Tomo de los Ancestros. Explica el concepto de esta misión.">
-              <img src="assets/images/aventura/objetos/libro-ayuda.png" alt="Abrir el Grimorio">
-              <span>Grimorio</span>
-            </button>
-            <button type="button" class="objeto-socket objeto-clarividencia"
-                    [class.consumido]="estadoObjetos.clarividencia"
-                    [disabled]="estadoObjetos.clarividencia"
-                    (click)="usarObjeto('clarividencia')"
-                    title="Esencia de Visión Verdadera. Revela una pista del código una sola vez.">
-              <img src="assets/images/aventura/objetos/pocion-clarividencia.png" alt="Poción de clarividencia">
-              <span>Clarividencia</span>
-            </button>
-            <button type="button" class="objeto-socket objeto-vida"
-                    [class.consumido]="estadoObjetos.vida"
-                    [disabled]="estadoObjetos.vida"
-                    (click)="usarObjeto('vida')"
-                    title="Sangre de Dragón Cristalizada. Restaura un corazón una sola vez.">
-              <img src="assets/images/aventura/objetos/pocion-vida.png" alt="Poción de vida">
-              <span>Vida</span>
-            </button>
-            <button type="button" class="objeto-socket objeto-tiempo"
-                    [class.consumido]="estadoObjetos.tiempo"
-                    [disabled]="estadoObjetos.tiempo"
-                    (click)="usarObjeto('tiempo')"
-                    title="Arena de Reloj Líquida. Recupera treinta segundos una sola vez.">
-              <img src="assets/images/aventura/objetos/pocion-tiempo.png" alt="Poción de tiempo">
-              <span>Tiempo</span>
-            </button>
-            </div>
-            <p class="mensaje-objeto" *ngIf="mensajeObjeto">{{ mensajeObjeto }}</p>
-          </div>
-        </ng-template>
-      </article>
-    </section>
-  </main>
+  </app-layout-juego>
 
   <div class="modal-overlay" *ngIf="falloFase || gameOver">
     <section class="modal-resultado">
       <span class="modal-icono">!</span>
       <h2>{{ gameOver ? (esNivelCinco ? 'DUENDES EN HUELGA' : 'FÁBRICA CLAUSURADA') : (estadoEscena === 'explosion' ? 'CIERRE DE EMERGENCIA' : (esNivelCinco ? 'BUCLE INTERRUMPIDO' : 'REGLA INCORRECTA')) }}</h2>
-      <p>{{ bitacora }}</p>
-      <div class="errores-modal" *ngIf="errores.length">
-        <p *ngFor="let error of errores">{{ error }}</p>
-      </div>
+      <p class="mensaje-error-principal">{{ errores[0] || bitacora }}</p>
       <p class="vidas-restantes">Vidas restantes: {{ vidas }}</p>
       <button type="button" *ngIf="!gameOver" (click)="reintentarFase()">Reintentar fase</button>
       <button type="button" *ngIf="gameOver" (click)="reiniciarNivel()">Reiniciar nivel</button>
+      <button type="button" class="btn-salir-resultado" (click)="salir()">{{ modoJuegoActual === 'aula' ? 'Volver al aula' : 'Salir' }}</button>
     </section>
   </div>
 
@@ -223,7 +122,7 @@
       <img src="/assets/images/exprecionsedraco/feliz.png" class="draco-feliz"
            [alt]="esNivelCinco ? 'Drako celebrando la producción automática' : 'Drako celebrando el control de la fábrica'">
 
-      <h1>¡MISIÓN COMPLETADA!</h1>
+      <h1>{{ modoJuegoActual === 'aula' ? '¡ACTIVIDAD COMPLETADA!' : '¡MISIÓN COMPLETADA!' }}</h1>
       <p class="mensaje-recompensa">{{ mensajeRecompensa }}</p>
       <div class="estrellas-celebracion" [attr.aria-label]="estrellas + ' estrellas obtenidas'">
         <span *ngFor="let estrella of estrellasAnimadas; let indice = index"
@@ -241,7 +140,7 @@
 
       <div class="botones-celebracion">
         <button type="button" class="btn-secundario" (click)="reiniciarNivel()">REINICIAR NIVEL</button>
-        <button type="button" class="btn-victoria" (click)="salir()">SALIR DE LA MISIÓN</button>
+        <button type="button" class="btn-victoria" (click)="salir()">{{ modoJuegoActual === 'aula' ? 'VOLVER AL AULA' : 'SALIR DE LA MISIÓN' }}</button>
       </div>
     </section>
   </div>

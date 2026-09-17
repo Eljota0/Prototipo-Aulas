@@ -52,6 +52,13 @@ export class LayoutJuegoComponent {
   // Nivel actual del juego (para la poción de clarividencia)
   @Input() nivelActual: number = 1;
 
+  // Las ayudas mágicas pertenecen exclusivamente al modo Aventura.
+  @Input() modoJuego: 'aventura' | 'aula' = 'aventura';
+
+  // El constructor reutiliza el tablero, pero oculta los controles de ejecución.
+  @Input() modoEdicion = false;
+  @Input() mostrarAjustes = true;
+
   // Estado inicial del inventario
   @Input() estadoObjetos?: any;
 

@@ -182,6 +182,32 @@
   gap: 20px;
 }
 
+.profile-save-status {
+  margin: 0;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--input-border);
+  overflow-wrap: anywhere;
+}
+
+.profile-save-error {
+  color: #ff9999;
+}
+
+/* Los avisos del cambio de contraseña no deben ocultar los controles en pantallas bajas. */
+.profile-modal.password-active {
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.profile-saving button:disabled,
+.profile-saving input:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 /* Campos de Edición en Línea */
 .form-group {
   display: flex;

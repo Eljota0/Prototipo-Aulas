@@ -3,6 +3,8 @@ import { EvaluadorTaladroService } from './evaluador-taladro.service';
 describe('EvaluadorTaladroService', () => {
   const evaluador = new EvaluadorTaladroService();
 
+  beforeEach(() => evaluador.configurarObjetivos());
+
   it('activa la estrategia de vapor aunque el código tenga espacios y saltos de línea', () => {
     const resultado = evaluador.evaluar(`
       evento(taladro.sobrecalentamiento) {
@@ -78,4 +80,23 @@ describe('EvaluadorTaladroService', () => {
     expect(resultado.banderas.estrategiaAguaCorrecta).toBeFalse();
     expect(resultado.errores[0].mensaje).toContain('500');
   });
+
+  it('evalúa los objetivos personalizados de una actividad de aula', () => {
+    evaluador.configurarObjetivos({
+      umbralTemperatura: 120,
+      presionObjetivo: 60,
+      profundidadObjetivo: 400
+    });
+
+    expect(evaluador.evaluarAndamiajeFase1(
+      'si(taladro.temperatura > 120) { taladro.liberarVapor(); }'
+    ).valido).toBeTrue();
+    expect(evaluador.evaluarAndamiajeFase2(
+      'si(taladro.presion == 60) { taladro.mantenerFuerza(); }'
+    ).valido).toBeTrue();
+    expect(evaluador.evaluarAndamiajeFase3(
+      'si(taladro.profundidad == 400) { taladro.detenerse(); taladro.extraerAgua = true; }'
+    ).valido).toBeTrue();
+  });
+
 });

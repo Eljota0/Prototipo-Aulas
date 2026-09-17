@@ -3,12 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Instruccion } from '../layout-juego/layout-juego.component';
 import { NotificationService } from '../services/notification.service';
-import { SafeHtmlPipe } from '../shared/safe-html.pipe';
 
 @Component({
   selector: 'app-consola-codigo',
   standalone: true,
-  imports: [CommonModule, FormsModule, SafeHtmlPipe],
+  imports: [CommonModule, FormsModule],
   templateUrl: './consola-codigo.component.html',
   styleUrl: './consola-codigo.component.scss'
 })
@@ -39,34 +38,36 @@ export class ConsolaCodigoComponent {
       return texto;
     }
 
-    let html = texto;
-
-    // 1. Escapar símbolos HTML que rompen el DOM
-    html = html.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // El texto puede venir de tarjetas configurables. Se escapa antes de agregar
+    // las etiquetas del resaltado para que nunca se interprete como HTML activo.
+    let html = texto
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
 
     // 2. Comentarios (Gris itálica)
-    html = html.replace(/(\/\/.*)/g, '<span style="color: #5c6370; font-style: italic;">$1</span>');
+    html = html.replace(/(\/\/.*)/g, '<span class="syntax-comment">$1</span>');
 
     // 3. Palabras clave (Magenta)
-    html = html.replace(/\b(evento|si)\b/g, '<span style="color: #c678dd;">$1</span>');
+    html = html.replace(/\b(evento|mientras|si|sino|verdadero|falso)\b/g, '<span class="syntax-keyword">$1</span>');
 
     // 4. Objeto principal (Rojo/Naranja)
-    html = html.replace(/\b(taladro)\b/g, '<span style="color: #e06c75;">$1</span>');
+    html = html.replace(/\b(taladro|fabrica)\b/g, '<span class="syntax-object">$1</span>');
 
     // 5. Métodos/Funciones (Azul claro)
-    html = html.replace(/\.(sobrecalentamiento|liberarVapor|apagarMotor|extraerCarbon|estabilizarPresion|mantenerFuerza|aumentarFuerza|recolectarAgua|detenerse|lanzarGasolina)/g, '.<span style="color: #61afef;">$1</span>');
+    html = html.replace(/\.(sobrecalentamiento|liberarVapor|apagarMotor|extraerCarbon|estabilizarPresion|mantenerFuerza|aumentarFuerza|recolectarAgua|detenerse|lanzarGasolina|guardar|destruir|quemar)/g, '.<span class="syntax-method">$1</span>');
 
     // 6. Propiedades (Celeste)
-    html = html.replace(/\.(temperatura|pesoCarga|carbon|presion|profundidad|extraerAgua)/g, '.<span style="color: #56b6c2;">$1</span>');
+    html = html.replace(/\.(temperatura|pesoCarga|carbon|presion|profundidad|extraerAgua|nuevoMaterial|tieneMateriales|materialActual)/g, '.<span class="syntax-property">$1</span>');
 
     // 7. Números (Dorado)
-    html = html.replace(/\b([0-9]+)\b/g, '<span style="color: #e5c07b;">$1</span>');
+    html = html.replace(/\b([0-9]+)\b/g, '<span class="syntax-number">$1</span>');
 
     // 7.5. Booleanos (Naranja/Dorado distintivo)
-    html = html.replace(/\b(true|false)\b/g, '<span style="color: #d19a66; font-weight: bold;">$1</span>');
+    html = html.replace(/\b(true|false)\b/g, '<span class="syntax-boolean">$1</span>');
 
     // 8. Operadores (Cian)
-    html = html.replace(/(&lt;|&gt;|==|!=)/g, '<span style="color: #56b6c2;">$1</span>');
+    html = html.replace(/(&lt;|&gt;|==|!=)/g, '<span class="syntax-operator">$1</span>');
 
     // 9. Lógica Dinámica de Placeholders (▯)
     const hayPlaceholderAntes = this.lineas.slice(0, lineaIndex).some(l => l.texto.includes('▯'));
@@ -75,11 +76,10 @@ export class ConsolaCodigoComponent {
     html = html.replace(/▯/g, () => {
       if (!primerEncontrado) {
         primerEncontrado = true;
-        // Añadimos la clase 'placeholder-parpadeo' junto con los estilos en línea
-        return '<span class="placeholder-parpadeo" style="color: white; font-weight: bold;">▯</span>'; 
+        return '<span class="placeholder-parpadeo">▯</span>';
       }
       // Resto de placeholders: Gris oscuro
-      return '<span style="color: #5c6370;">▯</span>';
+      return '<span class="placeholder-inactivo">▯</span>';
     });
 
     return html;

@@ -2198,3 +2198,74 @@
     min-height: 112px;
   }
 }
+
+/*
+ * Los niveles 4 y 5 usan el mismo armazón de consola/inventario de los
+ * niveles 1 y 2. Estas reglas solo adaptan sus tarjetas de código más largas;
+ * el tamaño de ambos paneles queda bajo el control del layout compartido.
+ */
+.nivel-cuatro-shell .juego-area {
+  display: block;
+}
+
+:host ::ng-deep app-baraja-tarjetas .cards-grid {
+  align-items: stretch;
+}
+
+:host ::ng-deep app-baraja-tarjetas .action-card {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 calc(50% - .5rem);
+}
+
+:host ::ng-deep app-baraja-tarjetas .card-codigo {
+  width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+  font-size: clamp(.62rem, .72vw, .82rem);
+}
+
+:host ::ng-deep app-consola-codigo .code-line-wrapper {
+  min-width: 0;
+}
+
+:host ::ng-deep app-consola-codigo .plantilla-display {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mensaje-error-principal {
+  max-width: 42rem;
+  margin-inline: auto;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+@media (max-width: 1280px) {
+  :host ::ng-deep app-baraja-tarjetas .action-card {
+    flex-basis: calc(50% - 6px);
+  }
+}
+
+@media (max-width: 480px) {
+  :host ::ng-deep app-baraja-tarjetas .action-card {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .nivel-cuatro-shell .tablero-juego {
+    height: clamp(420px, 64svh, 520px);
+    min-height: 420px;
+  }
+
+  :host ::ng-deep app-layout-juego .cards-section {
+    flex: 0 0 360px;
+    height: 360px;
+    min-height: 360px;
+  }
+}

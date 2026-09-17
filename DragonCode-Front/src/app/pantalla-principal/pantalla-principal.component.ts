@@ -23,6 +23,13 @@ import {
   NotificacionInterna,
   NotificacionesService
 } from '../services/notificaciones.service';
+import { NIVELES_DRAGONCODE } from '../core/catalogo-niveles';
+import { ConfiguradorNivelAulaComponent } from '../configurador-nivel-aula/configurador-nivel-aula.component';
+import {
+  ConfiguracionNivelAula,
+  crearConfiguracionNivelPredeterminada
+} from '../core/configuracion-niveles-aula';
+import { BorradorAulaService } from '../services/borrador-aula.service';
 
 // ─── MODELOS DE DATOS ───────────────────────────────────────────
 interface Rune {
@@ -41,13 +48,22 @@ interface WorldProgress {
   stars:  number;   // 0-3 desde la BD
 }
 
+type PlazoActividad = 'sin_limite' | '30_minutos' | '1_hora' | '24_horas' | '7_dias' | 'personalizado';
+
 
 import { LoaderService } from '../services/loader.service';
 
 @Component({
   selector: 'app-pantalla-principal',
   standalone: true,
-  imports: [RouterLink, CommonModule, FormsModule, PerfilComponent, TiendaComponent],
+  imports: [
+    RouterLink,
+    CommonModule,
+    FormsModule,
+    PerfilComponent,
+    TiendaComponent,
+    ConfiguradorNivelAulaComponent
+  ],
   templateUrl: './pantalla-principal.component.html',
   styleUrl:    './pantalla-principal.component.scss'
 })
@@ -61,6 +77,7 @@ export class PantallaPrincipalComponent implements OnInit {
   private notificacionesService = inject(NotificacionesService);
   private loaderService       = inject(LoaderService);
   private router              = inject(Router);
+  private borradorAulaService = inject(BorradorAulaService);
 
   // ── ESTADO: Perfil Usuario ───────────────────────────────────────
   userProfile$!: Observable<UserProfile>;
@@ -103,23 +120,23 @@ export class PantallaPrincipalComponent implements OnInit {
   tituloReto         = '';
   nivelSeleccionado  = 1;             // ID del nivel oficial (El Ogro = 1)
   fechaLimiteActividad = '';
+  plazoSeleccionado: PlazoActividad = 'sin_limite';
   cargandoCrearAula  = false;
   aulaCreada: AulaResponse | null = null;
+  mostrarEdicionAvanzada = false;
 
   parametrosReto: ParametrosEvaluacion = {
     tiempo_3_estrellas:        60,
     tiempo_2_estrellas:        120,
-    intentos_max_sin_penalidad: 2
+    intentos_max_sin_penalidad: 2,
+    anti_copia: true,
+    ayudas_habilitadas: false,
+    fases_seleccionadas: [1, 2, 3, 4],
+    configuracion_nivel: undefined
   };
 
   // Catálogo de niveles disponibles para reutilizar
-  nivelesDisponibles = [
-    { id: 1, nombre: 'Nivel 1: El Ogro', descripcion: 'Programación secuencial con movimiento' },
-    { id: 2, nombre: 'Nivel 2: Taladro a Vapor', descripcion: 'Eventos y condicionales básicos' },
-    { id: 3, nombre: 'Nivel 3: La Cueva de las Variables', descripcion: 'Variables y tipos de datos básicos' },
-    { id: 4, nombre: 'Nivel 4: Control de Calidad', descripcion: 'Control de flujo con si, sino si y sino' },
-    { id: 5, nombre: 'Nivel 5: Producción en Masa', descripcion: 'Bucles mientras combinados con decisiones' }
-  ];
+  readonly nivelesDisponibles = NIVELES_DRAGONCODE;
 
   // ── ESTADO: Modal Unirse a Aula ──────────────────────────────────
   isUnirseAulaOpen = false;
@@ -143,7 +160,20 @@ export class PantallaPrincipalComponent implements OnInit {
       this.loaderService.ocultar();
     }, 300);
 
+    this.restaurarAsistenteDesdeEditor();
+
     this.userService.fetchProfile().subscribe({
+      next: perfil => {
+        if (perfil.avatar_actual_id) {
+          this.userService.getAvatares().subscribe({
+            next: avatares => {
+              const equipado = avatares.find(avatar => avatar.id === perfil.avatar_actual_id);
+              if (equipado) this.selectedAvatar = equipado.url_imagen;
+            },
+            error: () => this.notificationService.show('No se pudo cargar tu avatar equipado', 'error')
+          });
+        }
+      },
       error: () => this.notificationService.show('No se pudo cargar tu información', 'error')
     });
 
@@ -321,17 +351,22 @@ export class PantallaPrincipalComponent implements OnInit {
     this.nuevoNombreAula   = '';
     this.aulaCreada        = null;
     this.aulaSeleccionadaAdmin = null;
+    this.nivelSeleccionado = 1;
     this.jugadoresAulaLista = [];
     this.reporteAulaAdmin = null;
+    this.plazoSeleccionado = 'sin_limite';
     this.fechaLimiteActividad = '';
     this.mostrarAgregarActividad = false;
     this.aulaParaActividad = null;
+    this.mostrarEdicionAvanzada = false;
     this.parametrosReto    = { 
       tiempo_3_estrellas: 60, 
       tiempo_2_estrellas: 120, 
       intentos_max_sin_penalidad: 3,
       anti_copia: true,
-      fases_seleccionadas: [1, 2, 3, 4]
+      ayudas_habilitadas: false,
+      fases_seleccionadas: [1, 2, 3, 4],
+      configuracion_nivel: undefined
     };
 
     // Cargar la lista de aulas creadas para mostrarlas inmediatamente en Paso 1
@@ -391,6 +426,7 @@ export class PantallaPrincipalComponent implements OnInit {
   }
 
   toggleFase(fase: number): void {
+    if (!this.fasesDisponiblesNivel.includes(fase)) return;
     const idx = this.parametrosReto.fases_seleccionadas!.indexOf(fase);
     if (idx > -1) {
       this.parametrosReto.fases_seleccionadas!.splice(idx, 1);
@@ -399,15 +435,89 @@ export class PantallaPrincipalComponent implements OnInit {
     }
   }
 
+  seleccionarNivel(nivelId: number): void {
+    if (nivelId === this.nivelSeleccionado) return;
+    this.nivelSeleccionado = nivelId;
+    this.mostrarEdicionAvanzada = false;
+    this.parametrosReto.fases_seleccionadas = [...this.fasesDisponiblesNivel];
+    this.parametrosReto.configuracion_nivel = crearConfiguracionNivelPredeterminada(nivelId);
+  }
+
+  actualizarConfiguracionNivel(configuracion: ConfiguracionNivelAula | undefined): void {
+    this.parametrosReto.configuracion_nivel = configuracion;
+  }
+
+  abrirEdicionAvanzada(): void {
+    if (this.nivelSeleccionado !== 1) {
+      this.mostrarEdicionAvanzada = !this.mostrarEdicionAvanzada;
+      return;
+    }
+
+    this.borradorAulaService.guardar({
+      modo: this.mostrarAgregarActividad ? 'agregar-actividad' : 'crear-aula',
+      nuevoNombreAula: this.nuevoNombreAula,
+      nivelSeleccionado: this.nivelSeleccionado,
+      parametrosReto: JSON.parse(JSON.stringify(this.parametrosReto)),
+      plazoSeleccionado: this.plazoSeleccionado,
+      fechaLimiteActividad: this.fechaLimiteActividad,
+      aulaParaActividad: this.aulaParaActividad
+    });
+    this.router.navigate(['/crear-aula/ogro']);
+  }
+
+  private restaurarAsistenteDesdeEditor(): void {
+    const borrador = this.borradorAulaService.consumir();
+    if (!borrador) return;
+
+    this.isCrearAulaOpen = true;
+    this.nuevoNombreAula = borrador.nuevoNombreAula;
+    this.nivelSeleccionado = borrador.nivelSeleccionado;
+    this.parametrosReto = borrador.parametrosReto;
+    this.plazoSeleccionado = borrador.plazoSeleccionado as PlazoActividad;
+    this.fechaLimiteActividad = borrador.fechaLimiteActividad;
+    this.aulaParaActividad = borrador.aulaParaActividad;
+    this.mostrarEdicionAvanzada = false;
+
+    if (borrador.modo === 'agregar-actividad' && borrador.aulaParaActividad) {
+      this.pasoCrearAula = 1;
+      this.creandoNuevaAula = false;
+      this.mostrarAgregarActividad = true;
+    } else {
+      this.pasoCrearAula = 3;
+      this.creandoNuevaAula = true;
+      this.mostrarAgregarActividad = false;
+    }
+  }
+
+  get fasesDisponiblesNivel(): number[] {
+    const cantidad = this.nivelesDisponibles.find(nivel => nivel.id === this.nivelSeleccionado)?.fases ?? 4;
+    return Array.from({ length: cantidad }, (_, indice) => indice + 1);
+  }
+
   /** Paso 3: Crear aula + reto personalizado en el backend */
   confirmarCrearAula(): void {
-    if (this.parametrosReto.tiempo_3_estrellas >= this.parametrosReto.tiempo_2_estrellas) {
+    // Esta protección evita que el asistente de una actividad existente termine
+    // creando otra aula si la vista conserva el botón general de confirmación.
+    if (this.mostrarAgregarActividad && this.aulaParaActividad) {
+      this.confirmarAgregarActividad();
+      return;
+    }
+
+    if (this.nivelSeleccionado === 2 && this.parametrosReto.tiempo_3_estrellas >= this.parametrosReto.tiempo_2_estrellas) {
       this.notificationService.show('El tiempo para 3⭐ debe ser menor al de 2⭐.', 'error');
+      return;
+    }
+    if (this.plazoSeleccionado === 'personalizado' && !this.fechaLimiteActividad.trim()) {
+      this.notificationService.show('Selecciona la fecha y hora límite.', 'error');
       return;
     }
     const fechaLimite = this.fechaLimiteComoIso();
     if (this.fechaLimiteActividad && !fechaLimite) {
       this.notificationService.show('La fecha límite no es válida.', 'error');
+      return;
+    }
+    if (fechaLimite && new Date(fechaLimite).getTime() <= Date.now()) {
+      this.notificationService.show('La fecha límite debe ser posterior a la hora actual.', 'error');
       return;
     }
     this.cargandoCrearAula = true;
@@ -420,7 +530,7 @@ export class PantallaPrincipalComponent implements OnInit {
           reto_nivel_id:        this.nivelSeleccionado,
           titulo:               `${this.nuevoNombreAula} - Nivel ${this.nivelSeleccionado}`,
           recompensa_estrellas: 5,
-          parametros:           { ...this.parametrosReto },
+          parametros:           { ...this.parametrosReto, ayudas_habilitadas: false },
           fecha_limite:         fechaLimite
         };
         this.aulasService.crearRetoEnAula(aula.id, datosReto).subscribe({
@@ -516,7 +626,15 @@ export class PantallaPrincipalComponent implements OnInit {
     localStorage.setItem('retoActivo', actividad.id);
     this.isUnirseAulaOpen = false;
     this.isAdminAulasOpen = false;
-    this.router.navigate(['/aventura/nivel', actividad.reto_nivel_id]);
+    this.router.navigate(
+      ['/aventura/nivel', actividad.reto_nivel_id],
+      {
+        queryParams: {
+          aula: this.aulaActividadesSeleccionada.id,
+          actividad: actividad.id
+        }
+      }
+    );
   }
 
   // 🚪🚪 MODAL: Unirse a Aula 🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪🚪
@@ -674,17 +792,46 @@ export class PantallaPrincipalComponent implements OnInit {
   abrirAgregarActividad(aula: AulaResponse): void {
     this.aulaParaActividad       = aula;
     this.mostrarAgregarActividad = true;
+    this.creandoNuevaAula        = false;
     // Pre-rellenar parámetros del wizard para este aula
     this.nuevoNombreAula  = aula.nombre_aula;
+    this.nivelSeleccionado = 1;
     this.pasoCrearAula    = 2;  // Saltar directamente a selección de nivel
     this.parametrosReto   = {
       tiempo_3_estrellas: 60,
       tiempo_2_estrellas: 120,
       intentos_max_sin_penalidad: 3,
       anti_copia: true,
-      fases_seleccionadas: [1, 2, 3, 4]
+      ayudas_habilitadas: false,
+      fases_seleccionadas: [1, 2, 3, 4],
+      configuracion_nivel: undefined
     };
+    this.plazoSeleccionado = 'sin_limite';
     this.fechaLimiteActividad = '';
+    this.mostrarEdicionAvanzada = false;
+  }
+
+  volverDesdeSeleccionNivel(): void {
+    if (this.mostrarAgregarActividad) {
+      this.cancelarAgregarActividad();
+      return;
+    }
+    this.pasoCrearAula = 1;
+  }
+
+  cancelarAgregarActividad(): void {
+    this.mostrarAgregarActividad = false;
+    this.aulaParaActividad = null;
+    this.mostrarEdicionAvanzada = false;
+    this.pasoCrearAula = 1;
+  }
+
+  confirmarConfiguracionActividad(): void {
+    if (this.mostrarAgregarActividad && this.aulaParaActividad) {
+      this.confirmarAgregarActividad();
+      return;
+    }
+    this.confirmarCrearAula();
   }
 
   confirmarAgregarActividad(): void {
@@ -693,8 +840,12 @@ export class PantallaPrincipalComponent implements OnInit {
       this.notificationService.show('Debes seleccionar al menos una fase.', 'error');
       return;
     }
-    if (this.parametrosReto.tiempo_3_estrellas >= this.parametrosReto.tiempo_2_estrellas) {
+    if (this.nivelSeleccionado === 2 && this.parametrosReto.tiempo_3_estrellas >= this.parametrosReto.tiempo_2_estrellas) {
       this.notificationService.show('El tiempo para 3⭐ debe ser menor al de 2⭐.', 'error');
+      return;
+    }
+    if (this.plazoSeleccionado === 'personalizado' && !this.fechaLimiteActividad.trim()) {
+      this.notificationService.show('Selecciona la fecha y hora límite.', 'error');
       return;
     }
     const fechaLimite = this.fechaLimiteComoIso();
@@ -702,19 +853,29 @@ export class PantallaPrincipalComponent implements OnInit {
       this.notificationService.show('La fecha límite no es válida.', 'error');
       return;
     }
+    if (fechaLimite && new Date(fechaLimite).getTime() <= Date.now()) {
+      this.notificationService.show('La fecha límite debe ser posterior a la hora actual.', 'error');
+      return;
+    }
     this.cargandoCrearAula = true;
     const datosReto: RetoPersonalizadoCreate = {
       reto_nivel_id:        this.nivelSeleccionado,
       titulo:               `${this.aulaParaActividad.nombre_aula} - Actividad`,
       recompensa_estrellas: 5,
-      parametros:           { ...this.parametrosReto },
+      parametros:           { ...this.parametrosReto, ayudas_habilitadas: false },
       fecha_limite:         fechaLimite
     };
     this.aulasService.crearRetoEnAula(this.aulaParaActividad.id, datosReto).subscribe({
       next: () => {
+        const aulaActualizada = this.aulaParaActividad;
         this.cargandoCrearAula       = false;
         this.mostrarAgregarActividad = false;
+        this.aulaParaActividad       = null;
+        this.pasoCrearAula           = 1;
         this.notificationService.show('¡Actividad agregada con éxito!', 'success');
+        if (aulaActualizada && this.aulaSeleccionadaAdmin === aulaActualizada.id) {
+          this.cargarSeguimientoAula(aulaActualizada.id);
+        }
       },
       error: () => { this.cargandoCrearAula = false; }
     });
@@ -735,8 +896,79 @@ export class PantallaPrincipalComponent implements OnInit {
   }
 
   private fechaLimiteComoIso(): string | null {
+    this.actualizarFechaLimiteDesdePlazo();
     if (!this.fechaLimiteActividad.trim()) return null;
     const fecha = new Date(this.fechaLimiteActividad);
     return Number.isNaN(fecha.getTime()) ? null : fecha.toISOString();
+  }
+
+  seleccionarPlazo(opcion: PlazoActividad): void {
+    this.plazoSeleccionado = opcion;
+    if (opcion === 'personalizado' && !this.fechaLimiteActividad) {
+      this.fechaLimiteActividad = this.fechaLocalParaInput(new Date(Date.now() + 60 * 60_000));
+      return;
+    }
+    this.actualizarFechaLimiteDesdePlazo();
+  }
+
+  establecerFechaPersonalizada(valor: string): void {
+    this.plazoSeleccionado = 'personalizado';
+    this.fechaLimiteActividad = valor;
+  }
+
+  get fechaMinimaActividad(): string {
+    return this.fechaLocalParaInput(new Date(Date.now() + 60_000));
+  }
+
+  get zonaHorariaUsuario(): string {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'hora local del dispositivo';
+  }
+
+  get resumenFechaLimite(): string {
+    if (this.plazoSeleccionado === 'sin_limite' || !this.fechaLimiteActividad) {
+      return 'Sin fecha límite';
+    }
+    const fecha = new Date(this.fechaLimiteActividad);
+    if (Number.isNaN(fecha.getTime())) return 'Fecha pendiente de seleccionar';
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    }).format(fecha);
+  }
+
+  get nombreNivelSeleccionado(): string {
+    return this.nivelesDisponibles.find(nivel => nivel.id === this.nivelSeleccionado)?.nombre ?? `Nivel ${this.nivelSeleccionado}`;
+  }
+
+  get resumenFasesSeleccionadas(): string {
+    const fases = [...(this.parametrosReto.fases_seleccionadas ?? [])].sort((a, b) => a - b);
+    return fases.length ? fases.map(fase => `F${fase}`).join(', ') : 'Ninguna';
+  }
+
+  private actualizarFechaLimiteDesdePlazo(): void {
+    if (this.plazoSeleccionado === 'sin_limite') {
+      this.fechaLimiteActividad = '';
+      return;
+    }
+    if (this.plazoSeleccionado === 'personalizado') {
+      return;
+    }
+
+    const duraciones: Record<Exclude<PlazoActividad, 'sin_limite' | 'personalizado'>, number> = {
+      '30_minutos': 30 * 60_000,
+      '1_hora': 60 * 60_000,
+      '24_horas': 24 * 60 * 60_000,
+      '7_dias': 7 * 24 * 60 * 60_000
+    };
+    this.fechaLimiteActividad = this.fechaLocalParaInput(new Date(Date.now() + duraciones[this.plazoSeleccionado]));
+  }
+
+  private fechaLocalParaInput(fecha: Date): string {
+    const desplazamientoLocal = fecha.getTimezoneOffset() * 60_000;
+    return new Date(fecha.getTime() - desplazamientoLocal).toISOString().slice(0, 16);
   }
 }

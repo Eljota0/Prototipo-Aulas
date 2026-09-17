@@ -1,14 +1,19 @@
-<app-game-header (salir)="abandonarPartida()" (onToggleDraco)="onToggleDraco.emit($event)"></app-game-header>
+<app-game-header
+  [mostrarAyudaDraco]="modoJuego === 'aventura'"
+  [mostrarAjustes]="mostrarAjustes"
+  (salir)="abandonarPartida()"
+  (onToggleDraco)="onToggleDraco.emit($event)">
+</app-game-header>
 
-<main class="game-layout-wrapper">
+<main class="game-layout-wrapper" [class.editor-activo]="modoEdicion">
   <div class="game-content-wrapper">
     <section class="game-board">
       <ng-content></ng-content>
     </section>
 
-    <div class="mobile-divider"></div>
+    <div class="mobile-divider" [attr.aria-hidden]="modoEdicion"></div>
 
-    <aside class="game-controls">
+    <aside class="game-controls" [attr.aria-hidden]="modoEdicion" [attr.inert]="modoEdicion ? '' : null">
       <app-consola-codigo 
         class="console-section"
         [lineas]="lineasCodigo" 
@@ -26,6 +31,7 @@
 
       <app-baraja-tarjetas 
         class="cards-section"
+        [modoJuego]="modoJuego"
         [configuracion]="configuracionTarjetas" 
         [estadoObjetos]="estadoObjetos || {
           libro: { activo: true },

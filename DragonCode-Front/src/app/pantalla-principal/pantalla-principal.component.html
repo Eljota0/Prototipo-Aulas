@@ -108,19 +108,18 @@
 
     <p class="section-title">¿QUÉ DESEAS HACER HOY?</p>
 
-    <!-- AQUÍ SE ELIMINÓ LA TARJETA MIS AULAS, SOLO QUEDAN 3 -->
     <section class="mode-cards">
-      <article class="mode-card card-aventura" [routerLink]="['/aventura']">
+      <a class="mode-card card-aventura" [routerLink]="['/aventura']">
         <div class="card-image-area card-img-aventura"></div>
         <div class="card-text-panel">
           <div class="card-text-bg"></div>
           <div class="card-text-content">
             <h2 class="card-title">MODO AVENTURA</h2>
-            <p class="card-desc">Aprende a tu ritmo en misiones epicas</p>
+            <p class="card-desc">Aprende a tu ritmo en misiones épicas</p>
           </div>
         </div>
-      </article>
-      <article class="mode-card card-crear" (click)="openCrearAula()" style="cursor:pointer">
+      </a>
+      <button type="button" class="mode-card card-crear" (click)="openCrearAula()">
         <div class="card-image-area card-img-crear"></div>
         <div class="card-text-panel">
           <div class="card-text-bg"></div>
@@ -129,17 +128,17 @@
             <p class="card-desc">Forja tu propio reino del conocimiento</p>
           </div>
         </div>
-      </article>
-      <article class="mode-card card-unirse" (click)="openUnirseAula()" style="cursor:pointer">
+      </button>
+      <button type="button" class="mode-card card-unirse" (click)="openUnirseAula()">
         <div class="card-image-area card-img-unirse"></div>
         <div class="card-text-panel">
           <div class="card-text-bg"></div>
           <div class="card-text-content">
             <h2 class="card-title">UNIRSE A UN AULA</h2>
-            <p class="card-desc">Unete a la aventura de otro maestro</p>
+            <p class="card-desc">Únete a la aventura de otro maestro</p>
           </div>
         </div>
-      </article>
+      </button>
     </section>
   </main>
 
@@ -280,54 +279,75 @@
 
                     <!-- Inline Participants View -->
                     @if (aulaSeleccionadaAdmin === aula.id) {
-                      <div style="margin-top:10px; padding:12px; border:1px solid rgba(255,215,0,0.3); border-radius:6px; background:rgba(0,0,0,0.6);">
-                        <h4 style="color:#FFD700; font-family:'TuFuentePixel',monospace; font-size:0.8rem; margin:0 0 8px 0; text-align:center;">
-                          ESTUDIANTES INSCRITOS:
-                        </h4>
+                      <section class="classroom-report" aria-label="Seguimiento del aula">
+                        <div class="classroom-report__heading">
+                          <span class="classroom-report__eyebrow">GRUPO</span>
+                          <h4>Estudiantes inscritos</h4>
+                        </div>
                         @if (cargandoJugadores) {
-                          <p style="color:#aaa; text-align:center; font-family:'TuFuentePixel',monospace; font-size:0.85rem;">Cargando...</p>
+                          <p class="classroom-report__empty">Cargando estudiantes...</p>
                         } @else if (jugadoresAulaLista.length === 0) {
-                          <p style="color:#aaa; text-align:center; font-family:'TuFuentePixel',monospace; font-size:0.85rem;">No hay alumnos todavía.</p>
+                          <p class="classroom-report__empty">Todavía no hay estudiantes inscritos.</p>
                         } @else {
-                          <div style="display:flex; flex-direction:column; gap:6px;">
+                          <div class="student-list">
                             @for (jugador of jugadoresAulaLista; track jugador.jugador_id) {
-                              <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:6px 10px; border-radius:4px;">
-                                <span style="color:#fff; font-family:'TuFuentePixel',monospace; font-size:0.9rem;">{{ jugador.nombre }} {{ jugador.apellido }}</span>
-                                <span style="color:#FFD700; font-family:'TuFuentePixel',monospace; font-size:0.8rem;">⭐ {{ jugador.estrellas_totales }}</span>
+                              <div class="student-row">
+                                <span class="student-row__name">{{ jugador.apellido }}, {{ jugador.nombre }}</span>
+                                <span class="student-row__stars" [attr.aria-label]="jugador.estrellas_totales + ' estrellas'">
+                                  <span aria-hidden="true">★</span> {{ jugador.estrellas_totales }}
+                                </span>
                               </div>
                             }
                           </div>
                         }
 
-                        <h4 style="color:#82F4E0; font-family:'TuFuentePixel',monospace; font-size:0.8rem; margin:14px 0 8px; text-align:center;">
-                          SEGUIMIENTO DE ACTIVIDADES:
-                        </h4>
+                        <div class="classroom-report__heading classroom-report__heading--activities">
+                          <span class="classroom-report__eyebrow">RESULTADOS</span>
+                          <h4>Seguimiento de actividades</h4>
+                        </div>
                         @if (cargandoSeguimiento) {
-                          <p style="color:#aaa; text-align:center; font-family:'TuFuentePixel',monospace; font-size:0.8rem;">Calculando resultados...</p>
+                          <p class="classroom-report__empty">Calculando resultados...</p>
                         } @else if (reporteAulaAdmin?.actividades?.length === 0) {
-                          <p style="color:#aaa; text-align:center; font-family:'TuFuentePixel',monospace; font-size:0.8rem;">Aún no hay actividades asignadas.</p>
+                          <p class="classroom-report__empty">Aún no hay actividades asignadas.</p>
                         } @else {
-                          <div style="display:flex; flex-direction:column; gap:8px;">
+                          <div class="tracking-list">
                             @for (actividad of reporteAulaAdmin?.actividades ?? []; track actividad.reto_id) {
-                              <div style="background:rgba(130,244,224,0.06); border:1px solid rgba(130,244,224,0.25); padding:8px;">
-                                <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
-                                  <div>
-                                    <strong style="color:#fff; font-family:'TuFuentePixel',monospace; font-size:0.75rem;">{{ actividad.titulo }}</strong>
-                                    <p style="margin:5px 0 0; color:#a3bac2; font-size:0.7rem;">
-                                      {{ actividad.completados }}/{{ actividad.total_jugadores }} entregas · Promedio {{ actividad.promedio_calificacion }}
-                                    </p>
-                                    @if (actividad.fecha_limite) {
-                                      <small style="color:#FFD700; font-size:0.65rem;">Límite: {{ actividad.fecha_limite | date:'dd/MM/yyyy HH:mm' }}</small>
-                                    }
+                              <article class="tracking-card">
+                                <header class="tracking-card__header">
+                                  <h5>{{ actividad.titulo }}</h5>
+                                  <span class="tracking-status" [attr.data-status]="actividad.estado">
+                                    {{ actividad.estado | uppercase }}
+                                  </span>
+                                </header>
+
+                                <div class="tracking-metrics" aria-label="Resumen de resultados">
+                                  <div class="tracking-metric">
+                                    <span>Entregas</span>
+                                    <strong>{{ actividad.completados }}/{{ actividad.total_jugadores }}</strong>
                                   </div>
-                                  <span style="color:#d946ef; font-family:'TuFuentePixel',monospace; font-size:0.65rem;">{{ actividad.estado | uppercase }}</span>
+                                  <div class="tracking-metric">
+                                    <span>Promedio</span>
+                                    <strong>{{ actividad.promedio_calificacion }}/10</strong>
+                                  </div>
+                                  <div class="tracking-metric">
+                                    <span>Pendientes</span>
+                                    <strong>{{ actividad.pendientes }}</strong>
+                                  </div>
                                 </div>
+
+                                @if (actividad.fecha_limite) {
+                                  <p class="tracking-deadline">
+                                    <span>Fecha límite</span>
+                                    <time [attr.datetime]="actividad.fecha_limite">{{ actividad.fecha_limite | date:'dd/MM/yyyy · HH:mm' }}</time>
+                                  </p>
+                                }
+
                                 @if (actividad.jugadores.length > 0) {
-                                  <div style="margin-top:7px; display:flex; flex-direction:column; gap:4px;">
+                                  <div class="tracking-students" aria-label="Calificaciones de estudiantes">
                                     @for (alumno of actividad.jugadores; track alumno.jugador_id) {
-                                      <div style="display:flex; justify-content:space-between; color:#ddd; font-size:0.68rem;">
-                                        <span>{{ alumno.nombre }} {{ alumno.apellido }}</span>
-                                        <span [style.color]="alumno.completado ? '#4ade80' : '#f87171'">
+                                      <div class="tracking-student">
+                                        <span class="tracking-student__name">{{ alumno.apellido }}, {{ alumno.nombre }}</span>
+                                        <span class="tracking-student__grade" [class.tracking-student__grade--pending]="!alumno.completado">
                                           {{ alumno.completado ? (alumno.calificacion_numerica + '/10') : 'PENDIENTE' }}
                                         </span>
                                       </div>
@@ -335,17 +355,16 @@
                                   </div>
                                 }
                                 @if (actividad.estado !== 'cerrado') {
-                                  <button class="cyber-glow-btn glow-red"
-                                          style="font-size:0.62rem; padding:4px 8px; margin-top:7px;"
+                                  <button class="cyber-glow-btn glow-red tracking-card__close"
                                           (click)="cerrarActividad(aula.id, actividad)">
                                     CERRAR ACTIVIDAD
                                   </button>
                                 }
-                              </div>
+                              </article>
                             }
                           </div>
                         }
-                      </div>
+                      </section>
                     }
 
                   </div>
@@ -358,17 +377,17 @@
                       <button class="stars-close-btn" style="font-size:0.85rem;" (click)="mostrarAgregarActividad=false">&#x2715;</button>
                     </div>
                     @for (nivel of nivelesDisponibles; track nivel.id) {
-                      <div (click)="nivelSeleccionado = nivel.id"
+                      <div (click)="seleccionarNivel(nivel.id)"
                            style="padding:7px 10px; border-radius:5px; cursor:pointer; margin-bottom:5px; border:1.5px solid;"
                            [style.border-color]="nivelSeleccionado === nivel.id ? '#FFD700' : '#333'"
                            [style.background]="nivelSeleccionado === nivel.id ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.02)'">
                         <p style="margin:0; color:#FFD700; font-size:0.78rem; font-weight:bold;">{{ nivel.nombre }}</p>
                       </div>
-                      @if (nivelSeleccionado === nivel.id && nivel.id <= 4) {
+                      @if (nivelSeleccionado === nivel.id) {
                         <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; margin-bottom:8px; border:1px solid rgba(130,244,224,0.2);">
                           <span style="color:#82F4E0; font-family: 'TuFuentePixel', monospace; font-size: 0.75rem;">Fases a impartir:</span>
                           <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-                            @for (fase of [1,2,3,4]; track fase) {
+                            @for (fase of fasesDisponiblesNivel; track fase) {
                               <div (click)="toggleFase(fase)"
                                    [class]="parametrosReto.fases_seleccionadas?.includes(fase) ? 'cyber-glow-btn' : 'cyber-glow-btn'"
                                    style="padding: 4px 8px; font-size: 0.7rem; flex: 1; text-align: center; border-width: 1.5px; cursor: pointer;"
@@ -383,30 +402,67 @@
                         </div>
                       }
                     }
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:5px;">
-                      <label style="display:flex; flex-direction:column; gap:3px; font-size:0.72rem; font-family:'TuFuentePixel',monospace;">
-                        <span style="color:#82F4E0;">⭐⭐⭐ Tiempo 3★ (seg)</span>
-                        <input type="number" [(ngModel)]="parametrosReto.tiempo_3_estrellas" min="10" max="300" class="cyber-input" style="padding:4px 7px;">
-                      </label>
-                      <label style="display:flex; flex-direction:column; gap:3px; font-size:0.72rem; font-family:'TuFuentePixel',monospace;">
-                        <span style="color:#a3bac2;">⭐⭐ Tiempo 2★ (seg)</span>
-                        <input type="number" [(ngModel)]="parametrosReto.tiempo_2_estrellas" min="20" max="600" class="cyber-input" style="padding:4px 7px;">
-                      </label>
-                    </div>
-                    <label style="display:flex; flex-direction:column; gap:3px; font-size:0.72rem; font-family:'TuFuentePixel',monospace; margin-top:8px;">
-                      <span style="color:#FFD700;">FECHA LÍMITE (OPCIONAL)</span>
-                      <input type="datetime-local" [(ngModel)]="fechaLimiteActividad"
-                             class="cyber-input" style="padding:4px 7px;">
-                    </label>
-                    
-                    <div (click)="parametrosReto.anti_copia = !parametrosReto.anti_copia"
-                         style="display:flex; align-items:center; gap:8px; font-size:0.75rem; font-family:'TuFuentePixel',monospace; margin-top:10px; cursor:pointer;">
-                      <div style="width: 16px; height: 16px; border: 2px solid #82F4E0; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #05070a; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);">
-                        @if (parametrosReto.anti_copia) {
-                          <span style="color: #82F4E0; font-size: 12px; line-height: 1; text-shadow: 0 0 4px #82F4E0;">✔</span>
+                    <button type="button" class="cyber-glow-btn glow-purple activity-advanced-button"
+                            (click)="abrirEdicionAvanzada()">
+                      @if (nivelSeleccionado === 1) {
+                        {{ parametrosReto.configuracion_nivel?.tipo === 'mapa_ogro' ? 'EDITAR MAPA GUARDADO' : 'EDITAR MAPA DEL NIVEL' }}
+                      } @else {
+                        {{ mostrarEdicionAvanzada ? 'OCULTAR EDICIÓN AVANZADA' : 'EDITAR PARÁMETROS' }}
+                      }
+                    </button>
+                    @if (nivelSeleccionado === 1 && parametrosReto.configuracion_nivel?.tipo === 'mapa_ogro') {
+                      <p class="activity-editor-status">Diseño personalizado guardado para esta actividad.</p>
+                    }
+                    @if (nivelSeleccionado !== 1 && mostrarEdicionAvanzada) {
+                      <app-configurador-nivel-aula
+                        [nivelId]="nivelSeleccionado"
+                        [fasesSeleccionadas]="parametrosReto.fases_seleccionadas || []"
+                        [configuracion]="parametrosReto.configuracion_nivel"
+                        (configuracionChange)="actualizarConfiguracionNivel($event)">
+                      </app-configurador-nivel-aula>
+                    }
+                    <p class="cyber-modal-message">Calificación: 10/10 al primer intento completado, 8/10 al segundo o tercero y 6/10 desde el cuarto. El sistema conserva automáticamente el mejor resultado.</p>
+                    <div class="activity-settings activity-settings--compact">
+                      <div class="deadline-config">
+                        <label class="activity-field-label" for="plazo-actividad-adicional">PLAZO PARA COMPLETAR</label>
+                        <select id="plazo-actividad-adicional" class="cyber-input activity-select"
+                                [ngModel]="plazoSeleccionado"
+                                (ngModelChange)="seleccionarPlazo($event)">
+                          <option value="sin_limite">Sin fecha límite</option>
+                          <option value="30_minutos">30 minutos</option>
+                          <option value="1_hora">1 hora</option>
+                          <option value="24_horas">24 horas</option>
+                          <option value="7_dias">7 días</option>
+                          <option value="personalizado">Elegir fecha y hora</option>
+                        </select>
+                        @if (plazoSeleccionado === 'personalizado') {
+                          <input type="datetime-local" class="cyber-input activity-datetime"
+                                 [min]="fechaMinimaActividad"
+                                 [ngModel]="fechaLimiteActividad"
+                                 (ngModelChange)="establecerFechaPersonalizada($event)"
+                                 aria-label="Fecha y hora límite personalizada">
                         }
+                        <div class="deadline-preview">
+                          <span>HORA LOCAL · {{ zonaHorariaUsuario }}</span>
+                          <strong>{{ resumenFechaLimite }}</strong>
+                        </div>
                       </div>
-                      <span style="color:#82F4E0; text-shadow: 1px 1px 0 #000;">🛡️ Bloquear Copiar/Pegar</span>
+
+                      <div class="activity-toggle-grid">
+                        <button type="button" class="activity-toggle"
+                                [class.activity-toggle--active]="parametrosReto.anti_copia"
+                                [attr.aria-pressed]="parametrosReto.anti_copia"
+                                (click)="parametrosReto.anti_copia = !parametrosReto.anti_copia">
+                          <span class="activity-toggle__mark">{{ parametrosReto.anti_copia ? '✓' : '×' }}</span>
+                          <span><strong>Anti-copia</strong><small>{{ parametrosReto.anti_copia ? 'Activado' : 'Desactivado' }}</small></span>
+                        </button>
+                      </div>
+
+                      <div class="activity-summary" aria-label="Resumen de la actividad">
+                        <span>NIVEL</span><strong>{{ nombreNivelSeleccionado }}</strong>
+                        <span>FASES</span><strong>{{ resumenFasesSeleccionadas }}</strong>
+                        <span>CIERRE</span><strong>{{ resumenFechaLimite }}</strong>
+                      </div>
                     </div>
                     <div style="display:flex; justify-content:flex-end; margin-top:8px;">
                       <button class="cyber-glow-btn glow-green" style="font-size:0.72rem; padding:6px 12px;"
@@ -448,35 +504,44 @@
 
         <!-- PASO 2: Seleccionar Nivel + Fases -->
         @if (pasoCrearAula === 2) {
-          <h2 class="cyber-modal-title">SELECCIONAR NIVEL</h2>
-          <p class="cyber-modal-message">Elige el nivel que tus estudiantes deberán superar.</p>
+          <h2 class="cyber-modal-title">{{ mostrarAgregarActividad ? 'NUEVA ACTIVIDAD' : 'SELECCIONAR NIVEL' }}</h2>
+          <p class="cyber-modal-message">
+            @if (mostrarAgregarActividad && aulaParaActividad) {
+              Se añadirá a “{{ aulaParaActividad.nombre_aula }}” sin crear otra aula ni cambiar su código.
+            } @else {
+              Elige el nivel que tus estudiantes deberán superar.
+            }
+          </p>
           <div style="margin: 16px 0; display:flex; flex-direction:column; gap:8px; width: 100%;">
             @for (nivel of nivelesDisponibles; track nivel.id) {
-              <div (click)="nivelSeleccionado = nivel.id"
+              <button type="button" class="activity-level-option"
+                   (click)="seleccionarNivel(nivel.id)"
+                   [attr.aria-pressed]="nivelSeleccionado === nivel.id"
                    style="padding:14px; border-radius:6px; cursor:pointer; transition:all 0.2s; border: 2px solid; background-color: #05070a;"
                    [style.border-color]="nivelSeleccionado === nivel.id ? '#d946ef' : '#222'"
                    [style.box-shadow]="nivelSeleccionado === nivel.id ? '0 0 10px rgba(217,70,239,0.3), inset 0 0 10px rgba(0,0,0,0.9)' : 'inset 0 0 10px rgba(0,0,0,0.9)'">
                 <p style="margin:0; font-family:'TuFuentePixel',monospace; font-size:1.1rem; text-shadow:1px 1px 0 #000; letter-spacing:1px;"
                    [style.color]="nivelSeleccionado === nivel.id ? '#d946ef' : '#888'">{{ nivel.nombre }}</p>
                 <p style="margin:6px 0 0; font-family:'TuFuentePixel',monospace; font-size:0.85rem; color:#a3bac2;">{{ nivel.descripcion }}</p>
-              </div>
+              </button>
               
-              @if (nivelSeleccionado === nivel.id && nivel.id <= 4) {
+              @if (nivelSeleccionado === nivel.id) {
                 <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px;
                             margin-top: -4px; margin-bottom: 8px; border: 1px solid rgba(130,244,224,0.2);
                             display: flex; flex-direction: column; gap: 8px; text-align: left;">
                   <span style="color:#82F4E0; font-family: 'TuFuentePixel', monospace; font-size: 0.9rem; text-shadow: 1px 1px 0 #000;">Selecciona las fases a impartir:</span>
                   <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px;">
-                    @for (fase of [1,2,3,4]; track fase) {
-                      <div (click)="toggleFase(fase)"
-                           [class]="parametrosReto.fases_seleccionadas?.includes(fase) ? 'cyber-glow-btn' : 'cyber-glow-btn'"
+                    @for (fase of fasesDisponiblesNivel; track fase) {
+                      <button type="button" (click)="toggleFase(fase)"
+                           class="cyber-glow-btn activity-phase-option"
+                           [attr.aria-pressed]="parametrosReto.fases_seleccionadas?.includes(fase)"
                            style="padding: 8px 12px; font-size: 0.8rem; flex: 1; text-align: center; border-width: 2px; cursor: pointer;"
                            [style.background-color]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : 'rgba(255,255,255,0.05)'"
                            [style.border-color]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : '#444'"
                            [style.color]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : '#888'"
                            [style.box-shadow]="parametrosReto.fases_seleccionadas?.includes(fase) ? '' : 'inset 0 2px 8px rgba(0,0,0,0.8)'">
                         FASE {{fase}}
-                      </div>
+                      </button>
                     }
                   </div>
                 </div>
@@ -486,7 +551,7 @@
           <div class="logout-actions">
             <button type="button" class="cyber-glow-btn glow-red"
                     style="padding:10px 0; flex:1;"
-                    (click)="pasoCrearAula = 1">← ATRÁS</button>
+                    (click)="volverDesdeSeleccionNivel()">← ATRÁS</button>
             <button type="button" class="cyber-glow-btn glow-green"
                     style="padding:10px 0; flex:1;"
                     (click)="siguientePaso2()">SIGUIENTE →</button>
@@ -495,37 +560,72 @@
 
         <!-- PASO 3: Parámetros -->
         @if (pasoCrearAula === 3) {
-          <h2 class="cyber-modal-title">AJUSTAR DIFICULTAD</h2>
-          <p class="cyber-modal-message">Configura los criterios de evaluación para tu clase.</p>
+          <h2 class="cyber-modal-title">{{ mostrarAgregarActividad ? 'CONFIGURAR ACTIVIDAD' : 'AJUSTAR DIFICULTAD' }}</h2>
+          <p class="cyber-modal-message">
+            Configura los criterios de evaluación{{ mostrarAgregarActividad && aulaParaActividad ? ' para “' + aulaParaActividad.nombre_aula + '”' : ' para tu clase' }}.
+          </p>
           <div style="margin: 16px 0; display:flex; flex-direction:column; gap:14px; width: 100%; text-align: left;">
-            <label style="display:flex; flex-direction:column; gap:4px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace;">
-              <span style="color:#82F4E0;">⭐⭐⭐ Tiempo para 3 estrellas (seg)</span>
-              <input type="number" [(ngModel)]="parametrosReto.tiempo_3_estrellas" min="10" max="300"
-                     class="cyber-input" style="width:100%; box-sizing:border-box;">
-            </label>
-            <label style="display:flex; flex-direction:column; gap:4px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace;">
-              <span style="color:#a3bac2;">⭐⭐ Tiempo para 2 estrellas (seg)</span>
-              <input type="number" [(ngModel)]="parametrosReto.tiempo_2_estrellas" min="20" max="600"
-                     class="cyber-input" style="width:100%; box-sizing:border-box;">
-            </label>
-            <label style="display:flex; flex-direction:column; gap:4px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace;">
-              <span style="color:#a3bac2;">🔄 Intentos sin penalidad de estrella</span>
-              <input type="number" [(ngModel)]="parametrosReto.intentos_max_sin_penalidad" min="1" max="10"
-                     class="cyber-input" style="width:100%; box-sizing:border-box;">
-            </label>
-            <label style="display:flex; flex-direction:column; gap:4px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace;">
-              <span style="color:#FFD700;">FECHA LÍMITE (OPCIONAL)</span>
-              <input type="datetime-local" [(ngModel)]="fechaLimiteActividad"
-                     class="cyber-input" style="width:100%; box-sizing:border-box;">
-            </label>
-            <div (click)="parametrosReto.anti_copia = !parametrosReto.anti_copia"
-                 style="display:flex; align-items: center; gap:10px; font-size:0.85rem; font-family: 'TuFuentePixel', monospace; margin-top: 10px; cursor: pointer;">
-              <div style="width: 20px; height: 20px; border: 2px solid #82F4E0; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #05070a; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);">
-                @if (parametrosReto.anti_copia) {
-                  <span style="color: #82F4E0; font-size: 16px; line-height: 1; text-shadow: 0 0 5px #82F4E0;">✔</span>
+            <button type="button" class="cyber-glow-btn glow-purple activity-advanced-button"
+                    (click)="abrirEdicionAvanzada()">
+              @if (nivelSeleccionado === 1) {
+                {{ parametrosReto.configuracion_nivel?.tipo === 'mapa_ogro' ? 'EDITAR MAPA GUARDADO' : 'EDITAR MAPA DEL NIVEL' }}
+              } @else {
+                {{ mostrarEdicionAvanzada ? 'OCULTAR EDICIÓN AVANZADA' : 'EDITAR PARÁMETROS' }}
+              }
+            </button>
+            @if (nivelSeleccionado === 1 && parametrosReto.configuracion_nivel?.tipo === 'mapa_ogro') {
+              <p class="activity-editor-status">Diseño personalizado guardado para esta actividad.</p>
+            }
+            @if (nivelSeleccionado !== 1 && mostrarEdicionAvanzada) {
+              <app-configurador-nivel-aula
+                [nivelId]="nivelSeleccionado"
+                [fasesSeleccionadas]="parametrosReto.fases_seleccionadas || []"
+                [configuracion]="parametrosReto.configuracion_nivel"
+                (configuracionChange)="actualizarConfiguracionNivel($event)">
+              </app-configurador-nivel-aula>
+            }
+            <p class="cyber-modal-message">Calificación: 10/10 al primer intento completado, 8/10 al segundo o tercero y 6/10 desde el cuarto. El sistema conserva automáticamente el mejor resultado.</p>
+            <div class="activity-settings">
+              <div class="deadline-config">
+                <label class="activity-field-label" for="plazo-nueva-actividad">PLAZO PARA COMPLETAR</label>
+                <select id="plazo-nueva-actividad" class="cyber-input activity-select"
+                        [ngModel]="plazoSeleccionado"
+                        (ngModelChange)="seleccionarPlazo($event)">
+                  <option value="sin_limite">Sin fecha límite</option>
+                  <option value="30_minutos">30 minutos</option>
+                  <option value="1_hora">1 hora</option>
+                  <option value="24_horas">24 horas</option>
+                  <option value="7_dias">7 días</option>
+                  <option value="personalizado">Elegir fecha y hora</option>
+                </select>
+                @if (plazoSeleccionado === 'personalizado') {
+                  <input type="datetime-local" class="cyber-input activity-datetime"
+                         [min]="fechaMinimaActividad"
+                         [ngModel]="fechaLimiteActividad"
+                         (ngModelChange)="establecerFechaPersonalizada($event)"
+                         aria-label="Fecha y hora límite personalizada">
                 }
+                <div class="deadline-preview">
+                  <span>HORA LOCAL · {{ zonaHorariaUsuario }}</span>
+                  <strong>{{ resumenFechaLimite }}</strong>
+                </div>
               </div>
-              <span style="color:#82F4E0; text-shadow: 1px 1px 0 #000;">🛡️ Bloquear Copiar/Pegar en Consola</span>
+
+              <div class="activity-toggle-grid">
+                <button type="button" class="activity-toggle"
+                        [class.activity-toggle--active]="parametrosReto.anti_copia"
+                        [attr.aria-pressed]="parametrosReto.anti_copia"
+                        (click)="parametrosReto.anti_copia = !parametrosReto.anti_copia">
+                  <span class="activity-toggle__mark">{{ parametrosReto.anti_copia ? '✓' : '×' }}</span>
+                  <span><strong>Bloquear copiar/pegar</strong><small>{{ parametrosReto.anti_copia ? 'Activado' : 'Desactivado' }}</small></span>
+                </button>
+              </div>
+
+              <div class="activity-summary" aria-label="Resumen antes de crear el aula">
+                <span>NIVEL</span><strong>{{ nombreNivelSeleccionado }}</strong>
+                <span>FASES</span><strong>{{ resumenFasesSeleccionadas }}</strong>
+                <span>CIERRE</span><strong>{{ resumenFechaLimite }}</strong>
+              </div>
             </div>
           </div>
           <div class="logout-actions">
@@ -534,8 +634,8 @@
                     (click)="pasoCrearAula = 2">← ATRÁS</button>
             <button type="button" class="cyber-glow-btn glow-green"
                     style="padding:10px 0; flex:1;"
-                    [disabled]="cargandoCrearAula" (click)="confirmarCrearAula()">
-              {{ cargandoCrearAula ? 'CREANDO...' : '¡CREAR AULA!' }}
+                    [disabled]="cargandoCrearAula" (click)="confirmarConfiguracionActividad()">
+              {{ cargandoCrearAula ? 'GUARDANDO...' : (mostrarAgregarActividad ? 'AÑADIR ACTIVIDAD' : '¡CREAR AULA!') }}
             </button>
           </div>
         }

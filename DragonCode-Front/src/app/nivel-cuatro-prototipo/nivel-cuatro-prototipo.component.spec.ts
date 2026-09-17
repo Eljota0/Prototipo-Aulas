@@ -1,4 +1,4 @@
-import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AulasService } from '../services/aulas.service';
@@ -33,9 +33,11 @@ describe('NivelCuatroPrototipoComponent', () => {
     }).compileComponents();
   });
 
-  it('mantiene el evento como plantilla fija fuera del texto del usuario', () => {
+  it('mantiene el evento como plantilla fija fuera del texto del usuario', async () => {
     const fixture = TestBed.createComponent(NivelCuatroPrototipoComponent);
     const componente = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(componente.codigoUsuario).toBe('');
@@ -75,7 +77,7 @@ describe('NivelCuatroPrototipoComponent', () => {
     fixture.detectChanges();
 
     const textoVisible = fixture.nativeElement.textContent as string;
-    const tarjetas = fixture.nativeElement.querySelectorAll('.tarjeta-codigo');
+    const tarjetas = fixture.nativeElement.querySelectorAll('.action-card');
 
     expect(textoVisible).not.toContain('DISTRACTOR');
     expect(fixture.nativeElement.querySelector('.tipo-control')).toBeNull();
@@ -95,6 +97,39 @@ describe('NivelCuatroPrototipoComponent', () => {
     expect(textoVisible).not.toContain('MOSTRAR PISTA');
     fixture.componentInstance.ngOnDestroy();
   });
+
+  it('reutiliza el layout, el pergamino y el inventario de los niveles anteriores', () => {
+    const fixture = TestBed.createComponent(NivelCuatroPrototipoComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-layout-juego')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-consola-codigo')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-baraja-tarjetas')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.panel-derecho')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.objetos-fabrica')).toBeNull();
+    fixture.componentInstance.ngOnDestroy();
+  });
+
+  it('muestra una sola vez el diagnóstico principal en el modal', fakeAsync(() => {
+    routerDoble.url = '/prototipo/nivel-5';
+    const fixture = TestBed.createComponent(NivelCuatroPrototipoComponent);
+    const componente = fixture.componentInstance;
+    fixture.detectChanges();
+
+    componente.codigoUsuario = 'si (fabrica.materialActual == "Diamante") { fabrica.guardar(); }';
+    componente.ejecutarCodigo();
+    tick(700);
+    fixture.detectChanges();
+
+    const mensaje = componente.errores[0];
+    const repeticiones = (fixture.nativeElement.textContent.match(
+      new RegExp(mensaje.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+    ) ?? []).length;
+    expect(repeticiones).toBe(1);
+    componente.ngOnDestroy();
+    flush();
+    discardPeriodicTasks();
+  }));
 
   it('usa el grimorio y la clarividencia como ayudas del inventario', () => {
     const fixture = TestBed.createComponent(NivelCuatroPrototipoComponent);
@@ -132,18 +167,19 @@ describe('NivelCuatroPrototipoComponent', () => {
     componente.ngOnDestroy();
   });
 
-  it('bloquea pegar en modo anti-copia sin impedir que el estudiante escriba', () => {
+  it('usa el pergamino guiado del layout compartido en modo anti-copia', () => {
     const fixture = TestBed.createComponent(NivelCuatroPrototipoComponent);
     const componente = fixture.componentInstance;
     fixture.detectChanges();
     componente.antiCopiaActivo = true;
     fixture.detectChanges();
 
-    const textarea = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
     const evento = { preventDefault: jasmine.createSpy('preventDefault') } as unknown as ClipboardEvent;
     componente.bloquearTransferencia(evento);
 
-    expect(textarea.readOnly).toBeFalse();
+    expect(fixture.nativeElement.querySelector('app-layout-juego')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.plantilla-display')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
     expect(evento.preventDefault).toHaveBeenCalled();
     expect(componente.errores[0]).toContain('escribe el código');
     componente.ngOnDestroy();
@@ -171,6 +207,7 @@ describe('NivelCuatroPrototipoComponent', () => {
     expect(componente.carbonQuemado).toBe(2);
     expect(fixture.nativeElement.textContent).toContain('¡MISIÓN COMPLETADA!');
     componente.ngOnDestroy();
+    flush();
   }));
 
   it('activa la emergencia si el explosivo se envía al horno', fakeAsync(() => {
@@ -192,6 +229,7 @@ describe('NivelCuatroPrototipoComponent', () => {
     expect(componente.estadoEscena).toBe('explosion');
     expect(componente.vidas).toBe(2);
     componente.ngOnDestroy();
+    flush();
     discardPeriodicTasks();
   }));
 
@@ -214,6 +252,8 @@ describe('NivelCuatroPrototipoComponent', () => {
     expect(progresoDoble.guardarProgreso).toHaveBeenCalledTimes(1);
     const solicitud = progresoDoble.guardarProgreso.calls.mostRecent().args[0];
     expect(solicitud.reto_nivel_id).toBe(4);
+    expect(solicitud.vidas_restantes).toBe(3);
+    expect(solicitud.ayudas_usadas).toBeFalse();
     expect(solicitud.codigo_solucion).toContain('// Fase 4');
     expect(componente.progresoGuardado).toBeTrue();
     componente.ngOnDestroy();
@@ -244,6 +284,8 @@ describe('NivelCuatroPrototipoComponent', () => {
     expect(componente.carbonQuemado).toBe(4);
     const solicitud = progresoDoble.guardarProgreso.calls.mostRecent().args[0];
     expect(solicitud.reto_nivel_id).toBe(5);
+    expect(solicitud.vidas_restantes).toBe(3);
+    expect(solicitud.ayudas_usadas).toBeFalse();
     componente.ngOnDestroy();
   }));
 
@@ -283,5 +325,81 @@ describe('NivelCuatroPrototipoComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('1 — 2');
     expect(fixture.nativeElement.textContent).toContain('FASE 1/2');
     componente.ngOnDestroy();
+  });
+
+  it('usa en la simulación la secuencia de materiales publicada por el profesor', () => {
+    routerDoble.url = '/aventura/nivel/4';
+    const componente = TestBed.createComponent(NivelCuatroPrototipoComponent).componentInstance;
+
+    (componente as any).aplicarConfiguracionAula({
+      parametros_evaluacion: {
+        fases_seleccionadas: [1],
+        configuracion_nivel: {
+          version: 1,
+          nivel_id: 4,
+          tipo: 'materiales_fabrica',
+          materiales_por_fase: {
+            '1': ['Diamante', 'Carbon', 'Explosivo'],
+            '2': ['Carbon'], '3': ['Diamante'], '4': ['Explosivo']
+          }
+        }
+      }
+    });
+
+    expect(componente.fases.length).toBe(1);
+    expect(componente.fases[0].materiales).toEqual(['Diamante', 'Carbon', 'Explosivo']);
+    componente.ngOnDestroy();
+  });
+  for (const nivel of [4, 5]) {
+    it(`nivel ${nivel}: puntúa ayudas consumidas y conserva su uso entre fases`, () => {
+      routerDoble.url = `/prototipo/nivel-${nivel}`;
+      const componente = TestBed.createComponent(NivelCuatroPrototipoComponent).componentInstance;
+      componente.ngOnInit();
+      componente.usarObjeto('libro');
+      componente.insertarTarjeta(componente.fases[0].tarjetas[0]);
+      componente.usarObjeto('vida');
+      componente.usarObjeto('tiempo');
+      expect(componente.ayudasUsadas).toBeFalse();
+      componente.usarObjeto('clarividencia');
+      (componente as any).prepararFaseActual();
+      expect(componente.ayudasUsadas).toBeTrue();
+      componente.tiempoSegundos = 900;
+      (componente as any).finalizarNivel();
+      expect(componente.estrellas).toBe(2);
+      expect(componente.calificacion).toBe(10);
+      componente.reiniciarNivel();
+      expect(componente.ayudasUsadas).toBeFalse();
+      componente.ngOnDestroy();
+    });
+  }
+
+  it('desactiva todos los objetos de ayuda en cualquier actividad de aula', () => {
+    const componente = TestBed.createComponent(NivelCuatroPrototipoComponent).componentInstance;
+
+    (componente as any).aplicarConfiguracionAula({
+      parametros_evaluacion: { ayudas_habilitadas: true }
+    });
+
+    expect(Object.values(componente.inventarioNivel).every(objeto => !objeto.activo)).toBeTrue();
+    componente.ngOnDestroy();
+  });
+
+  it('adapta la salida y la pantalla final al contexto del aula en los niveles 4 y 5', () => {
+    for (const nivel of [4, 5]) {
+      routerDoble.url = `/aventura/nivel/${nivel}`;
+      const fixture = TestBed.createComponent(NivelCuatroPrototipoComponent);
+      const componente = fixture.componentInstance;
+      (componente as any).esActividadAula = true;
+      componente.nivelCompletado = true;
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('¡ACTIVIDAD COMPLETADA!');
+      expect(fixture.nativeElement.textContent).toContain('VOLVER AL AULA');
+
+      componente.salir();
+      expect(routerDoble.navigate).toHaveBeenCalledWith(['/pantalla-principal']);
+      componente.ngOnDestroy();
+      routerDoble.navigate.calls.reset();
+    }
   });
 });

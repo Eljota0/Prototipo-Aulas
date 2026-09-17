@@ -499,3 +499,54 @@
   .drako-hechicero { left: 0; width: min(38%, 195px); }
   .murcielagos { left: 32%; }
 }
+
+/* El escenario conserva su arte, pero la consola y el inventario pertenecen al layout común. */
+.nivel-tres-shell .juego-area {
+  display: block;
+}
+
+.nivel-tres-shell .tablero-juego {
+  width: 100%;
+  height: 100%;
+}
+
+.nivel-tres-shell .mision-flotante p {
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.mensaje-objeto {
+  overflow-wrap: anywhere;
+}
+
+:host ::ng-deep app-baraja-tarjetas .action-card {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 calc(50% - .5rem);
+}
+
+:host ::ng-deep app-baraja-tarjetas .card-codigo,
+:host ::ng-deep app-consola-codigo .plantilla-display {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+  .nivel-tres-shell .tablero-juego {
+    height: clamp(420px, 64svh, 520px);
+    min-height: 420px;
+  }
+
+  :host ::ng-deep app-layout-juego .cards-section {
+    flex: 0 0 330px;
+    height: 330px;
+    min-height: 330px;
+  }
+}
+
+@media (max-width: 480px) {
+  :host ::ng-deep app-baraja-tarjetas .action-card {
+    flex-basis: 100%;
+  }
+}

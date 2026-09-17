@@ -9,6 +9,8 @@ export interface GuardarProgresoRequest {
   tiempo_segundos: number;   // Segundos totales del intento
   intentos: number;          // Número de intentos que tomó completarlo
   codigo_solucion: string;   // El código que escribió el jugador
+  vidas_restantes: number;
+  ayudas_usadas: boolean;
   aula_id?: string;          // Opcional: si el jugador está en un aula
   reto_personalizado_id?: string; // UUID del reto específico completado en el aula
 }

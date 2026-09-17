@@ -50,6 +50,7 @@ describe('NivelTresPrototipoComponent', () => {
     expect(componente.memoria['luz']).toBe('true');
     expect(componente.errores[0]).toContain('booleano');
     componente.ngOnDestroy();
+    tick(1000);
     discardPeriodicTasks();
   }));
 
@@ -111,6 +112,7 @@ describe('NivelTresPrototipoComponent', () => {
     expect(componente.calificacion).toBe(10);
     expect(fixture.nativeElement.textContent).toContain('¡MISIÓN COMPLETADA!');
     componente.ngOnDestroy();
+    tick(1000);
   }));
 
   it('reemplaza la horda por el murciélago alfa en la fase final', () => {
@@ -149,9 +151,100 @@ describe('NivelTresPrototipoComponent', () => {
     const solicitud = progresoDoble.guardarProgreso.calls.mostRecent().args[0];
     expect(solicitud.reto_nivel_id).toBe(3);
     expect(solicitud.intentos).toBe(1);
+    expect(solicitud.vidas_restantes).toBe(3);
+    expect(solicitud.ayudas_usadas).toBeFalse();
     expect(solicitud.codigo_solucion).toContain('// Fase 1');
     expect(solicitud.codigo_solucion).toContain('// Fase 4');
     expect(componente.progresoGuardado).toBeTrue();
     componente.ngOnDestroy();
   }));
+  it('conserva la pista usada entre fases y la limpia solo al reiniciar el nivel', () => {
+    const componente = TestBed.createComponent(NivelTresPrototipoComponent).componentInstance;
+    componente.insertarTarjeta(componente.fases[0].tarjetas[0]);
+    expect(componente.ayudasUsadas).toBeFalse();
+    componente.alternarPista();
+    componente.alternarPista();
+    expect(componente.ayudasUsadas).toBeTrue();
+    (componente as any).prepararFaseActual();
+    expect(componente.ayudasUsadas).toBeTrue();
+    componente.reiniciarNivel();
+    expect(componente.ayudasUsadas).toBeFalse();
+    componente.ngOnDestroy();
+  });
+
+  it('puntúa con vidas/ayudas sin penalizar duración ni alterar nota por intentos', () => {
+    const componente = TestBed.createComponent(NivelTresPrototipoComponent).componentInstance;
+    componente.vidas = 3;
+    componente.ayudasUsadas = true;
+    componente.tiempoSegundos = 900;
+    componente.erroresAcumulados = 3;
+    (componente as any).finalizarNivel();
+    expect(componente.estrellas).toBe(2);
+    expect(componente.calificacion).toBe(6);
+    expect(progresoDoble.guardarProgreso).not.toHaveBeenCalled();
+    componente.ngOnDestroy();
+  });
+
+  it('oculta los objetos de ayuda en cualquier actividad de aula', () => {
+    const componente = TestBed.createComponent(NivelTresPrototipoComponent).componentInstance;
+    componente.ayudaVisible = true;
+
+    (componente as any).aplicarConfiguracionAula({
+      parametros_evaluacion: { ayudas_habilitadas: true }
+    });
+
+    expect(componente.ayudasHabilitadas).toBeFalse();
+    expect(componente.ayudaVisible).toBeFalse();
+    expect(componente.inventarioNivel.libro.activo).toBeFalse();
+    expect(componente.inventarioNivel.clarividencia.activo).toBeFalse();
+    componente.ngOnDestroy();
+  });
+
+  it('conserva las respuestas correctas al reducir los distractores del aula', () => {
+    const componente = TestBed.createComponent(NivelTresPrototipoComponent).componentInstance;
+
+    (componente as any).aplicarConfiguracionAula({
+      parametros_evaluacion: {
+        fases_seleccionadas: [1, 4],
+        configuracion_nivel: {
+          version: 1,
+          nivel_id: 3,
+          tipo: 'variables_cueva',
+          distractores_por_fase: 0
+        }
+      }
+    });
+
+    expect(componente.fases[0].tarjetas.map(tarjeta => tarjeta.codigo)).toEqual(['luz = true']);
+    expect(componente.fases[1].tarjetas.map(tarjeta => tarjeta.codigo)).toEqual([
+      'cantidad = 3', 'elemento = "Fuego"', 'luz = true'
+    ]);
+    componente.ngOnDestroy();
+  });
+
+  it('reutiliza el layout compartido y no duplica consola ni inventario', () => {
+    const fixture = TestBed.createComponent(NivelTresPrototipoComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-layout-juego')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-consola-codigo')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-baraja-tarjetas')).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.panel-derecho').length).toBe(0);
+    fixture.componentInstance.ngOnDestroy();
+  });
+
+  it('adapta la salida y la pantalla final al contexto del aula', () => {
+    const fixture = TestBed.createComponent(NivelTresPrototipoComponent);
+    const componente = fixture.componentInstance;
+    (componente as any).esActividadAula = true;
+    componente.nivelCompletado = true;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('¡ACTIVIDAD COMPLETADA!');
+    expect(fixture.nativeElement.textContent).toContain('VOLVER AL AULA');
+
+    componente.salir();
+    expect(routerDoble.navigate).toHaveBeenCalledWith(['/pantalla-principal']);
+    componente.ngOnDestroy();
+  });
 });

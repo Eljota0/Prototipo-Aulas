@@ -1,10 +1,13 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpContextToken } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../services/notification.service';
 import { AuthService } from '../../services/auth.service';
+
+// Los formularios con error propio pueden evitar un segundo aviso global.
+export const ERROR_GESTIONADO_EN_FORMULARIO = new HttpContextToken<boolean>(() => false);
 
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   const notificationService = inject(NotificationService);
@@ -30,13 +33,18 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(apiReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      let errorMsg = 'Ocurrió un error inesperado de red';
+      if (req.context.get(ERROR_GESTIONADO_EN_FORMULARIO)) {
+        return throwError(() => error);
+      }
+      let errorMsg = 'No se pudo completar la solicitud. Inténtalo nuevamente.';
       
       if (error.error && typeof error.error === 'object' && error.error.detail) {
         // En FastAPI el formato por defecto de error es { "detail": "Mensaje" }
         errorMsg = error.error.detail;
-      } else if (error.message) {
-        errorMsg = error.message;
+      } else if (error.status === 0) {
+        errorMsg = 'No se pudo conectar con el servidor. Verifica tu conexión e inténtalo nuevamente.';
+      } else if (error.status >= 500) {
+        errorMsg = 'El servidor no pudo completar la solicitud. Inténtalo nuevamente en unos momentos.';
       }
 
       notificationService.show(errorMsg, 'error');

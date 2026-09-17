@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { GameHeaderComponent } from '../game-header/game-header.component';
+import { TarjetaConfig } from '../baraja-tarjetas/baraja-tarjetas.component';
+import { Instruccion, LayoutJuegoComponent } from '../layout-juego/layout-juego.component';
 import {
   ReglasFaseVariables,
   ResultadoEvaluacion,
@@ -16,6 +16,9 @@ import {
 } from '../services/aulas.service';
 import { LoaderService } from '../services/loader.service';
 import { ProgresoService } from '../services/progreso.service';
+import { calcularEstrellas } from '../core/estrellas';
+import nivel3Data from '../../assets/data/aventuraniveles/nivel-3.json';
+import { ConfiguracionNivelTres as ConfiguracionAulaNivelTres } from '../core/configuracion-niveles-aula';
 
 type FaseVariables = 1 | 2 | 3 | 4;
 type TonoTarjeta = 'azul' | 'verde' | 'dorado' | 'violeta';
@@ -47,92 +50,40 @@ interface FaseNivelTres {
   tarjetas: TarjetaVariable[];
 }
 
+interface ConfiguracionNivelTres {
+  plantilla: { placeholder: string };
+  fases: FaseNivelTres[];
+}
+
 @Component({
   selector: 'app-nivel-tres-prototipo',
   standalone: true,
-  imports: [CommonModule, FormsModule, GameHeaderComponent],
+  imports: [CommonModule, LayoutJuegoComponent],
   templateUrl: './nivel-tres-prototipo.component.html',
   styleUrls: [
     '../nivel-dos-prototipo/nivel-dos-prototipo.component.scss',
     './nivel-tres-prototipo.component.scss'
   ]
 })
-export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
-  readonly fasesBase: FaseNivelTres[] = [
-    {
-      numero: 1,
-      titulo: 'Revelar la cueva',
-      concepto: 'Booleano · verdadero o falso',
-      objetivo: 'Guarda el estado verdadero en luz para que Drako pueda descubrir a sus enemigos.',
-      pista: 'true es un booleano. No lleva comillas y representa un estado activado.',
-      instruccionFija: 'drako.revelarCueva(luz);',
-      reglas: { variablesEsperadas: { luz: true }, asignacionesMinimas: 1 },
-      tarjetas: [
-        { codigo: 'luz = "true"', etiqueta: 'Texto "true"', tipo: 'TEXTO', tono: 'dorado' },
-        { codigo: 'luz = false', etiqueta: 'Estado apagado', tipo: 'BOOLEANO', tono: 'violeta' },
-        { codigo: 'luz = true', etiqueta: 'Estado encendido', tipo: 'BOOLEANO', tono: 'verde' },
-        { codigo: 'luz = 1', etiqueta: 'Número 1', tipo: 'ENTERO', tono: 'azul' }
-      ]
-    },
-    {
-      numero: 2,
-      titulo: 'Preparar el elemento',
-      concepto: 'String · información entre comillas',
-      objetivo: 'Guarda el texto "Fuego" en elemento para preparar el hechizo correcto.',
-      pista: 'Los textos necesitan comillas. Sin ellas, Fuego sería interpretado como una variable inexistente.',
-      instruccionFija: 'drako.prepararHechizo(elemento);',
-      reglas: { variablesEsperadas: { elemento: 'Fuego' }, asignacionesMinimas: 1 },
-      tarjetas: [
-        { codigo: 'elemento = 3', etiqueta: 'Número 3', tipo: 'ENTERO', tono: 'azul' },
-        { codigo: 'elemento = "Fuego"', etiqueta: 'Texto "Fuego"', tipo: 'TEXTO', tono: 'dorado' },
-        { codigo: 'elemento = true', etiqueta: 'Valor activado', tipo: 'BOOLEANO', tono: 'verde' },
-        { codigo: 'elemento = Fuego', etiqueta: 'Nombre sin comillas', tipo: 'SIN COMILLAS', tono: 'violeta' }
-      ]
-    },
-    {
-      numero: 3,
-      titulo: 'Calcular los ataques',
-      concepto: 'Entero · cantidad exacta',
-      objetivo: 'Guarda el número 3 en cantidad: debe existir un proyectil por cada murciélago.',
-      pista: '3 es un entero. Si escribes "3" con comillas, estarás almacenando texto.',
-      instruccionFija: 'drako.invocarAtaques(cantidad);',
-      reglas: { variablesEsperadas: { cantidad: 3 }, asignacionesMinimas: 1 },
-      tarjetas: [
-        { codigo: 'cantidad = 5', etiqueta: 'Cinco ataques', tipo: 'ENTERO', tono: 'violeta' },
-        { codigo: 'cantidad = "3"', etiqueta: 'Texto "3"', tipo: 'TEXTO', tono: 'dorado' },
-        { codigo: 'cantidad = true', etiqueta: 'Valor activado', tipo: 'BOOLEANO', tono: 'verde' },
-        { codigo: 'cantidad = 3', etiqueta: 'Tres ataques', tipo: 'ENTERO', tono: 'azul' }
-      ]
-    },
-    {
-      numero: 4,
-      titulo: 'El murciélago alfa',
-      concepto: 'Integración de tipos de datos',
-      objetivo: 'El jefe de la cueva apareció. Repite las tres variables correctas para que Drako ejecute el combate completo.',
-      pista: 'El jefe exige combinar todo: luz como booleano, elemento como texto y cantidad como entero.',
-      instruccionFija: 'drako.iniciarCombate(luz, elemento, cantidad);',
-      reglas: {
-        variablesEsperadas: { luz: true, elemento: 'Fuego', cantidad: 3 },
-        asignacionesMinimas: 3
-      },
-      tarjetas: [
-        { codigo: 'cantidad = 3', etiqueta: 'Tres ataques', tipo: 'ENTERO', tono: 'azul' },
-        { codigo: 'elemento = true', etiqueta: 'Valor activado', tipo: 'BOOLEANO', tono: 'verde' },
-        { codigo: 'luz = "true"', etiqueta: 'Texto "true"', tipo: 'TEXTO', tono: 'dorado' },
-        { codigo: 'elemento = "Fuego"', etiqueta: 'Texto "Fuego"', tipo: 'TEXTO', tono: 'violeta' },
-        { codigo: 'cantidad = "3"', etiqueta: 'Texto "3"', tipo: 'TEXTO', tono: 'dorado' },
-        { codigo: 'luz = true', etiqueta: 'Estado encendido', tipo: 'BOOLEANO', tono: 'verde' },
-        { codigo: 'cantidad = 5', etiqueta: 'Cinco ataques', tipo: 'ENTERO', tono: 'violeta' },
-        { codigo: 'elemento = 3', etiqueta: 'Número 3', tipo: 'ENTERO', tono: 'azul' }
-      ]
-    }
-  ];
+export class NivelTresPrototipoComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild(LayoutJuegoComponent) layoutJuego?: LayoutJuegoComponent;
+
+  private readonly tonoColores: Record<TonoTarjeta, { boton: string; consola: string }> = {
+    azul: { boton: '#174bd4', consola: '#82b1ff' },
+    verde: { boton: '#288650', consola: '#a5d6a7' },
+    dorado: { boton: '#df8b17', consola: '#ffd180' },
+    violeta: { boton: '#8e1ba4', consola: '#ce93d8' }
+  };
+  private readonly configuracionNivel = nivel3Data as unknown as ConfiguracionNivelTres;
+  readonly fasesBase = this.configuracionNivel.fases;
+
 
   fases: FaseNivelTres[] = [...this.fasesBase];
 
   faseActualIndice = 0;
   codigoUsuario = '';
   vidas = 3;
+  ayudasUsadas = false;
   intentos = 0;
   erroresAcumulados = 0;
   tiempoSegundos = 0;
@@ -144,7 +95,20 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
   calificacion = 0;
   pistaVisible = false;
   ayudaVisible = false;
-  pestanaInventario: 'acciones' | 'objetos' = 'acciones';
+  ayudasHabilitadas = true;
+  mensajeObjeto = '';
+  configuracionTarjetasActual: TarjetaConfig[] = [];
+  inventarioNivel = {
+    libro: { activo: true },
+    clarividencia: { activo: true, consumida: false },
+    vida: { activo: true, consumida: false },
+    tiempo: { activo: true, consumida: false }
+  };
+  estadoObjetos = {
+    clarividencia: false,
+    vida: false,
+    tiempo: false
+  };
   estadoEscena: EstadoEscena = 'espera';
   bitacora = 'Las runas de memoria están vacías. Prepara la primera variable.';
   errores: string[] = [];
@@ -166,9 +130,10 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
   private retoActualId?: string;
   private esActividadAula = false;
   private solucionesPorFase = new Map<number, string>();
-  private tiempoTresEstrellas = 60;
-  private tiempoDosEstrellas = 120;
-  private maxIntentosSinPenalidad = 3;
+
+  get modoJuegoActual(): 'aventura' | 'aula' {
+    return this.esActividadAula || !!localStorage.getItem('aulaActiva') ? 'aula' : 'aventura';
+  }
 
   constructor(
     private motor: MotorEjecucionService,
@@ -181,6 +146,10 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.prepararFaseActual();
     this.cargarContextoInicial();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.renderizarPergamino(), 0);
   }
 
   get faseActual(): FaseNivelTres {
@@ -242,12 +211,25 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
     return 'PREPARACIÓN INCORRECTA';
   }
 
+  manejarUsoTarjeta(tarjeta: TarjetaConfig): void {
+    const tarjetaOriginal = this.faseActual.tarjetas.find(item => item.codigo === tarjeta.accion);
+    if (tarjetaOriginal) this.insertarTarjeta(tarjetaOriginal);
+  }
+
   insertarTarjeta(tarjeta: TarjetaVariable): void {
     if (this.ejecutando || this.falloFase || this.gameOver || this.nivelCompletado) return;
+    this.layoutJuego?.consola?.guardarEstadoPlantilla(this.codigoUsuario);
     this.codigoUsuario = this.codigoUsuario.trim()
       ? `${this.codigoUsuario.trimEnd()}\n${tarjeta.codigo}`
       : tarjeta.codigo;
     this.errores = [];
+    this.renderizarPergamino();
+  }
+
+  alternarPista(): void {
+    if (this.ejecutando || this.falloFase || this.gameOver || this.nivelCompletado) return;
+    if (!this.pistaVisible) this.usarObjeto('clarividencia');
+    else this.pistaVisible = false;
   }
 
   borrarLinea(): void {
@@ -256,16 +238,91 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
     lineas.pop();
     this.codigoUsuario = lineas.join('\n');
     this.errores = [];
+    this.renderizarPergamino();
   }
 
   limpiarPergamino(): void {
     if (this.ejecutando || this.falloFase) return;
     this.codigoUsuario = '';
     this.errores = [];
+    if (this.layoutJuego?.consola) this.layoutJuego.consola.historialPlantilla = [];
+    this.renderizarPergamino();
   }
 
-  ejecutarCodigo(): void {
+  retrocederPaso(codigoAnterior: string): void {
     if (this.ejecutando || this.falloFase || this.gameOver || this.nivelCompletado) return;
+    this.codigoUsuario = codigoAnterior;
+    this.errores = [];
+    this.renderizarPergamino();
+  }
+
+  usarObjeto(objeto: 'libro' | 'clarividencia' | 'vida' | 'tiempo'): void {
+    if (this.ejecutando || this.falloFase || this.gameOver || this.nivelCompletado) return;
+    if (objeto === 'libro') {
+      this.ayudaVisible = true;
+      this.mensajeObjeto = '';
+      return;
+    }
+
+    if (objeto === 'clarividencia') {
+      if (this.estadoObjetos.clarividencia) return;
+      this.estadoObjetos.clarividencia = true;
+      this.inventarioNivel.clarividencia.consumida = true;
+      this.pistaVisible = true;
+      this.ayudasUsadas = true;
+      this.mensajeObjeto = `CLARIVIDENCIA: ${this.faseActual.pista}`;
+      if (this.layoutJuego?.consola) {
+        this.layoutJuego.consola.solucionesMagicas[3] = this.solucionVisibleActual();
+        this.layoutJuego.activarClarividencia();
+      }
+      return;
+    }
+
+    if (objeto === 'vida') {
+      if (this.estadoObjetos.vida) return;
+      if (this.vidas >= 3) {
+        this.layoutJuego?.baraja?.agitarPocion('roja');
+        this.mensajeObjeto = 'Tus tres corazones están completos. Guarda la poción para cuando la necesites.';
+        return;
+      }
+      this.vidas++;
+      this.estadoObjetos.vida = true;
+      this.inventarioNivel.vida.consumida = true;
+      this.ayudasUsadas = true;
+      this.mensajeObjeto = 'Poción de vida usada: recuperaste un corazón.';
+      return;
+    }
+
+    if (this.estadoObjetos.tiempo) return;
+    if (this.tiempoSegundos === 0) {
+      this.layoutJuego?.baraja?.agitarPocion('verde');
+      this.mensajeObjeto = 'El reloj todavía está en cero. Guarda la poción para más adelante.';
+      return;
+    }
+    this.tiempoSegundos = Math.max(0, this.tiempoSegundos - 30);
+    if (this.temporizador) this.tiempoInicioMs = Date.now() - this.tiempoSegundos * 1000;
+    this.estadoObjetos.tiempo = true;
+    this.inventarioNivel.tiempo.consumida = true;
+    this.ayudasUsadas = true;
+    this.mensajeObjeto = 'Poción de tiempo usada: recuperaste treinta segundos.';
+  }
+
+  manejarUsoPocion(tipo: 'roja' | 'verde' | 'amarilla' | 'libro'): void {
+    const objeto: Record<typeof tipo, 'libro' | 'clarividencia' | 'vida' | 'tiempo'> = {
+      roja: 'vida',
+      verde: 'tiempo',
+      amarilla: 'clarividencia',
+      libro: 'libro'
+    };
+    this.usarObjeto(objeto[tipo]);
+  }
+
+  ejecutarCodigo(codigoDesdePergamino?: string): void {
+    if (this.ejecutando || this.falloFase || this.gameOver || this.nivelCompletado) return;
+
+    if (codigoDesdePergamino !== undefined) {
+      this.codigoUsuario = this.extraerCodigoUsuario(codigoDesdePergamino);
+    }
 
     this.iniciarTemporizador();
     this.limpiarTareasPendientes();
@@ -298,6 +355,7 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
     this.limpiarTareasPendientes();
     this.faseActualIndice = 0;
     this.vidas = 3;
+    this.ayudasUsadas = false;
     this.intentos = 0;
     this.erroresAcumulados = 0;
     this.tiempoSegundos = 0;
@@ -310,11 +368,15 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
     this.progresoGuardado = false;
     this.mensajeSincronizacion = '';
     this.solucionesPorFase.clear();
+    this.estadoObjetos = { clarividencia: false, vida: false, tiempo: false };
+    this.inventarioNivel.clarividencia.consumida = false;
+    this.inventarioNivel.vida.consumida = false;
+    this.inventarioNivel.tiempo.consumida = false;
     this.prepararFaseActual();
   }
 
   salir(): void {
-    this.router.navigate(['/aventura']);
+    this.router.navigate([this.modoJuegoActual === 'aula' ? '/pantalla-principal' : '/aventura']);
   }
 
   valorMemoria(nombre: string): string {
@@ -413,15 +475,9 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
     this.detenerTemporizador();
     const intentos = this.intentosCalificables;
 
-    // Misma recompensa que el Nivel 2: tiempo para las estrellas e intentos
-    // reales para la calificación.
+    // RF-07: vidas/ayudas para estrellas; RF-16: intentos para la nota académica.
     this.calificacion = intentos <= 1 ? 10 : intentos <= 3 ? 8 : 6;
-    this.estrellas = this.tiempoSegundos <= this.tiempoTresEstrellas
-      ? 3
-      : this.tiempoSegundos <= this.tiempoDosEstrellas ? 2 : 1;
-    if (intentos > this.maxIntentosSinPenalidad) {
-      this.estrellas = Math.max(1, this.estrellas - 1);
-    }
+    this.estrellas = calcularEstrellas(this.vidas, this.ayudasUsadas);
     this.guardarProgreso();
   }
 
@@ -472,19 +528,56 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
     }
 
     this.antiCopiaActivo = parametros?.anti_copia ?? false;
-    this.tiempoTresEstrellas = parametros?.tiempo_3_estrellas ?? 60;
-    this.tiempoDosEstrellas = parametros?.tiempo_2_estrellas ?? 120;
-    this.maxIntentosSinPenalidad = parametros?.intentos_max_sin_penalidad ?? 3;
+    // Las ayudas y pociones permanecen disponibles solo en Aventura.
+    this.ayudasHabilitadas = false;
+    this.inventarioNivel.libro.activo = this.ayudasHabilitadas;
+    this.inventarioNivel.clarividencia.activo = this.ayudasHabilitadas;
+    this.inventarioNivel.vida.activo = this.ayudasHabilitadas;
+    this.inventarioNivel.tiempo.activo = this.ayudasHabilitadas;
+    if (!this.ayudasHabilitadas) this.ayudaVisible = false;
+    const configuracion = parametros?.configuracion_nivel;
+    const cantidadDistractores = configuracion?.tipo === 'variables_cueva'
+      && configuracion.nivel_id === 3
+      ? (configuracion as ConfiguracionAulaNivelTres).distractores_por_fase
+      : 3;
+    const fasesConfiguradas = this.fasesBase.map(fase => ({
+      ...fase,
+      reglas: {
+        ...fase.reglas,
+        variablesEsperadas: { ...fase.reglas.variablesEsperadas }
+      },
+      tarjetas: this.limitarDistractores(fase, cantidadDistractores)
+    }));
+
     const fasesSeleccionadas = parametros?.fases_seleccionadas
       ?.map(Number)
       .filter(numero => Number.isInteger(numero) && numero >= 1 && numero <= 4);
 
     if (fasesSeleccionadas?.length) {
       const seleccion = new Set(fasesSeleccionadas);
-      this.fases = this.fasesBase.filter(fase => seleccion.has(fase.numero));
-      this.faseActualIndice = 0;
-      this.prepararFaseActual();
+      this.fases = fasesConfiguradas.filter(fase => seleccion.has(fase.numero));
+    } else {
+      this.fases = fasesConfiguradas;
     }
+    this.faseActualIndice = 0;
+    this.prepararFaseActual();
+  }
+
+  private limitarDistractores(fase: FaseNivelTres, cantidad: number): TarjetaVariable[] {
+    const soluciones = new Set(
+      Object.entries(fase.reglas.variablesEsperadas).map(([nombre, valor]) => {
+        const valorCodigo = typeof valor === 'string' ? `"${valor}"` : String(valor);
+        return `${nombre}=${valorCodigo}`.replace(/\s+/g, '');
+      })
+    );
+    let distractoresIncluidos = 0;
+    return fase.tarjetas.filter(tarjeta => {
+      const esSolucion = soluciones.has(tarjeta.codigo.replace(/\s+/g, ''));
+      if (esSolucion) return true;
+      if (distractoresIncluidos >= cantidad) return false;
+      distractoresIncluidos++;
+      return true;
+    });
   }
 
   private guardarProgreso(): void {
@@ -506,6 +599,8 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
       reto_nivel_id: 3,
       tiempo_segundos: this.tiempoSegundos,
       intentos: this.intentosCalificables,
+      vidas_restantes: this.vidas,
+      ayudas_usadas: this.esActividadAula ? false : this.ayudasUsadas,
       codigo_solucion: codigoSolucion,
       aula_id: this.aulaActualId,
       reto_personalizado_id: this.retoActualId
@@ -582,6 +677,65 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
     return mensajes;
   }
 
+  private actualizarConfiguracionTarjetas(): void {
+    this.configuracionTarjetasActual = this.faseActual.tarjetas.map(tarjeta => {
+      const colores = this.tonoColores[tarjeta.tono];
+      return {
+        nombre: tarjeta.etiqueta,
+        titulo: tarjeta.tipo,
+        accion: tarjeta.codigo,
+        colorBoton: colores.boton,
+        colorConsola: colores.consola
+      };
+    });
+  }
+
+  private renderizarPergamino(): void {
+    if (!this.layoutJuego) return;
+
+    const lineas: Instruccion[] = [];
+    if (this.codigoUsuario.trim()) {
+      this.codigoUsuario.split('\n').forEach(linea => {
+        lineas.push({ texto: linea, color: '#dcecff', tieneError: false });
+      });
+    } else {
+      lineas.push({
+        texto: this.configuracionNivel.plantilla.placeholder,
+        color: '#6b7280',
+        tieneError: false,
+        esPlaceholder: true
+      });
+    }
+    lineas.push({
+      texto: this.faseActual.instruccionFija,
+      color: '#c586c0',
+      tieneError: false,
+      fija: true
+    });
+
+    this.layoutJuego.lineasCodigo = lineas;
+    if (this.layoutJuego.consola) this.layoutJuego.consola.lineas = lineas;
+  }
+
+  private extraerCodigoUsuario(codigoCompleto: string): string {
+    return codigoCompleto
+      .replace(/\r/g, '')
+      .split('\n')
+      .filter(linea => linea.trim() !== this.faseActual.instruccionFija.trim())
+      .filter(linea => linea.trim() !== this.configuracionNivel.plantilla.placeholder.trim())
+      .join('\n')
+      .trim();
+  }
+
+  private solucionVisibleActual(): string[] {
+    const esperadas = this.faseActual.reglas.variablesEsperadas;
+    const asignaciones = Object.entries(esperadas).map(([nombre, valor]) => {
+      const valorVisible = typeof valor === 'string' ? `"${valor}"` : String(valor);
+      return `${nombre} = ${valorVisible}`;
+    });
+    return [...asignaciones, this.faseActual.instruccionFija];
+  }
+
   private prepararFaseActual(): void {
     this.limpiarTareasPendientes();
     this.codigoUsuario = '';
@@ -590,13 +744,16 @@ export class NivelTresPrototipoComponent implements OnInit, OnDestroy {
     this.falloFase = false;
     this.pistaVisible = false;
     this.ayudaVisible = false;
+    this.mensajeObjeto = '';
     this.errores = [];
     this.estadoEscena = 'espera';
     this.luzActiva = this.faseActual.numero === 2 || this.faseActual.numero === 3;
     this.elementoActivo = this.faseActual.numero === 3 ? 'Fuego' : '';
     this.cantidadAtaques = 0;
     this.murcielagosDerrotados = 0;
-    this.pestanaInventario = 'acciones';
+    this.actualizarConfiguracionTarjetas();
+    if (this.layoutJuego?.consola) this.layoutJuego.consola.historialPlantilla = [];
+    this.renderizarPergamino();
     this.bitacora = this.faseActual.numero === 4
       ? 'El murciélago alfa bloquea la salida. Reconstruye las tres variables para vencerlo.'
       : `Fase ${this.faseActual.numero}: las variables de esta prueba están vacías.`;

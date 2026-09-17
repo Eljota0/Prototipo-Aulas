@@ -1,0 +1,71 @@
+{
+  "nivel": 4,
+  "titulo": "Control de Calidad",
+  "conceptoPedagogico": "Condicionales SI, SINO SI y SINO",
+  "bitacoraInicial": "La cinta espera una regla de control de calidad.",
+  "plantilla": {
+    "lineaInicio": "evento(fabrica.nuevoMaterial) {",
+    "lineaFin": "}",
+    "placeholder": "  // Elige una tarjeta de decisión"
+  },
+  "fases": [
+    {
+      "numero": 1,
+      "titulo": "Rescatar el diamante",
+      "concepto": "SI · preguntar antes de actuar",
+      "objetivo": "Llega un diamante. Elige la tarjeta que pregunta “¿es Diamante?” y, si la respuesta es sí, lo guarda.",
+      "pista": "Busca la tarjeta “SI es Diamante → guardar”. SI ejecuta su acción únicamente cuando la pregunta es verdadera.",
+      "materiales": ["Diamante"],
+      "tarjetas": [
+        { "codigo": "si (fabrica.materialActual == \"Carbon\") {\n  fabrica.guardar();\n}", "etiqueta": "SI es Carbón → guardar", "tipo": "DISTRACTOR", "tono": "dorado" },
+        { "codigo": "si (fabrica.materialActual == \"Explosivo\") {\n  fabrica.guardar();\n}", "etiqueta": "SI es Explosivo → guardar", "tipo": "DISTRACTOR", "tono": "violeta" },
+        { "codigo": "si (fabrica.materialActual == \"Diamante\") {\n  fabrica.guardar();\n}", "etiqueta": "SI es Diamante → guardar", "tipo": "CONDICIÓN SI", "tono": "azul" },
+        { "codigo": "fabrica.guardar();", "etiqueta": "Guardar sin preguntar", "tipo": "DISTRACTOR", "tono": "verde" }
+      ]
+    },
+    {
+      "numero": 2,
+      "titulo": "Proteger el horno",
+      "concepto": "SI / SINO · elegir entre dos caminos",
+      "objetivo": "Pueden llegar explosivo o carbón. Primero detecta y destruye el explosivo; SINO, envía el carbón al horno.",
+      "pista": "Inserta en este orden: “SI es Explosivo → destruir” y después “SINO → quemar lo restante”.",
+      "materiales": ["Carbon", "Explosivo"],
+      "tarjetas": [
+        { "codigo": "sino {\n  fabrica.guardar();\n}", "etiqueta": "SINO → guardar lo restante", "tipo": "DISTRACTOR", "tono": "azul" },
+        { "codigo": "si (fabrica.materialActual == \"Explosivo\") {\n  fabrica.destruir();\n}", "etiqueta": "SI es Explosivo → destruir", "tipo": "CONDICIÓN SI", "tono": "dorado" },
+        { "codigo": "si (fabrica.materialActual == \"Carbon\") {\n  fabrica.destruir();\n}", "etiqueta": "SI es Carbón → destruir", "tipo": "DISTRACTOR", "tono": "violeta" },
+        { "codigo": "sino {\n  fabrica.quemar();\n}", "etiqueta": "SINO → quemar lo restante", "tipo": "RAMA SINO", "tono": "verde" }
+      ]
+    },
+    {
+      "numero": 3,
+      "titulo": "Abrir una tercera ruta",
+      "concepto": "SINO SI · hacer una segunda pregunta",
+      "objetivo": "Primero pregunta si es diamante y guárdalo. Si no lo era, usa SINO SI para detectar y destruir el explosivo.",
+      "pista": "Inserta “SI es Diamante → guardar” y luego “SINO SI es Explosivo → destruir”.",
+      "materiales": ["Explosivo", "Diamante"],
+      "tarjetas": [
+        { "codigo": "sino si (fabrica.materialActual == \"Diamante\") {\n  fabrica.destruir();\n}", "etiqueta": "SINO SI es Diamante → destruir", "tipo": "DISTRACTOR", "tono": "dorado" },
+        { "codigo": "si (fabrica.materialActual == \"Diamante\") {\n  fabrica.guardar();\n}", "etiqueta": "SI es Diamante → guardar", "tipo": "CONDICIÓN SI", "tono": "azul" },
+        { "codigo": "si (fabrica.materialActual == \"Explosivo\") {\n  fabrica.destruir();\n}", "etiqueta": "Otro SI separado", "tipo": "DISTRACTOR", "tono": "verde" },
+        { "codigo": "sino si (fabrica.materialActual == \"Explosivo\") {\n  fabrica.destruir();\n}", "etiqueta": "SINO SI es Explosivo → destruir", "tipo": "RAMA SINO SI", "tono": "violeta" }
+      ]
+    },
+    {
+      "numero": 4,
+      "titulo": "Turno de control total",
+      "concepto": "SI / SINO SI / SINO · tres caminos",
+      "objetivo": "Clasifica todo el lote: guarda diamantes, destruye explosivos y manda al horno el carbón restante.",
+      "pista": "Orden: “SI es Diamante → guardar”, “SINO SI es Explosivo → destruir” y “SINO → quemar lo restante”.",
+      "materiales": ["Carbon", "Diamante", "Explosivo", "Diamante", "Carbon"],
+      "tarjetas": [
+        { "codigo": "si (fabrica.materialActual == \"Carbon\") {\n  fabrica.destruir();\n}", "etiqueta": "SI es Carbón → destruir", "tipo": "DISTRACTOR", "tono": "dorado" },
+        { "codigo": "sino si (fabrica.materialActual == \"Explosivo\") {\n  fabrica.destruir();\n}", "etiqueta": "SINO SI es Explosivo → destruir", "tipo": "RAMA SINO SI", "tono": "violeta" },
+        { "codigo": "si (fabrica.materialActual == \"Diamante\") {\n  fabrica.guardar();\n}", "etiqueta": "SI es Diamante → guardar", "tipo": "CONDICIÓN SI", "tono": "azul" },
+        { "codigo": "si (fabrica.materialActual == \"Explosivo\") {\n  fabrica.quemar();\n}", "etiqueta": "SI es Explosivo → quemar", "tipo": "DISTRACTOR", "tono": "dorado" },
+        { "codigo": "sino {\n  fabrica.quemar();\n}", "etiqueta": "SINO → quemar lo restante", "tipo": "RAMA SINO", "tono": "verde" },
+        { "codigo": "sino {\n  fabrica.guardar();\n}", "etiqueta": "SINO → guardar lo restante", "tipo": "DISTRACTOR", "tono": "violeta" }
+      ]
+    }
+  ]
+}

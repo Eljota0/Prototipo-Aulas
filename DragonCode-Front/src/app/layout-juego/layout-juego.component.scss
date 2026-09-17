@@ -25,7 +25,7 @@
 
 .game-layout-wrapper {
   height: calc(100dvh - 60px);
-  width: 100vw;
+  width: 100%;
   overflow: hidden;
   background-color: #0b0f19;
   padding: 1.5rem; /* Respiración global */
@@ -34,6 +34,26 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem; /* Separación con el header */
+}
+
+/* El constructor usa el mismo escenario, pero no necesita controles de código
+   hasta que el profesor pulse "Probar nivel". */
+.game-layout-wrapper.editor-activo {
+  width: 100%;
+
+  .game-content-wrapper {
+    width: 100%;
+  }
+
+  .game-board {
+    width: 100%;
+    height: 100%;
+  }
+
+  .game-controls,
+  .mobile-divider {
+    display: none;
+  }
 }
 
 /* Contenedor del Tablero y Controles */
@@ -124,14 +144,21 @@
     /* CRÍTICO: Cero padding general para que el scroll hijo toque los bordes del celular */
     padding: 0; 
     gap: 0;
-    overflow: hidden; /* Evita scroll de página completa */
+    overflow: hidden;
   }
 
   .game-content-wrapper {
     flex-direction: column;
     gap: 0;
     height: 100%;
-    overflow: hidden;
+    /* Un solo scroll contiene tablero, consola e inventario. Antes los controles
+       intentaban desplazarse dentro del espacio sobrante y podían quedar con
+       altura cero en teléfonos o en orientación horizontal. */
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
   }
 
   .game-board {
@@ -153,16 +180,13 @@
   }
 
   .game-controls {
-    flex-grow: 1; /* Ocupa todo el espacio restante abajo */
-    overflow-y: auto; /* Activa el scroll mágico */
-    -webkit-overflow-scrolling: touch; /* Scroll fluido en iOS */
+    flex: 0 0 auto;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     width: 100%;
-    min-height: 0;
-    /* El padding interno evita que los elementos toquen el borde, 
-       pero la barra de scroll sí se pegará al borde de la pantalla */
+    min-height: auto;
     padding: 1rem; 
   }
 
@@ -174,5 +198,24 @@
 
   .cards-section {
     width: 100%;
+    height: clamp(320px, 60dvh, 520px);
+    min-height: 320px;
+    flex: 0 0 auto;
+  }
+
+  .game-layout-wrapper.editor-activo {
+    height: min(68dvh, 680px);
+    min-height: 420px;
+    padding: .75rem;
+
+    .game-content-wrapper {
+      height: 100%;
+    }
+
+    .game-board {
+      width: 100%;
+      min-height: 0;
+      margin: 0;
+    }
   }
 }

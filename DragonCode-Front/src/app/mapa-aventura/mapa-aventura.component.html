@@ -1,54 +1,79 @@
 <div class="lobby-container">
   <header class="lobby-header">
-    <a routerLink="/pantalla-principal" class="btn-back">
-      <span class="back-icon">◄</span> VOLVER
+    <a routerLink="/pantalla-principal" class="btn-back" aria-label="Volver a la pantalla principal">
+      <span class="back-icon" aria-hidden="true">◄</span> VOLVER
     </a>
     <div class="title-group">
       <span class="title-eyebrow">RUTA DE APRENDIZAJE</span>
       <h1 class="lobby-title">MODO AVENTURA</h1>
-      <p class="lobby-subtitle">Selecciona tu próximo desafío, Maestro Dragón</p>
+      <p class="lobby-subtitle">Aprende programación misión por misión</p>
     </div>
   </header>
 
-  <section class="progress-panel" aria-label="Progreso del modo aventura">
-    <div class="progress-copy">
-      <span>PROGRESO DE LA AVENTURA</span>
-      <strong>{{ nivelesCompletados }} / {{ totalNiveles }} NIVELES</strong>
+  <section class="mentor-panel" aria-labelledby="mentor-title">
+    <div class="mentor-portrait" aria-hidden="true">
+      <img src="assets/images/draco/dracobase1.png" alt="">
     </div>
-    <div class="progress-track" aria-hidden="true">
-      <i [style.width.%]="porcentajeProgreso"></i>
+    <div class="mentor-copy">
+      <span class="mentor-label">GUÍA DE DRAKO</span>
+      <h2 id="mentor-title">Cada desafío desbloquea una nueva habilidad</h2>
+      <p>Empieza con instrucciones sencillas y avanza hasta automatizar una fábrica completa.</p>
     </div>
-    <p>Completa cada misión para desbloquear el siguiente desafío.</p>
+    <div class="progress-panel" aria-label="Progreso del modo aventura">
+      <div class="progress-copy">
+        <span>PROGRESO</span>
+        <strong>{{ nivelesCompletados }} / {{ totalNiveles }}</strong>
+      </div>
+      <div class="progress-track" aria-hidden="true">
+        <i [style.width.%]="porcentajeProgreso"></i>
+      </div>
+      <p>{{ nivelesCompletados === totalNiveles ? 'Ruta completada' : 'Completa una misión para abrir la siguiente' }}</p>
+    </div>
   </section>
 
-  <main class="levels-grid">
+  <main class="levels-grid" aria-label="Niveles del modo aventura">
     @for (level of niveles; track level.id) {
-      @if (level.bloqueado) {
-        <article class="level-card locked-level">
-          <span class="level-kicker">DESAFÍO 0{{ level.id }}</span>
-          <div class="level-icon-wrapper">
+      <a
+        class="level-card level-{{ level.id }}"
+        [class.locked-level]="level.bloqueado"
+        [class.unlocked-level]="!level.bloqueado"
+        [class.completed-level]="level.completado"
+        [routerLink]="level.bloqueado ? null : ['/aventura/nivel', level.id]"
+        [attr.aria-disabled]="level.bloqueado"
+        [attr.tabindex]="level.bloqueado ? -1 : 0"
+        [attr.aria-label]="'Nivel ' + level.id + ': ' + level.titulo + '. ' + level.tema + '. ' + (level.bloqueado ? 'Bloqueado' : level.completado ? 'Completado' : 'Disponible')">
+        <div class="card-topline">
+          <span class="level-kicker">NIVEL 0{{ level.id }}</span>
+          <span class="phase-count">{{ level.fases }} FASES</span>
+        </div>
+
+        <div class="level-icon-wrapper" aria-hidden="true">
+          @if (level.bloqueado) {
             <div class="padlock-icon"></div>
-          </div>
-          <h3 class="level-number">{{ level.id }}</h3>
-          <p class="level-title">POR DESCUBRIR</p>
-          <span class="level-status">BLOQUEADO</span>
-        </article>
-      } @else {
-        <a [routerLink]="['/aventura/nivel', level.id]" class="level-card unlocked-level"
-           [class.completed-level]="level.completado">
-          <span class="level-kicker">DESAFÍO 0{{ level.id }}</span>
-          <div class="level-icon-wrapper">
-            <div class="dragon-icon"></div>
-          </div>
-          <h3 class="level-number">{{ level.id }}</h3>
-          <p class="level-title">{{ level.titulo }}</p>
+          } @else {
+            <span class="skill-glyph">{{ level.id }}</span>
+          }
+        </div>
+
+        <div class="level-copy">
+          <p class="level-topic">{{ level.tema }}</p>
+          <h2 class="level-title">{{ level.titulo }}</h2>
+          <p class="level-description">{{ level.descripcion }}</p>
+        </div>
+
+        <div class="card-footer">
           @if (level.completado) {
             <span class="badge-completed">COMPLETADO</span>
+            <span class="level-action">REPETIR</span>
+          } @else if (level.bloqueado) {
+            <span class="level-status">BLOQUEADO</span>
+            <span class="level-action">SUPERA EL NIVEL {{ level.id - 1 }}</span>
           } @else {
             <span class="level-status available">DISPONIBLE</span>
+            <span class="level-action">JUGAR</span>
           }
-        </a>
-      }
+        </div>
+      </a>
     }
   </main>
 </div>

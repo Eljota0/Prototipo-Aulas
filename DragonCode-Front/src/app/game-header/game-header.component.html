@@ -11,12 +11,14 @@
     <img src="assets/images/login/titulo.png" alt="DragonCode Logo" class="header-logo">
   </div>
 
+  @if (mostrarAjustes) {
   <button type="button" class="header-btn btn-ajustes" aria-label="Abrir ajustes" (click)="toggleModalAjustes()">
     <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
   </button>
+  }
 </header>
 
 <!-- Modal: Abandonar Misión -->
@@ -35,7 +37,7 @@
 }
 
 <!-- Modal: Ajustes -->
-@if (mostrarModalAjustes) {
+@if (mostrarAjustes && mostrarModalAjustes) {
   <div class="modal-overlay">
     <div class="modal-box retro-modal">
       <button class="close-btn" (click)="toggleModalAjustes()">X</button>
@@ -49,12 +51,14 @@
           </div>
         </div>
 
-        <div class="setting-item" (click)="toggleAyudaDraco()">
-          <span class="setting-label">Ayuda de Draco</span>
-          <div class="retro-switch" [class.active]="ayudaDracoActiva">
-            <div class="switch-knob"></div>
+        @if (mostrarAyudaDraco) {
+          <div class="setting-item" (click)="toggleAyudaDraco()">
+            <span class="setting-label">Ayuda de Draco</span>
+            <div class="retro-switch" [class.active]="ayudaDracoActiva">
+              <div class="switch-knob"></div>
+            </div>
           </div>
-        </div>
+        }
       </div>
     </div>
   </div>

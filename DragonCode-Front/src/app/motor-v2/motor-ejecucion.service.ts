@@ -12,7 +12,7 @@ import {
 } from './evaluador-nivel';
 import { EvaluadorControlCalidadService } from './evaluador-control-calidad.service';
 import { EvaluadorProduccionMasivaService } from './evaluador-produccion-masiva.service';
-import { EvaluadorTaladroService } from './evaluador-taladro.service';
+import { EvaluadorTaladroService, ObjetivosTaladro } from './evaluador-taladro.service';
 
 export type TipoMotor = 'variables';
 
@@ -34,6 +34,10 @@ export class MotorEjecucionService {
 
   evaluarTaladro(codigo: string, fase: FaseTaladro = 1): ResultadoEvaluacionTaladro {
     return this.evaluadorTaladro.evaluar(codigo, fase);
+  }
+
+  configurarTaladro(objetivos?: Partial<ObjetivosTaladro>): void {
+    this.evaluadorTaladro.configurarObjetivos(objetivos);
   }
 
   evaluarAndamiajeFase1(codigo: string): { valido: boolean; tipoFallo: string; operador: string; valor: number; accion: string } {

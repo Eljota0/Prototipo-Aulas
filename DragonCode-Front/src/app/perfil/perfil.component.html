@@ -1,6 +1,6 @@
 <div class="profile-overlay" (click)="onClose()">
-  <div class="profile-modal" (click)="$event.stopPropagation()">
-    <button type="button" class="close-btn" (click)="onClose()">X</button>
+  <div class="profile-modal" [class.password-active]="currentView === 'password'" [class.profile-saving]="guardandoPerfil || guardandoPassword" (click)="$event.stopPropagation()">
+    <button type="button" class="close-btn" [disabled]="guardandoPerfil || guardandoPassword" (click)="onClose()">X</button>
 
     @if (currentView === 'perfil') {
       <div class="view-container">
@@ -17,17 +17,17 @@
           </div>
 
           <div class="profile-right">
-            <form class="profile-form">
+            <form class="profile-form" (ngSubmit)="editingField && saveField(editingField)" [attr.aria-busy]="guardandoPerfil">
               <div class="form-group inline-edit-group">
                 <label>Nombre</label>
                 <div class="input-row">
                   @if (editingField !== 'nombre') {
                     <p class="static-value">{{ (userProfile$ | async)?.nombre }}</p>
-                    <button type="button" class="edit-icon-btn" (click)="toggleEdit('nombre')" title="Editar Nombre">✎</button>
+                    <button type="button" class="edit-icon-btn" [disabled]="guardandoPerfil" (click)="toggleEdit('nombre')" title="Editar Nombre">✎</button>
                   } @else {
-                    <input type="text" name="nombre" [(ngModel)]="editingValue" class="retro-input" autofocus>
-                    <button type="button" class="save-icon-btn" (click)="saveField('nombre')" title="Guardar">✔</button>
-                    <button type="button" class="cancel-icon-btn" (click)="cancelEdit()" title="Cancelar">✖</button>
+                    <input type="text" name="nombre" [(ngModel)]="editingValue" class="retro-input" [disabled]="guardandoPerfil" [attr.aria-invalid]="!!errorPerfil" [attr.aria-describedby]="errorPerfil ? 'error-perfil' : null" aria-label="Nombre" autofocus>
+                    <button type="button" class="save-icon-btn" [disabled]="guardandoPerfil" (click)="saveField('nombre')" title="Guardar">✔</button>
+                    <button type="button" class="cancel-icon-btn" [disabled]="guardandoPerfil" (click)="cancelEdit()" title="Cancelar">✖</button>
                   }
                 </div>
               </div>
@@ -37,11 +37,11 @@
                 <div class="input-row">
                   @if (editingField !== 'apellido') {
                     <p class="static-value">{{ (userProfile$ | async)?.apellido }}</p>
-                    <button type="button" class="edit-icon-btn" (click)="toggleEdit('apellido')" title="Editar Apellido">✎</button>
+                    <button type="button" class="edit-icon-btn" [disabled]="guardandoPerfil" (click)="toggleEdit('apellido')" title="Editar Apellido">✎</button>
                   } @else {
-                    <input type="text" name="apellido" [(ngModel)]="editingValue" class="retro-input" autofocus>
-                    <button type="button" class="save-icon-btn" (click)="saveField('apellido')" title="Guardar">✔</button>
-                    <button type="button" class="cancel-icon-btn" (click)="cancelEdit()" title="Cancelar">✖</button>
+                    <input type="text" name="apellido" [(ngModel)]="editingValue" class="retro-input" [disabled]="guardandoPerfil" [attr.aria-invalid]="!!errorPerfil" [attr.aria-describedby]="errorPerfil ? 'error-perfil' : null" aria-label="Apellido" autofocus>
+                    <button type="button" class="save-icon-btn" [disabled]="guardandoPerfil" (click)="saveField('apellido')" title="Guardar">✔</button>
+                    <button type="button" class="cancel-icon-btn" [disabled]="guardandoPerfil" (click)="cancelEdit()" title="Cancelar">✖</button>
                   }
                 </div>
               </div>
@@ -49,19 +49,19 @@
               <div class="form-group inline-edit-group">
                 <label>Correo Electrónico</label>
                 <div class="input-row">
-                  @if (editingField !== 'email') {
-                    <p class="static-value">{{ (userProfile$ | async)?.email }}</p>
-                    <button type="button" class="edit-icon-btn" (click)="toggleEdit('email')" title="Editar Correo">✎</button>
-                  } @else {
-                    <input type="email" name="email" [(ngModel)]="editingValue" class="retro-input" autofocus>
-                    <button type="button" class="save-icon-btn" (click)="saveField('email')" title="Guardar">✔</button>
-                    <button type="button" class="cancel-icon-btn" (click)="cancelEdit()" title="Cancelar">✖</button>
-                  }
+                  <p class="static-value" title="El correo identifica tu cuenta y no se modifica desde el perfil.">{{ (userProfile$ | async)?.email }}</p>
                 </div>
               </div>
 
+              @if (guardandoPerfil) {
+                <p class="profile-save-status" role="status">Guardando cambios...</p>
+              }
+              @if (errorPerfil) {
+                <p id="error-perfil" class="profile-save-status profile-save-error" role="alert">{{ errorPerfil }}</p>
+              }
+
               <div class="password-section">
-                <button type="button" class="change-password-btn" (click)="goToPasswordView()">
+                <button type="button" class="change-password-btn" [disabled]="guardandoPerfil" (click)="goToPasswordView()">
                   Cambiar Contraseña
                 </button>
               </div>
@@ -76,11 +76,13 @@
         <h2 class="profile-title">CAMBIAR CONTRASEÑA</h2>
         <div class="title-divider"></div>
 
-        <form class="password-form">
+        <form class="password-form" (ngSubmit)="confirmPasswordChange()" [attr.aria-busy]="guardandoPassword">
+          <p class="profile-save-status">Al guardar se cerrarán tus sesiones. Después podrás entrar con la nueva contraseña.</p>
           <div class="form-group">
-            <label>Contraseña Actual</label>
+            <label for="perfil-old-pass">Contraseña Actual</label>
             <div class="input-wrapper">
               <input [type]="mostrarActual ? 'text' : 'password'" name="oldPass"
+                     id="perfil-old-pass" autocomplete="current-password" [disabled]="guardandoPassword"
                      [(ngModel)]="passwordData.oldPass" class="retro-input"
                      [ngClass]="{'input-error': errorVacio && !passwordData.oldPass}">
               <span class="material-symbols-outlined icono-toggle" (click)="toggleActual()">{{ mostrarActual ? 'visibility_off' : 'visibility' }}</span>
@@ -88,9 +90,10 @@
           </div>
 
           <div class="form-group">
-            <label>Nueva Contraseña</label>
+            <label for="perfil-new-pass">Nueva Contraseña</label>
             <div class="input-wrapper">
               <input [type]="mostrarNueva ? 'text' : 'password'" name="newPass"
+                     id="perfil-new-pass" autocomplete="new-password" [disabled]="guardandoPassword"
                      [(ngModel)]="passwordData.newPass" class="retro-input"
                      (ngModelChange)="validarPassword($event)"
                      [ngClass]="{'input-error': (errorVacio && !passwordData.newPass) || errorRequisitos || errorCoincidencia}">
@@ -105,51 +108,31 @@
           </div>
 
           <div class="form-group">
-            <label>Confirmar Nueva Contraseña</label>
+            <label for="perfil-confirm-pass">Confirmar Nueva Contraseña</label>
             <div class="input-wrapper">
               <input [type]="mostrarConfirmacion ? 'text' : 'password'" name="confirmPass"
+                     id="perfil-confirm-pass" autocomplete="new-password" [disabled]="guardandoPassword"
                      [(ngModel)]="passwordData.confirmPass" class="retro-input"
                      [ngClass]="{'input-error': (errorVacio && !passwordData.confirmPass) || errorCoincidencia}">
               <span class="material-symbols-outlined icono-toggle" (click)="toggleConfirmacion()">{{ mostrarConfirmacion ? 'visibility_off' : 'visibility' }}</span>
             </div>
           </div>
 
+          @if (guardandoPassword) {
+            <p class="profile-save-status" role="status">Guardando contraseña...</p>
+          }
+          @if (errorPasswordDetalle) {
+            <p class="profile-save-status profile-save-error" role="alert">{{ errorPasswordDetalle }}</p>
+          }
           <div class="password-actions">
-            <button type="button" class="forgot-pass-btn" [disabled]="recoverySent" (click)="sendRecoveryEmail()">
+            <button type="button" class="forgot-pass-btn" [disabled]="recoverySent || guardandoPassword" (click)="sendRecoveryEmail()">
               {{ recoverySent ? 'Correo enviado...' : '¿Olvidó su contraseña?' }}
             </button>
-            <button type="button" class="retro-btn save-btn" (click)="confirmPasswordChange()">CONFIRMAR</button>
+            <button type="submit" class="retro-btn save-btn" [disabled]="guardandoPassword">CONFIRMAR</button>
           </div>
         </form>
       </div>
     }
 
-    @if (currentView === 'confirmEmail') {
-      <div class="view-container password-view">
-        <h2 class="profile-title" style="font-size: 1.3rem;">CONFIRMAR CAMBIO DE CORREO</h2>
-        <div class="title-divider"></div>
-
-        <form class="password-form">
-          <p style="color: var(--text-color-secondary); font-family: 'TuFuentePixel', monospace; font-size: 0.9rem; text-align: center; margin-bottom: 20px;">
-            Ingresa tu contraseña para autorizar el cambio de correo electrónico a: <br>
-            <strong style="color: #fff;">{{ pendingEmail }}</strong>
-          </p>
-
-          <div class="form-group">
-            <label>Contraseña Actual</label>
-            <div class="input-wrapper">
-              <input [type]="mostrarClaveCorreo ? 'text' : 'password'" name="confirmEmailPass"
-                     [(ngModel)]="confirmEmailPass" class="retro-input" autofocus>
-              <span class="material-symbols-outlined icono-toggle" (click)="toggleClaveCorreo()">{{ mostrarClaveCorreo ? 'visibility_off' : 'visibility' }}</span>
-            </div>
-          </div>
-
-          <div style="display: flex; justify-content: center; flex-direction: row; gap: 20px; margin-top: 30px;">
-            <button type="button" class="retro-btn" style="color: var(--btn-danger-color); border-color: var(--btn-danger-color);" (click)="cancelEmailChange()">CANCELAR</button>
-            <button type="button" class="retro-btn save-btn" [disabled]="!confirmEmailPass" (click)="confirmEmailChange()">ACEPTAR</button>
-          </div>
-        </form>
-      </div>
-    }
   </div>
 </div>

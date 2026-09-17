@@ -10,6 +10,8 @@ import { TarjetaConfig } from '../baraja-tarjetas/baraja-tarjetas.component';
 import { ProgresoService } from '../services/progreso.service';
 import { AulasService } from '../services/aulas.service';
 import { AssetPreloaderService } from '../services/asset-preloader.service';
+import { ConfiguracionNivelUno } from '../core/configuracion-niveles-aula';
+import { BorradorAulaService } from '../services/borrador-aula.service';
 
 export type TipoTerreno = 'vacio' | 'suelo' | 'sueloroto' | 'suelo-ogro' | 'salida' | 'meta-ogro';
 export type TipoObjeto = 'ninguno' | 'roca' | 'cofre';
@@ -66,7 +68,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     { expresion: 'sorpendido', texto: 'Ah, y si tu código es un desastre... te dejaré usar esta Poción de Clarividencia. ¡Pero no te acostumbres, no siempre daré la respuesta!', itemCentro: 'pocion-clarividencia' },
     { expresion: 'feliz', texto: '¡Es hora de codificar! Escribe tu primer script en el pergamino mágico y hagamos que ese ogro camine. ¡Buena suerte!' }
   ];
-  mostrarTutorial = true;
+  mostrarTutorial = false;
   dialogoActualIndex = 0;
   textoMostrado = '';
   isTyping = false;
@@ -166,6 +168,15 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   estrellasObtenidasEmoji: string = '';
   mensajePuntaje: string = '';
 
+  private elementoDialogoVictoria?: HTMLDialogElement;
+
+  @ViewChild('dialogoVictoria')
+  set dialogoVictoria(referencia: ElementRef<HTMLDialogElement> | undefined) {
+    const dialogo = referencia?.nativeElement;
+    this.elementoDialogoVictoria = dialogo;
+    if (dialogo && !dialogo.open) dialogo.showModal();
+  }
+
   tableroSnapshot: Casilla[][] = []; // Fotografía del mapa original
 
   // --- MANUAL DEL PROGRAMADOR ---
@@ -224,6 +235,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   borradoresNiveles: Record<number, any> = {};
 
   esModoProfesor: boolean = false;
+  edicionDesdeAula: boolean = false;
   mostrarMapaEnDOM: boolean = true;
 
   // ── SEGUIMIENTO DE TIEMPO Y RENDIMIENTO PARA EL BACKEND ─────────────
@@ -252,7 +264,8 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     private loaderService: LoaderService,
     private progresoService: ProgresoService,
     private aulasService: AulasService,
-    private assetPreloader: AssetPreloaderService
+    private assetPreloader: AssetPreloaderService,
+    private borradorAulaService: BorradorAulaService
   ) {}
 
   iniciarDialogo() {
@@ -293,13 +306,14 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.esAulaActiva = !!localStorage.getItem('aulaActiva');
+    this.esModoProfesor = this.router.url.includes('crear-aula');
     
-    // Iniciar el tutorial basado en la preferencia de Ayuda de Draco
+    // La introducción de Drako pertenece únicamente al modo Aventura.
     const ayudaActivada = localStorage.getItem('ayuda_draco') !== 'false';
     // Aquí verifica contra tu variable real de nivel completado
     const nivelYaSuperado = false; // Ajusta esto si tienes un tracker de nivel pasado
     
-    if (ayudaActivada && !nivelYaSuperado) {
+    if (this.puedeMostrarIntroduccionDrako() && ayudaActivada && !nivelYaSuperado) {
       this.mostrarTutorial = true;
       this.iniciarDialogo();
     } else {
@@ -327,13 +341,16 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
       this.isLoadingAssets = false;
     });
 
-    // 1. Determinar el rol basado en la URL
-    const urlActual = this.router.url;
-    this.esModoProfesor = urlActual.includes('crear-aula');
-
     if (this.esModoProfesor) {
-      // MODO CREADOR: Lienzo en blanco, listo para editar
-      this.generarTableroPrueba();
+      // MODO CREADOR: recupera el mapa del asistente o prepara un lienzo nuevo.
+      const borrador = this.borradorAulaService.obtener();
+      const configuracion = borrador?.parametrosReto.configuracion_nivel;
+      this.edicionDesdeAula = !!borrador;
+      if (configuracion?.tipo === 'mapa_ogro') {
+        this.cargarConfiguracionEnEditor(configuracion);
+      } else {
+        this.generarTableroPrueba();
+      }
       this.loaderService.ocultar();
     } else {
       // MODO JUGADOR: Auto-cargar el nivel oficial JSON
@@ -368,6 +385,12 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
               }
             }
             this.antiCopiaActivo = parametros?.anti_copia || false;
+            // Las ayudas y pociones pertenecen exclusivamente al Modo Aventura.
+            const ayudasHabilitadas = false;
+            this.inventarioNivel.libro.activo = ayudasHabilitadas;
+            this.inventarioNivel.clarividencia.activo = ayudasHabilitadas;
+            this.inventarioNivel.vida.activo = ayudasHabilitadas;
+            this.inventarioNivel.tiempo.activo = ayudasHabilitadas;
             
             // Limitamos los intentos y el tiempo máximo según el profesor
             // (La validación estricta ocurre en el backend al guardar progreso, 
@@ -380,7 +403,14 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
             if (Array.isArray(fases)) {
               fases = fases.map((f: any) => Number(f));
             }
-            this.fetchNivelJson(fases);
+            const configuracionNivel = (parametros as any)?.configuracion_nivel;
+            if (configuracionNivel?.tipo === 'mapa_ogro') {
+              this.maxVidas = configuracionNivel.max_vidas;
+              this.vidasActuales = configuracionNivel.max_vidas;
+              this.fetchNivelJson(fases, configuracionNivel.campana);
+            } else {
+              this.fetchNivelJson(fases);
+            }
           } else {
             this.fetchNivelJson();
           }
@@ -393,99 +423,15 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private fetchNivelJson(fasesSeleccionadas?: number[]) {
+  private fetchNivelJson(fasesSeleccionadas?: number[], campanaPersonalizada?: unknown) {
+    if (campanaPersonalizada) {
+      this.procesarDatosNivel(campanaPersonalizada, fasesSeleccionadas);
+      return;
+    }
+
     // Ahora usamos HttpClient de Angular (el interceptor tiene bypass para /assets/)
     this.http.get<any>('/assets/data/aventuraniveles/nivel-1.json').subscribe({
-      next: (datosNivel) => {
-        // DATA PARSER INTELIGENTE: Detecta si es un nivel o una campaña completa
-        let niveles: any[] = [];
-
-        if (datosNivel && Array.isArray(datosNivel.niveles)) {
-          // FORMATO CAMPAÑA (NUEVO): { totalNiveles: X, niveles: [...] }
-          niveles = datosNivel.niveles;
-        } else if (Array.isArray(datosNivel)) {
-          // FORMATO CAMPAÑA (LEGACY): El JSON es directamente un arreglo de niveles
-          niveles = datosNivel;
-        } else if (datosNivel && datosNivel.matriz) {
-          // FORMATO NIVEL ÚNICO: El JSON es un objeto plano con una sola matriz
-          niveles = [datosNivel];
-        } else {
-          console.error('Formato de JSON no reconocido:', datosNivel);
-          this.generarTableroPrueba();
-          return;
-        }
-
-        // SISTEMA DE SELECCIÓN DE FASES (Para Aulas)
-        if (fasesSeleccionadas && fasesSeleccionadas.length > 0) {
-          niveles = niveles.filter((nivel, index) => fasesSeleccionadas.includes(index + 1) || fasesSeleccionadas.includes(nivel.idNivel));
-          
-          // Si estamos en un aula, la ÚLTIMA fase de la lista debe terminar el reto
-          if (niveles.length > 0) {
-            const ultimoNivel = niveles[niveles.length - 1];
-            if (ultimoNivel && ultimoNivel.matriz) {
-              for (let fila of ultimoNivel.matriz) {
-                for (let celda of fila) {
-                  if (celda.zona === 'inferior' && celda.terreno === 'salida') {
-                    celda.terreno = 'meta-ogro';
-                    celda.rotacionTerreno = 0;
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        if (niveles.length === 0) {
-           this.notificationService.show('El profesor no seleccionó ninguna fase válida.', 'error');
-           this.generarTableroPrueba();
-           return;
-        }
-
-        // REHIDRATACIÓN COMPLETA DE LA CACHÉ GLOBAL
-        this.totalNiveles = niveles.length;
-        this.borradoresNiveles = {};
-
-        for (let i = 0; i < niveles.length; i++) {
-          const nivel = niveles[i];
-          this.borradoresNiveles[i + 1] = {
-            tablero: JSON.parse(JSON.stringify(nivel.matriz)),
-            filasEditables: nivel.filasEditables || 5,
-            columnas: nivel.columnas || 9
-          };
-        }
-
-        // CARGAR EL PRIMER NIVEL EN PANTALLA
-        this.nivelActual = 1;
-        const primerNivel = this.borradoresNiveles[1];
-        this.tablero = JSON.parse(JSON.stringify(primerNivel.tablero));
-        this.inputFilas = primerNivel.filasEditables;
-        this.columnas = primerNivel.columnas;
-
-        // Procesos del motor gráfico
-        this.calcularFilos();
-        this.tableroSnapshot = JSON.parse(JSON.stringify(this.tablero));
-        this.cofresSnapshot = 0;
-        this.cofresRecolectados = 0;
-
-        // Activar modo juego
-        this.modoEditor = false;
-        this.jugando = true;
-
-        // Ubicar al Ogro en el Spawn
-        this.inicializarOgroEnSpawn();
-
-        // Forzar recálculo físico del Grid tras la carga de datos
-        this.cdr.detectChanges();
-        
-        setTimeout(() => {
-          this.forzarRecalculoFisico();
-        }, 50);
-
-        // APP SHELL: Ocultar con transición suave tras dar tiempo a la descarga de assets
-        setTimeout(() => {
-          this.loaderService.ocultar();
-        }, 800);
-      },
+      next: datosNivel => this.procesarDatosNivel(datosNivel, fasesSeleccionadas),
       error: (err) => {
         console.error('Error cargando el nivel. Verifica la ruta en assets.', err);
         this.generarTableroPrueba(); // Fallback de seguridad
@@ -493,7 +439,78 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  private procesarDatosNivel(datosRecibidos: any, fasesSeleccionadas?: number[]): void {
+    const datosNivel = JSON.parse(JSON.stringify(datosRecibidos));
+    let niveles: any[] = [];
+
+    if (datosNivel && Array.isArray(datosNivel.niveles)) {
+      niveles = datosNivel.niveles;
+    } else if (Array.isArray(datosNivel)) {
+      niveles = datosNivel;
+    } else if (datosNivel && datosNivel.matriz) {
+      niveles = [datosNivel];
+    } else {
+      console.error('Formato de JSON no reconocido:', datosNivel);
+      this.generarTableroPrueba();
+      return;
+    }
+
+    if (fasesSeleccionadas?.length) {
+      niveles = niveles.filter((nivel, index) =>
+        fasesSeleccionadas.includes(index + 1) || fasesSeleccionadas.includes(nivel.idNivel)
+      );
+      const ultimoNivel = niveles[niveles.length - 1];
+      for (const fila of ultimoNivel?.matriz ?? []) {
+        for (const celda of fila) {
+          if (celda.zona === 'inferior' && celda.terreno === 'salida') {
+            celda.terreno = 'meta-ogro';
+            celda.rotacionTerreno = 0;
+          }
+        }
+      }
+    }
+
+    if (!niveles.length) {
+      this.notificationService.show('El profesor no seleccionó ninguna fase válida.', 'error');
+      this.generarTableroPrueba();
+      return;
+    }
+
+    this.totalNiveles = niveles.length;
+    this.borradoresNiveles = {};
+    niveles.forEach((nivel, indice) => {
+      this.borradoresNiveles[indice + 1] = {
+        tablero: JSON.parse(JSON.stringify(nivel.matriz)),
+        filasEditables: nivel.filasEditables || 5,
+        columnas: nivel.columnas || 9
+      };
+    });
+
+    this.nivelActual = 1;
+    const primerNivel = this.borradoresNiveles[1];
+    this.tablero = JSON.parse(JSON.stringify(primerNivel.tablero));
+    this.inputFilas = primerNivel.filasEditables;
+    this.columnas = primerNivel.columnas;
+    this.calcularFilos();
+    this.tableroSnapshot = JSON.parse(JSON.stringify(this.tablero));
+    this.cofresSnapshot = 0;
+    this.cofresRecolectados = 0;
+    this.modoEditor = false;
+    this.jugando = true;
+    this.inicializarOgroEnSpawn();
+    this.cdr.detectChanges();
+
+    setTimeout(() => this.forzarRecalculoFisico(), 50);
+    setTimeout(() => this.loaderService.ocultar(), 800);
+  }
+
   manejarToggleDraco(estado: boolean) {
+    if (!this.puedeMostrarIntroduccionDrako()) {
+      this.mostrarTutorial = false;
+      if (this.typeInterval) clearInterval(this.typeInterval);
+      return;
+    }
+
     if (estado) {
       if (this.nivelActual === 1 && !this.pantallaNivelCompletado) {
         this.dialogoActualIndex = 0;
@@ -505,6 +522,35 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
       this.mostrarTutorial = false;
       if (this.typeInterval) clearInterval(this.typeInterval);
     }
+  }
+
+  private cargarConfiguracionEnEditor(configuracion: ConfiguracionNivelUno): void {
+    this.maxVidas = configuracion.max_vidas;
+    this.vidasActuales = configuracion.max_vidas;
+    this.totalNiveles = configuracion.campana.totalNiveles;
+    this.inputTotalNiveles = configuracion.campana.totalNiveles;
+    this.editorInicializado = true;
+    this.borradoresNiveles = {};
+
+    for (const nivel of configuracion.campana.niveles) {
+      this.borradoresNiveles[nivel.idNivel] = {
+        tablero: JSON.parse(JSON.stringify(nivel.matriz)),
+        filasEditables: nivel.filasEditables,
+        columnas: nivel.columnas
+      };
+    }
+
+    const primero = this.borradoresNiveles[1];
+    this.nivelActual = 1;
+    this.inputFilas = primero.filasEditables;
+    this.inputColumnas = primero.columnas;
+    this.columnas = primero.columnas;
+    this.tablero = JSON.parse(JSON.stringify(primero.tablero));
+    this.calcularFilos();
+  }
+
+  private puedeMostrarIntroduccionDrako(): boolean {
+    return !this.esAulaActiva && !this.esModoProfesor;
   }
 
   /** Inicializa la entidad Ogro buscando el Spawn en el tablero activo */
@@ -546,11 +592,6 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   manejarUsoPocion(tipo: 'roja' | 'verde' | 'amarilla' | 'libro') {
     if (!this.jugando) return;
     
-    // Si usa pociones, marca como ayuda usada
-    if (tipo !== 'libro') {
-      this.ayudasUsadas = true;
-    }
-
     // Extrae la referencia real a tu estado del inventario para poder marcar los ítems como consumidos
     const inventario = this.layoutJuego?.baraja?.estadoObjetos; 
     if (!inventario) return;
@@ -561,7 +602,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
         break;
 
       case 'roja':
-        if (inventario.vida.consumida) return; // Ya se usó
+        if (!inventario.vida.activo || inventario.vida.consumida) return;
         
         if (this.vidasActuales >= this.maxVidas) {
           // REGLA DE NEGOCIO: Salud llena, ordenar al hijo que agite el ítem
@@ -569,6 +610,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
         } else {
           this.vidasActuales++;
           inventario.vida.consumida = true; // Mutación centralizada
+          this.ayudasUsadas = true;
           
           this.efectoCuracionActivo = true;
           this.cdr.detectChanges();
@@ -578,9 +620,10 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
 
       case 'verde':
         // Funcionalidad futura: añadir tiempo extra
-        if (inventario.tiempo.consumida) return;
+        if (!inventario.tiempo.activo || inventario.tiempo.consumida) return;
         
         inventario.tiempo.consumida = true;
+        this.ayudasUsadas = true;
         
         this.efectoTiempoActivo = true;
         this.cdr.detectChanges();
@@ -588,8 +631,9 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
         break;
         
       case 'amarilla':
-        if (inventario.clarividencia.consumida) return;
+        if (!inventario.clarividencia.activo || inventario.clarividencia.consumida) return;
         inventario.clarividencia.consumida = true;
+        this.ayudasUsadas = true;
         this.layoutJuego.activarClarividencia();
         break;
     }
@@ -627,8 +671,8 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
       return; // Terminamos la ejecución aquí
     }
 
-    // Reglas normales para el resto de pinceles
-    if (celda.zona === 'inferior' && this.pincelActual !== 'vacio') return;
+    // La fila inferior también forma parte del recorrido. La única regla
+    // especial es que la meta debe colocarse en esa fila.
 
     // LÓGICA DE BORRADO INTELIGENTE (Por capas)
     if (this.pincelActual === 'vacio') {
@@ -910,6 +954,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     // — RESETEAR MÉTRICAS DE RENDIMIENTO —
     this.tiempoInicioMs = 0;
     this.contadorIntentos = 0;
+    this.ayudasUsadas = false;
     
     // 1. Restauramos mapa
     if (this.tableroSnapshot && this.tableroSnapshot.length > 0) {
@@ -1114,31 +1159,33 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
             reto_nivel_id: 1, // Nivel 1: El Ogro
             tiempo_segundos: tiempoTotal,
             intentos: this.contadorIntentos,
+            vidas_restantes: this.vidasActuales,
+            ayudas_usadas: aulaActiva ? false : this.ayudasUsadas,
             codigo_solucion: this.codigoUsuario,
             aula_id: aulaActiva ? aulaActiva : undefined,
-            reto_personalizado_id: (this as any).retoActualId
+            reto_personalizado_id: aulaActiva ? (this as any).retoActualId : undefined
           }).subscribe({
             next: (respuesta) => {
               // Limpiar aulaActiva tras completarlo
               localStorage.removeItem('aulaActiva');
               
-              // Mensaje personalizado según si es la primera vez
-              const emoji = respuesta.estrellas_obtenidas === 3 ? '⭐⭐⭐' :
-                            respuesta.estrellas_obtenidas === 2 ? '⭐⭐' : '⭐';
-              const msg = respuesta.es_primera_vez
-                ? `¡Felicidades! Obtuviste ${emoji} y ahora tienes ${respuesta.estrellas_totales_usuario} estrellas.`
-                : `¡Bien! Mejor puntaje actualizado. Tienes ${respuesta.estrellas_totales_usuario} estrellas en total.`;
-              this.estrellasObtenidasEmoji = emoji;
-              this.mensajePuntaje = msg;
-              this.calcularEstrellas();
+              // El texto y los iconos representan el mismo resultado confirmado por el servidor.
+              // El saldo acumulado puede ser mayor que las estrellas de este intento.
+              this.estrellasFinales = respuesta.estrellas_obtenidas;
+              this.arrayEstrellas = Array(this.estrellasFinales).fill(0);
+              this.estrellasObtenidasEmoji = '⭐'.repeat(this.estrellasFinales);
+              const total = respuesta.estrellas_totales_usuario;
+              this.mensajePuntaje = `Este intento: ${this.estrellasFinales} ${this.estrellasFinales === 1 ? 'estrella' : 'estrellas'} de 3. `
+                + (aulaActiva ? 'La actividad no añade saldo a la tienda.' : `Saldo para la tienda: ${total} ${total === 1 ? 'estrella' : 'estrellas'}.`);
               this.pantallaNivelCompletado = true;
             },
             error: () => {
-              // Si la petición falla, avisamos pero no rompemos el juego
-              this.notificationService.show('Progreso guardado (sin respuesta del servidor)', 'success');
-              this.estrellasObtenidasEmoji = '⭐';
-              this.mensajePuntaje = '¡Has completado la aventura!';
-              this.calcularEstrellas();
+              // Completar el recorrido no confirma que el servidor haya guardado la entrega.
+              this.mensajePuntaje = 'Completaste el recorrido, pero no se confirmó el guardado. Revisa tu conexión y consulta tu progreso.';
+              this.notificationService.show(this.mensajePuntaje, 'error');
+              this.estrellasObtenidasEmoji = '';
+              this.estrellasFinales = 0;
+              this.arrayEstrellas = [];
               this.pantallaNivelCompletado = true;
             }
           });
@@ -1205,6 +1252,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isRecovering = false;
     this.nivelActual = 1;
     this.vidasActuales = this.maxVidas;
+    this.ayudasUsadas = false;
     this.cofresRecolectados = 0;
     
     if (this.layoutJuego) {
@@ -1260,7 +1308,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   salirMenuPrincipal() {
     this.pantallaGameOver = false;
-    this.router.navigate(['/pantalla-principal']);
+    this.router.navigate([this.esAulaActiva ? '/pantalla-principal' : '/aventura']);
   }
 
   volverAlAula() {
@@ -1401,29 +1449,6 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  calcularEstrellas() {
-    let estrellas = 0;
-    
-    // 1ra Estrella: Completar el nivel
-    estrellas++; 
-    
-    // 2da Estrella: Todos los cofres
-    if (this.cofresRecolectados >= this.totalCofresNivel) {
-      estrellas++;
-    }
-    
-    // 3ra Estrella: Código puro (Sin tarjetas ni pociones)
-    if (!this.ayudasUsadas) {
-      estrellas++;
-    }
-    
-    this.estrellasFinales = estrellas;
-    // Creamos un array del tamaño de las estrellas ganadas para el *ngFor
-    this.arrayEstrellas = Array(this.estrellasFinales).fill(0);
-    
-    // TODO futuro: Enviar this.estrellasFinales al Backend
-  }
-
   compilarYEjecutar(codigoDesdeEditor?: string) {
     if (codigoDesdeEditor !== undefined) {
       this.codigoUsuario = codigoDesdeEditor;
@@ -1522,9 +1547,25 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
     
-    const json = JSON.stringify(campanaExportar, null, 2);
-    
-    // 3. FEEDBACK VISUAL DE ÉXITO
+    if (this.edicionDesdeAula) {
+      const configuracion: ConfiguracionNivelUno = {
+        version: 1,
+        nivel_id: 1,
+        tipo: 'mapa_ogro',
+        max_vidas: this.maxVidas,
+        campana: campanaExportar
+      };
+      if (!this.borradorAulaService.guardarMapa(configuracion)) {
+        this.notificationService.show('No se encontró el borrador del aula. Vuelve al gestor e inténtalo otra vez.', 'error');
+        return;
+      }
+      this.notificationService.show('Diseño guardado en la actividad.', 'success');
+      this.router.navigate(['/pantalla-principal']);
+      return;
+    }
+
+    // Se conserva la exportación original cuando el constructor se abre directamente.
+    JSON.stringify(campanaExportar, null, 2);
     this.notificationService.show('¡Nivel exportado exitosamente! Revisa la consola.', 'success');
   }
 
@@ -1542,6 +1583,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.elementoDialogoVictoria?.close();
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }

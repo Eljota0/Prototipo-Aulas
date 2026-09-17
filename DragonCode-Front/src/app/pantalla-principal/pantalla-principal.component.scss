@@ -13,7 +13,7 @@
   ────────────────────────────────────────────────────────────── */
   --hud-height:              clamp(58px, 6.5vw, 72px);
   --hud-padding-h:           clamp(12px, 3vw, 24px);  /* Padding lateral (separa logo y botones de los bordes) */
-  --hud-btn-size:            clamp(26px, 3vw, 33px);  /* Tamaño de los botones del HUD (reducido 25%) */
+  --hud-btn-size:            clamp(44px, 3vw, 48px);
   --hud-bg-overlay:          rgba(0, 0, 0, 0.4);      /* Oscurecimiento sobre la textura del HUD */
 
   /* ── TEXTURA fondotitulo.png (técnica de mosaico como crear-cuenta) ─
@@ -373,6 +373,15 @@
   position: relative;
   transition: transform 0.1s ease, box-shadow 0.2s ease;
   font-family: inherit;
+  touch-action: manipulation;
+}
+
+.hud-btn:focus-visible,
+.mode-card:focus-visible,
+.activity-level-option:focus-visible,
+.activity-phase-option:focus-visible {
+  outline: 3px solid #82f4e0;
+  outline-offset: 4px;
 }
 
 .hud-btn:active {
@@ -799,6 +808,14 @@
 
   cursor: pointer;
   overflow: hidden; /* Evita que el zoom de la imagen se desborde */
+  appearance: none;
+  padding: 0;
+  color: inherit;
+  background-color: transparent;
+  font: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  touch-action: manipulation;
 
   transition: filter 0.2s ease, transform 0.1s ease;
 }
@@ -1010,6 +1027,8 @@
   cursor: pointer;
   transition: filter 0.2s ease, transform 0.1s step-end, box-shadow 0.2s ease;
   font-family: 'TuFuentePixel', monospace;
+  min-height: 44px;
+  touch-action: manipulation;
 }
 
 .stars-panel:hover {
@@ -1314,6 +1333,184 @@
   color: #3b5059;
 }
 
+.activity-level-option {
+  width: 100%;
+  appearance: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  touch-action: manipulation;
+}
+
+.activity-phase-option {
+  min-height: 48px;
+  touch-action: manipulation;
+}
+
+/* Configuración de actividades: controles legibles y cómodos en táctil. */
+.activity-settings {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deadline-config {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.42);
+  border: 1px solid rgba(255, 215, 0, 0.32);
+  border-radius: 6px;
+}
+
+.activity-field-label {
+  color: #ffd700;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.7px;
+}
+
+.activity-select,
+.activity-datetime {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.activity-select option {
+  color: #e6fffb;
+  background: #0b0f19;
+}
+
+.deadline-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 3px;
+  font-family: 'TuFuentePixel', monospace;
+}
+
+.deadline-preview span {
+  color: #77939c;
+  font-size: 0.62rem;
+  overflow-wrap: anywhere;
+}
+
+.deadline-preview strong {
+  color: #f6e9a8;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.activity-toggle-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.activity-toggle {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  color: #8da1a8;
+  background: rgba(255, 255, 255, 0.025);
+  border: 2px solid #354047;
+  border-radius: 6px;
+  font-family: 'TuFuentePixel', monospace;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.activity-toggle--active {
+  color: #82f4e0;
+  background: rgba(76, 253, 221, 0.09);
+  border-color: #4cfddd;
+  box-shadow: 0 0 8px rgba(76, 253, 221, 0.16);
+}
+
+.activity-toggle:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+}
+
+.activity-toggle__mark {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: grid;
+  place-items: center;
+  color: currentColor;
+  background: #05070a;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.activity-toggle strong,
+.activity-toggle small {
+  display: block;
+  line-height: 1.25;
+}
+
+.activity-toggle strong {
+  color: currentColor;
+  font-size: 0.7rem;
+}
+
+.activity-toggle small {
+  margin-top: 3px;
+  color: #a3bac2;
+  font-size: 0.58rem;
+}
+
+.activity-summary {
+  display: grid;
+  grid-template-columns: minmax(58px, auto) minmax(0, 1fr);
+  gap: 6px 10px;
+  padding: 11px 12px;
+  background: rgba(130, 244, 224, 0.055);
+  border-left: 3px solid #82f4e0;
+  font-family: 'TuFuentePixel', monospace;
+  line-height: 1.35;
+}
+
+.activity-summary span {
+  color: #6f8b92;
+  font-size: 0.6rem;
+}
+
+.activity-summary strong {
+  min-width: 0;
+  color: #d9fdf7;
+  font-size: 0.68rem;
+  overflow-wrap: anywhere;
+}
+
+.activity-settings--compact {
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.activity-settings--compact .deadline-config {
+  padding: 9px;
+}
+
+.activity-settings--compact .activity-select,
+.activity-settings--compact .activity-datetime {
+  padding: 7px 9px;
+  font-size: 0.75rem;
+}
+
+.activity-settings--compact .activity-toggle {
+  min-height: 48px;
+  padding: 7px 8px;
+}
+
 .cyber-action-btn {
   flex: 1;
   padding: 12px 10px;
@@ -1327,6 +1524,31 @@
   color: #fff;
   text-shadow: 2px 2px 0 #000;
   box-shadow: inset 0 2px 0 rgba(255,255,255,0.1), 0 4px 0 #000;
+}
+
+@media (max-width: 520px) {
+  .cyber-modal {
+    width: calc(100% - 20px);
+    max-height: calc(100dvh - 20px);
+    padding: 16px 12px;
+  }
+
+  .activity-toggle-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-summary {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .logout-actions {
+    gap: 8px;
+  }
+
+  .logout-actions .cyber-glow-btn {
+    min-height: 48px;
+    font-size: 0.72rem;
+  }
 }
 .cyber-action-btn:active {
   transform: translateY(4px);
@@ -1391,6 +1613,272 @@
   transform: translateY(-2px);
   border-color: #82F4E0;
   box-shadow: 0 0 15px rgba(130, 244, 224, 0.6), inset 0 0 10px rgba(0,0,0,0.9);
+}
+
+/* Reporte académico: conserva el lenguaje visual del juego, pero prioriza la lectura. */
+.classroom-report {
+  margin-top: 12px;
+  padding: 14px;
+  color: #e8f3f5;
+  background: linear-gradient(180deg, rgba(8, 18, 23, 0.96), rgba(2, 8, 11, 0.98));
+  border: 1px solid rgba(130, 244, 224, 0.34);
+  border-radius: 8px;
+  text-align: left;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.classroom-report__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+.classroom-report__heading--activities {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(130, 244, 224, 0.18);
+}
+
+.classroom-report__heading h4 {
+  margin: 0;
+  color: #f5fbfc;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.classroom-report__eyebrow {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  color: #04100e;
+  background: #82f4e0;
+  border-radius: 3px;
+  font-size: 0.61rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.classroom-report__empty {
+  margin: 9px 0;
+  padding: 11px;
+  color: #a7bbc1;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 5px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.student-list,
+.tracking-list,
+.tracking-students {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-list {
+  gap: 6px;
+}
+
+.student-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.045);
+  border-left: 3px solid rgba(255, 215, 0, 0.72);
+  border-radius: 4px;
+}
+
+.student-row__name {
+  min-width: 0;
+  color: #f7fbfc;
+  font-size: 0.9rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.student-row__stars {
+  flex: 0 0 auto;
+  color: #ffd84d;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.tracking-list {
+  gap: 10px;
+}
+
+.tracking-card {
+  padding: 12px;
+  background: rgba(6, 17, 20, 0.92);
+  border: 1px solid rgba(130, 244, 224, 0.3);
+  border-left: 4px solid #82f4e0;
+  border-radius: 5px;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.32);
+}
+
+.tracking-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tracking-card__header h5 {
+  min-width: 0;
+  margin: 0;
+  color: #fff;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.tracking-status {
+  flex: 0 0 auto;
+  padding: 4px 6px;
+  color: #f0a5f5;
+  background: rgba(217, 70, 239, 0.12);
+  border: 1px solid rgba(217, 70, 239, 0.48);
+  border-radius: 999px;
+  font-size: 0.61rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.tracking-status[data-status="cerrado"],
+.tracking-status[data-status="vencido"] {
+  color: #ffb5b5;
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.42);
+}
+
+.tracking-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 11px;
+}
+
+.tracking-metric {
+  min-width: 0;
+  padding: 8px 6px;
+  background: rgba(130, 244, 224, 0.055);
+  border: 1px solid rgba(130, 244, 224, 0.15);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.tracking-metric span,
+.tracking-metric strong {
+  display: block;
+}
+
+.tracking-metric span {
+  color: #91a8ae;
+  font-size: 0.66rem;
+  line-height: 1.25;
+}
+
+.tracking-metric strong {
+  margin-top: 3px;
+  color: #82f4e0;
+  font-size: 0.92rem;
+}
+
+.tracking-deadline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 7px 8px;
+  color: #adbec3;
+  background: rgba(255, 215, 0, 0.06);
+  border-left: 2px solid #ffd700;
+  font-size: 0.72rem;
+}
+
+.tracking-deadline time {
+  color: #ffe98a;
+  font-weight: 700;
+  text-align: right;
+}
+
+.tracking-students {
+  gap: 4px;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tracking-student {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+  padding: 4px 6px;
+  color: #dbe6e8;
+  font-size: 0.76rem;
+}
+
+.tracking-student:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.tracking-student__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.tracking-student__grade {
+  flex: 0 0 auto;
+  color: #5df09a;
+  font-weight: 800;
+}
+
+.tracking-student__grade--pending {
+  color: #ff9292;
+  font-size: 0.67rem;
+}
+
+.tracking-card__close {
+  min-height: 42px;
+  margin-top: 10px;
+  padding: 7px 10px;
+  font-size: 0.65rem;
+  touch-action: manipulation;
+}
+
+@media (max-width: 520px) {
+  .classroom-report {
+    padding: 11px;
+  }
+
+  .classroom-report__heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .tracking-card__header,
+  .tracking-deadline {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .tracking-deadline time {
+    text-align: left;
+  }
+
+  .tracking-metrics {
+    grid-template-columns: 1fr;
+  }
 }
 
 .cyber-glow-btn {
@@ -1593,4 +2081,19 @@
   position: fixed;
   inset: 0;
   z-index: 99; /* Justo debajo del dropdown que debería tener z-index 100 */
+}
+.activity-advanced-button {
+  width: 100%;
+  min-height: 3rem;
+  padding: .75rem 1rem;
+  font-size: .82rem;
+}
+
+.activity-editor-status {
+  margin: -.35rem 0 0;
+  padding: .55rem .7rem;
+  border-left: 3px solid #82f4e0;
+  background: rgba(130, 244, 224, .08);
+  color: #c7ddd9;
+  font: .78rem/1.45 Arial, Helvetica, sans-serif;
 }

@@ -1,0 +1,71 @@
+{
+  "nivel": 5,
+  "titulo": "Producción en Masa",
+  "conceptoPedagogico": "Bucle MIENTRAS combinado con condicionales",
+  "bitacoraInicial": "La cuadrilla espera que actives el ciclo automático.",
+  "plantilla": {
+    "placeholder": "// Elige primero la tarjeta MIENTRAS"
+  },
+  "fases": [
+    {
+      "numero": 1,
+      "titulo": "Encender la producción continua",
+      "concepto": "MIENTRAS · repetir una acción",
+      "objetivo": "Coloca 3 tarjetas en este orden: “MIENTRAS queden materiales”, “SI es Diamante → guardar” y “FIN de MIENTRAS”.",
+      "pista": "El bucle abre primero, la decisión queda dentro y la tarjeta FIN cierra todo al final.",
+      "materiales": ["Diamante", "Diamante", "Diamante"],
+      "tarjetas": [
+        { "codigo": "si (fabrica.materialActual == \"Diamante\") {\n  fabrica.guardar();\n}", "etiqueta": "SI es Diamante → guardar", "tipo": "CONDICIÓN SI", "tono": "azul" },
+        { "codigo": "mientras (fabrica.tieneMateriales == falso) {", "etiqueta": "MIENTRAS la cinta esté vacía", "tipo": "DISTRACTOR", "tono": "violeta" },
+        { "codigo": "mientras (fabrica.tieneMateriales == verdadero) {", "etiqueta": "MIENTRAS queden materiales", "tipo": "BUCLE MIENTRAS", "tono": "dorado" },
+        { "codigo": "}", "etiqueta": "FIN de MIENTRAS", "tipo": "CIERRE", "tono": "verde" }
+      ]
+    },
+    {
+      "numero": 2,
+      "titulo": "Mantener el horno seguro",
+      "concepto": "MIENTRAS + SI / SINO · repetir decisiones",
+      "objetivo": "Coloca, en orden: “MIENTRAS queden materiales”, “SI es Explosivo → destruir”, “SINO → quemar” y “FIN de MIENTRAS”.",
+      "pista": "Abre el bucle, añade las dos decisiones dentro y usa FIN para cerrar la repetición.",
+      "materiales": ["Carbon", "Explosivo", "Carbon", "Explosivo", "Carbon"],
+      "tarjetas": [
+        { "codigo": "sino {\n  fabrica.quemar();\n}", "etiqueta": "SINO → quemar lo restante", "tipo": "RAMA SINO", "tono": "verde" },
+        { "codigo": "mientras (fabrica.tieneMateriales == verdadero) {", "etiqueta": "MIENTRAS queden materiales", "tipo": "BUCLE MIENTRAS", "tono": "dorado" },
+        { "codigo": "si (fabrica.materialActual == \"Explosivo\") {\n  fabrica.destruir();\n}", "etiqueta": "SI es Explosivo → destruir", "tipo": "CONDICIÓN SI", "tono": "violeta" },
+        { "codigo": "sino {\n  fabrica.guardar();\n}", "etiqueta": "SINO → guardar lo restante", "tipo": "DISTRACTOR", "tono": "azul" },
+        { "codigo": "}", "etiqueta": "FIN de MIENTRAS", "tipo": "CIERRE", "tono": "verde" }
+      ]
+    },
+    {
+      "numero": 3,
+      "titulo": "Automatizar rutas especiales",
+      "concepto": "MIENTRAS + SINO SI · repetir dos preguntas",
+      "objetivo": "Coloca, en orden: “MIENTRAS queden materiales”, “SI es Diamante → guardar”, “SINO SI es Explosivo → destruir” y “FIN”.",
+      "pista": "SI inicia la decisión; SINO SI añade la segunda pregunta sin crear una decisión separada.",
+      "materiales": ["Explosivo", "Diamante", "Explosivo", "Diamante", "Diamante", "Explosivo"],
+      "tarjetas": [
+        { "codigo": "sino si (fabrica.materialActual == \"Explosivo\") {\n  fabrica.destruir();\n}", "etiqueta": "SINO SI es Explosivo → destruir", "tipo": "RAMA SINO SI", "tono": "violeta" },
+        { "codigo": "}", "etiqueta": "FIN de MIENTRAS", "tipo": "CIERRE", "tono": "verde" },
+        { "codigo": "si (fabrica.materialActual == \"Diamante\") {\n  fabrica.guardar();\n}", "etiqueta": "SI es Diamante → guardar", "tipo": "CONDICIÓN SI", "tono": "azul" },
+        { "codigo": "mientras (fabrica.tieneMateriales == verdadero) {", "etiqueta": "MIENTRAS queden materiales", "tipo": "BUCLE MIENTRAS", "tono": "dorado" },
+        { "codigo": "si (fabrica.materialActual == \"Explosivo\") {\n  fabrica.destruir();\n}", "etiqueta": "Otro SI separado", "tipo": "DISTRACTOR", "tono": "verde" }
+      ]
+    },
+    {
+      "numero": 4,
+      "titulo": "Avalancha de producción",
+      "concepto": "MIENTRAS + tres caminos · automatización completa",
+      "objetivo": "Ordena 5 tarjetas: MIENTRAS, SI Diamante, SINO SI Explosivo, SINO para el carbón y FIN de MIENTRAS.",
+      "pista": "Abre MIENTRAS, coloca las tres rutas dentro en ese orden y cierra el bucle con FIN.",
+      "materiales": ["Carbon", "Diamante", "Explosivo", "Diamante", "Carbon", "Explosivo", "Carbon", "Diamante", "Explosivo", "Carbon"],
+      "tarjetas": [
+        { "codigo": "sino {\n  fabrica.quemar();\n}", "etiqueta": "SINO → quemar lo restante", "tipo": "RAMA SINO", "tono": "verde" },
+        { "codigo": "mientras (fabrica.tieneMateriales == verdadero) {", "etiqueta": "MIENTRAS queden materiales", "tipo": "BUCLE MIENTRAS", "tono": "dorado" },
+        { "codigo": "si (fabrica.materialActual == \"Diamante\") {\n  fabrica.guardar();\n}", "etiqueta": "SI es Diamante → guardar", "tipo": "CONDICIÓN SI", "tono": "azul" },
+        { "codigo": "}", "etiqueta": "FIN de MIENTRAS", "tipo": "CIERRE", "tono": "dorado" },
+        { "codigo": "sino si (fabrica.materialActual == \"Explosivo\") {\n  fabrica.destruir();\n}", "etiqueta": "SINO SI es Explosivo → destruir", "tipo": "RAMA SINO SI", "tono": "violeta" },
+        { "codigo": "mientras (fabrica.tieneMateriales == verdadero) {\n  fabrica.guardar();\n}", "etiqueta": "Guardar todo", "tipo": "DISTRACTOR", "tono": "verde" }
+      ]
+    }
+  ]
+}

@@ -37,7 +37,7 @@
           <!-- MODO PLANTILLA: Solo un div de lectura con Syntax Highlighting -->
           @if (modoPlantilla) {
             <div class="plantilla-display"
-                 [innerHTML]="parsearSintaxis(linea.texto, $index) | safeHtml">
+                 [innerHTML]="parsearSintaxis(linea.texto, $index)">
             </div>
           } @else {
             <!-- MODO LIBRE (Nivel 1): Input nativo editable -->

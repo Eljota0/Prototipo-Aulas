@@ -6,37 +6,53 @@ import {
   ResultadoEvaluacionControlCalidad,
   TipoMaterialFabrica
 } from './evaluador-nivel';
+import {
+  analizarCadenaCondicional,
+  coincideEstructura,
+  extraerBloqueRaiz,
+  mapearAcciones,
+  normalizarCodigoControl,
+  RamaCondicional
+} from './parser-control-flujo';
 
 @Injectable({ providedIn: 'root' })
 export class EvaluadorControlCalidadService implements EvaluadorNivel<
   FaseControlCalidad,
   ResultadoEvaluacionControlCalidad
 > {
-  private readonly eventoInicio = 'evento(fabrica.nuevoMaterial){';
-  private readonly diamante =
-    'si(fabrica.materialActual=="Diamante"){fabrica.guardar();}';
-  private readonly explosivo =
-    'si(fabrica.materialActual=="Explosivo"){fabrica.destruir();}';
-  private readonly explosivoAlternativo =
-    'sinosi(fabrica.materialActual=="Explosivo"){fabrica.destruir();}';
-  private readonly carbon = 'sino{fabrica.quemar();}';
-
-  private readonly soluciones: Record<FaseControlCalidad, string> = {
-    1: `${this.eventoInicio}${this.diamante}}`,
-    2: `${this.eventoInicio}${this.explosivo}${this.carbon}}`,
-    3: `${this.eventoInicio}${this.diamante}${this.explosivoAlternativo}}`,
-    4: `${this.eventoInicio}${this.diamante}${this.explosivoAlternativo}${this.carbon}}`
+  private readonly eventoInicio = /^evento\(fabrica\.nuevoMaterial\)\{/;
+  private readonly estructuras: Record<FaseControlCalidad, RamaCondicional[]> = {
+    1: [{ tipo: 'si', material: 'Diamante', accion: 'guardar' }],
+    2: [
+      { tipo: 'si', material: 'Explosivo', accion: 'destruir' },
+      { tipo: 'sino', accion: 'quemar' }
+    ],
+    3: [
+      { tipo: 'si', material: 'Diamante', accion: 'guardar' },
+      { tipo: 'sino-si', material: 'Explosivo', accion: 'destruir' }
+    ],
+    4: [
+      { tipo: 'si', material: 'Diamante', accion: 'guardar' },
+      { tipo: 'sino-si', material: 'Explosivo', accion: 'destruir' },
+      { tipo: 'sino', accion: 'quemar' }
+    ]
   };
 
   evaluar(codigo: string, fase: FaseControlCalidad): ResultadoEvaluacionControlCalidad {
-    const codigoSanitizado = this.sanitizar(codigo);
-    const acciones = this.extraerAcciones(codigoSanitizado);
+    const codigoSanitizado = normalizarCodigoControl(codigo);
+    const bloque = extraerBloqueRaiz(codigoSanitizado, this.eventoInicio);
+    const cadena = bloque.cierreValido
+      ? analizarCadenaCondicional(bloque.interior)
+      : { valida: false, ramas: [] as RamaCondicional[] };
+    const acciones = mapearAcciones(cadena.ramas);
     const errores: Array<{ mensaje: string }> = [];
 
-    if (!codigoSanitizado.startsWith(this.eventoInicio) || !codigoSanitizado.endsWith('}')) {
+    if (!bloque.aperturaValida || !bloque.cierreValido) {
       errores.push({ mensaje: 'La lógica debe permanecer dentro del evento fijo de la fábrica.' });
-    } else if (codigoSanitizado !== this.soluciones[fase]) {
-      errores.push({ mensaje: this.explicarError(codigoSanitizado, fase, acciones) });
+    } else if (!cadena.valida || !coincideEstructura(cadena.ramas, this.estructuras[fase])) {
+      errores.push({
+        mensaje: this.explicarError(codigoSanitizado, fase, acciones)
+      });
     }
 
     return {
@@ -45,30 +61,6 @@ export class EvaluadorControlCalidadService implements EvaluadorNivel<
       acciones,
       errores
     };
-  }
-
-  private sanitizar(codigo: string): string {
-    return codigo
-      .replace(/\s+/g, '')
-      .replace(/'([^']*)'/g, '"$1"');
-  }
-
-  private extraerAcciones(
-    codigo: string
-  ): Partial<Record<TipoMaterialFabrica, AccionFabrica>> {
-    const acciones: Partial<Record<TipoMaterialFabrica, AccionFabrica>> = {};
-    const condicion = /(?:si|sinosi)\(fabrica\.materialActual=="(Diamante|Explosivo|Carbon)"\)\{fabrica\.(guardar|destruir|quemar)\(\);\}/g;
-    let coincidencia: RegExpExecArray | null;
-
-    while ((coincidencia = condicion.exec(codigo)) !== null) {
-      acciones[coincidencia[1] as TipoMaterialFabrica] = coincidencia[2] as AccionFabrica;
-    }
-
-    if (/sino\{fabrica\.quemar\(\);\}/.test(codigo)) {
-      acciones.Carbon = 'quemar';
-    }
-
-    return acciones;
   }
 
   private explicarError(

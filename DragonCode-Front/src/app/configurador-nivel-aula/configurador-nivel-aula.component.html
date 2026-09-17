@@ -1,0 +1,113 @@
+@if (configuracion) {
+  <section class="configurador" aria-labelledby="titulo-configuracion-nivel">
+    <header class="configurador__cabecera">
+      <div>
+        <span class="configurador__paso">CONTENIDO DEL NIVEL</span>
+        <h3 id="titulo-configuracion-nivel">Personalizar actividad</h3>
+      </div>
+      <span class="configurador__seguro">PARÁMETROS SEGUROS</span>
+    </header>
+
+    @if (configuracionTaladro; as taladro) {
+      <div class="vista-previa vista-taladro" aria-label="Vista previa del nivel con los valores configurados">
+        <div class="vista-previa__titulo"><span>EJEMPLO EN EL NIVEL</span><strong>Panel del taladro</strong></div>
+        <img src="/assets/images/aventura/nivel2/taladro-vapor.png" alt="Taladro de vapor">
+        <div class="sensores-ejemplo">
+          <div><span>TEMPERATURA</span><strong>{{ taladro.umbral_temperatura }}°</strong></div>
+          <div><span>PRESIÓN</span><strong>{{ taladro.presion_objetivo }}</strong></div>
+          <div><span>AGUA</span><strong>{{ taladro.profundidad_objetivo }}m</strong></div>
+        </div>
+      </div>
+      <p class="configurador__ayuda">Define los valores que deberán reconocer los estudiantes. DragonCode actualizará las opciones y la evaluación.</p>
+      <div class="campos-grid">
+        <label>
+          <span>Temperatura máxima</span>
+          <small>La condición correcta será mayor que este valor.</small>
+          <div class="campo-unidad">
+            <input type="number" min="50" max="200" step="10"
+                   [ngModel]="taladro.umbral_temperatura"
+                   (ngModelChange)="actualizarNumero('umbral_temperatura', $event)">
+            <strong>°</strong>
+          </div>
+        </label>
+        <label>
+          <span>Presión estable</span>
+          <small>Valor exacto que mantiene la fuerza del taladro.</small>
+          <input type="number" min="20" max="100" step="5"
+                 [ngModel]="taladro.presion_objetivo"
+                 (ngModelChange)="actualizarNumero('presion_objetivo', $event)">
+        </label>
+        <label>
+          <span>Profundidad del agua</span>
+          <small>Punto exacto en el que debe iniciar la extracción.</small>
+          <input type="number" min="200" max="600" step="20"
+                 [ngModel]="taladro.profundidad_objetivo"
+                 (ngModelChange)="actualizarNumero('profundidad_objetivo', $event)">
+        </label>
+      </div>
+    }
+
+    @if (configuracionVariables; as variables) {
+      <div class="vista-previa vista-variables" aria-label="Vista previa de las tarjetas de la actividad">
+        <div class="vista-previa__titulo"><span>EJEMPLO EN EL NIVEL</span><strong>Opciones que verá el estudiante</strong></div>
+        <img src="/assets/images/aventura/nivel3/mago-variables.png" alt="Mago del nivel de variables">
+        <div class="tarjetas-ejemplo">
+          <span class="tarjeta-correcta">RESPUESTA CORRECTA</span>
+          @for (distractor of distractoresVista; track distractor) {
+            <span class="tarjeta-distractora">DISTRACTOR {{ distractor + 1 }}</span>
+          }
+        </div>
+      </div>
+      <p class="configurador__ayuda">Ajusta la cantidad de alternativas incorrectas. Los valores pedagógicos y las respuestas correctas permanecen protegidos.</p>
+      <label class="control-dificultad">
+        <span>Distractores por fase: <strong>{{ variables.distractores_por_fase }}</strong></span>
+        <input type="range" min="0" max="4" step="1"
+               [ngModel]="variables.distractores_por_fase"
+               (ngModelChange)="actualizarDistractores($event)">
+        <small>Menos distractores facilitan la actividad; más opciones aumentan el análisis requerido.</small>
+      </label>
+    }
+
+    @if (configuracionFabrica; as fabrica) {
+      <div class="vista-previa vista-fabrica" aria-label="Vista previa de la cinta transportadora">
+        <div class="vista-previa__titulo"><span>EJEMPLO EN EL NIVEL</span><strong>Fila inicial de la fase {{ faseEjemplo }}</strong></div>
+        <div class="cinta-ejemplo">
+          @for (material of materialesEjemplo; track identificarMaterial($index)) {
+            <div><img [src]="imagenMaterial(material)" [alt]="material"><small>{{ material === 'Carbon' ? 'Carbón' : material }}</small></div>
+          }
+        </div>
+      </div>
+      <p class="configurador__ayuda">Organiza la fila de materiales de cada fase seleccionada. Cada fase debe conservar entre 1 y 10 elementos.</p>
+      <div class="fases-materiales">
+        @for (fase of fasesVisibles; track fase) {
+          <article class="fase-materiales">
+            <div class="fase-materiales__titulo">
+              <strong>FASE {{ fase }}</strong>
+              <span>{{ fabrica.materiales_por_fase['' + fase].length || 0 }} materiales</span>
+            </div>
+            <div class="secuencia" [attr.aria-label]="'Secuencia de materiales de la fase ' + fase">
+              @for (material of fabrica.materiales_por_fase['' + fase]; track identificarMaterial($index)) {
+                <button type="button" class="material" [attr.data-material]="material"
+                        [disabled]="fabrica.materiales_por_fase['' + fase].length <= 1"
+                        (click)="quitarMaterial(fase, $index)"
+                        [attr.aria-label]="'Quitar ' + material">
+                  <i aria-hidden="true"></i><span>{{ material === 'Carbon' ? 'Carbón' : material }}</span><b>×</b>
+                </button>
+              }
+            </div>
+            <div class="agregar-material" aria-label="Agregar material">
+              @for (material of materiales; track material.valor) {
+                @if (materialPermitido(fase, material.valor)) {
+                  <button type="button" [disabled]="fabrica.materiales_por_fase['' + fase].length >= 10"
+                          (click)="agregarMaterial(fase, material.valor)">
+                    + {{ material.etiqueta }}
+                  </button>
+                }
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+}

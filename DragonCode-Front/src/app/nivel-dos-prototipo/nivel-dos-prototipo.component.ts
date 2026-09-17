@@ -16,9 +16,19 @@ import {
 } from '../services/aulas.service';
 import { LoaderService } from '../services/loader.service';
 import { ProgresoService } from '../services/progreso.service';
+import { calcularEstrellas } from '../core/estrellas';
 import nivel2Data from '../../assets/data/aventuraniveles/nivel-2.json';
+import { ConfiguracionNivelDos } from '../core/configuracion-niveles-aula';
 
 type TipoEventoTaladro = 'temperatura' | 'peso' | 'agua';
+type EstadoPuntaTaladro =
+  | 'inactivo'
+  | 'apagado'
+  | 'sobrepresion'
+  | 'ahogado'
+  | 'perforando'
+  | 'desestabilizado'
+  | 'extrayendo';
 type EstadoTaladro =
   | 'detenido'
   | 'perforando'
@@ -75,6 +85,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   pasoAndamiaje = 0;
   antiCopiaActivo = false;
   ayudaUsada = false;
+  readonly maxVidas = 3;
+  vidas = this.maxVidas;
 
   private readonly tonoColores: Record<string, { boton: string; consola: string }> = {
     azul:    { boton: '#174bd4', consola: '#82B1FF' },
@@ -106,6 +118,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   profundidadActual = 0;
   profundidadAgua = 500;
   profundidadMaxima = 600;
+  umbralTemperatura = 100;
+  presionObjetivo = 50;
   extrayendoAgua = false;
   aguaContaminada = false;
   escalasProfundidad: number[] = Array.from({length: 13}, (_, i) => i * 50); // [0, 50, 100... 600]
@@ -121,6 +135,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   pistaVisible = false;
   ayudaVisible = false;
   estadoTaladro: EstadoTaladro = 'detenido';
+  estadoPunta: EstadoPuntaTaladro = 'inactivo';
+  mostrarParticulasMoradas = false;
   errores: string[] = [];
   bitacora = 'Motor detenido. Construye la estrategia dentro del evento.';
   estrellas = 0;
@@ -171,7 +187,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
             break;
           case 2:
             const tonosArray = ['azul', 'naranja', 'violeta', 'cyan', 'dorado'];
-            andamiaje = [0, 50, 75, 100, 150].map((v, i) => ({ etiqueta: "Valor", codigo: v.toString(), tono: tonosArray[i % tonosArray.length] }));
+            andamiaje = this.opcionesNumericas([0, 50, 75, this.umbralTemperatura, 150])
+              .map((v, i) => ({ etiqueta: "Valor", codigo: v.toString(), tono: tonosArray[i % tonosArray.length] }));
             break;
           case 3:
             andamiaje = [
@@ -196,15 +213,12 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
             ];
             break;
           case 2:
-            andamiaje = [
-              { etiqueta: "Valor", codigo: "8", tono: "cyan" },
-              { etiqueta: "Valor", codigo: "30", tono: "purpura" },
-              { etiqueta: "Valor", codigo: "45", tono: "magenta" },
-              { etiqueta: "Valor", codigo: "50", tono: "turquesa" },
-              { etiqueta: "Valor", codigo: "55", tono: "mostaza" },
-              { etiqueta: "Valor", codigo: "70", tono: "violeta" },
-              { etiqueta: "Valor", codigo: "100", tono: "gris" }
-            ];
+            andamiaje = this.opcionesNumericas([30, 45, this.presionObjetivo, 55, 70])
+              .map((valor, indice) => ({
+                etiqueta: "Valor",
+                codigo: String(valor),
+                tono: ['cyan', 'purpura', 'turquesa', 'mostaza', 'violeta'][indice % 5]
+              }));
             break;
           case 3:
             andamiaje = [
@@ -228,11 +242,12 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
             ];
             break;
           case 2:
-            andamiaje = [
-              { etiqueta: "Valor", codigo: "200", tono: "cyan" },
-              { etiqueta: "Valor", codigo: "500", tono: "purpura" },
-              { etiqueta: "Valor", codigo: "800", tono: "magenta" }
-            ];
+            andamiaje = this.opcionesNumericas([200, this.profundidadAgua, 600])
+              .map((valor, indice) => ({
+                etiqueta: "Valor",
+                codigo: String(valor),
+                tono: ['cyan', 'purpura', 'magenta'][indice % 3]
+              }));
             break;
           case 3:
             andamiaje = [
@@ -273,13 +288,40 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     return array;
   }
 
+  private opcionesNumericas(valores: number[]): number[] {
+    return [...new Set(valores)].sort((a, b) => a - b);
+  }
+
   manejarToggleDraco(estado: boolean) { this.ayudaVisible = estado; }
-  manejarUsoPocion(pocion: string) { if (pocion === 'libro') this.ayudaVisible = !this.ayudaVisible; }
+
+  manejarUsoPocion(pocion: string): void {
+    const inventario = this.layoutJuego?.baraja?.estadoObjetos;
+    if (!inventario) return;
+
+    if (pocion === 'libro') {
+      if (!inventario.libro.activo) return;
+      this.ayudaVisible = !this.ayudaVisible;
+      if (this.ayudaVisible) this.ayudaUsada = true;
+      return;
+    }
+
+    if (pocion === 'roja') {
+      if (!inventario.vida.activo || inventario.vida.consumida) return;
+      if (this.vidas >= this.maxVidas) {
+        this.layoutJuego.baraja.agitarPocion('roja');
+        return;
+      }
+      this.vidas++;
+      inventario.vida.consumida = true;
+      this.inventarioNivel.vida.consumida = true;
+      this.ayudaUsada = true;
+    }
+  }
   registrarAyudaUsada() { this.ayudaUsada = true; }
 
   manejarUsoTarjeta(tarjeta: TarjetaConfig): void {
     if (this.faseActual.numero > 3) { this.ayudaUsada = true; return; }
-    
+
     if (this.layoutJuego && this.layoutJuego.consola) {
       this.layoutJuego.consola.guardarEstadoPlantilla(this.plantillaActiva);
     }
@@ -316,7 +358,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     if (this.faseActual.numero > 2 && this.solucionesPorFase.has(2)) {
       this.historialFases += this.solucionesPorFase.get(2) + '\n\n';
     }
-    
+
     this.plantillaActiva = `${this.faseActual.evento}\n  // Inserta tu codigo aqui\n}`;
     
     this.renderizarConsolaTexto();
@@ -391,6 +433,10 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   private solucionesPorFase = new Map<number, string>();
   private tiempoTresEstrellas = 60;
   private tiempoDosEstrellas = 120;
+
+  get modoJuegoActual(): 'aventura' | 'aula' {
+    return this.esActividadAula || !!localStorage.getItem('aulaActiva') ? 'aula' : 'aventura';
+  }
   private maxIntentosSinPenalidad = 3;
 
   constructor(
@@ -403,11 +449,16 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.motor.configurarTaladro();
     this.cargarContextoInicial();
   }
 
   get faseActual(): FaseNivelDos {
     return this.fases[this.faseActualIndice];
+  }
+
+  get fasesSuperadas(): number {
+    return this.nivelCompletado ? this.fases.length : this.faseActualIndice;
   }
 
   get plantillaInicio(): string {
@@ -558,12 +609,19 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     this.tiempoSegundos = 0;
     this.tiempoInicioMs = 0;
     this.nivelCompletado = false;
+    this.falloFase = false;
     this.gameOver = false;
+    this.vidas = this.maxVidas;
+    this.ayudaUsada = false;
     this.estrellas = 0;
     this.calificacion = 0;
     this.guardandoProgreso = false;
     this.progresoGuardado = false;
     this.mensajeSincronizacion = '';
+    this.inventarioNivel.vida.consumida = false;
+    if (this.layoutJuego?.baraja) {
+      this.layoutJuego.baraja.estadoObjetos.vida.consumida = false;
+    }
     this.solucionesPorFase.clear();
     this.prepararFaseActual();
   }
@@ -582,12 +640,12 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   private actualizarSimulacion(): void {
     const fase = this.faseActual.numero;
     this.estadoTaladro = 'perforando';
-    // El valor debe superar el umbral para que el código enseñado (> 100)
+    // El valor debe superar el umbral configurado para activar la condición.
     // también sea verdadero en la simulación, no solo en el evaluador.
-    this.temperatura = Math.min(300, this.temperatura + 10);
+    this.temperatura = Math.min(this.umbralTemperatura + 50, this.temperatura + 10);
 
     if (fase >= 2) {
-      this.pesoCristales = Math.min(55, this.pesoCristales + 5);
+      this.pesoCristales = Math.min(this.presionObjetivo + 5, this.pesoCristales + 5);
     }
     if (fase >= 3) {
       this.combustible = Math.max(0, this.combustible - 10);
@@ -595,7 +653,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
 
     if (fase === 1) {
       if (this.estrategias.estrategiaVaporCorrecta) {
-        if (this.temperatura > 100) this.resolverEvento('temperatura');
+        if (this.temperatura > this.umbralTemperatura) this.resolverEvento('temperatura');
         return;
       }
 
@@ -609,7 +667,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
         return;
       }
 
-      if (this.temperatura > 100) {
+      if (this.temperatura > this.umbralTemperatura) {
         this.fallarFase1Andamiaje('SOBRECALENTAMIENTO');
       }
       return;
@@ -617,10 +675,10 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
 
     if (fase === 2) {
       // Evitar que la temperatura estalle durante la ejecución real de Fase 2
-      if (this.temperatura > 100) this.temperatura = 0;
+      if (this.temperatura > this.umbralTemperatura) this.temperatura = 0;
 
       if (this.estrategias.estrategiaPesoCorrecta) {
-        if (this.pesoCristales >= 50) this.resolverEvento('peso');
+        if (this.pesoCristales >= this.presionObjetivo) this.resolverEvento('peso');
       } else {
         const conf = this.falloFase2AndamiajeConfig;
         let condicionCumplida = false;
@@ -632,7 +690,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
           return;
         }
 
-        if (this.pesoCristales >= 55) {
+        if (this.pesoCristales >= this.presionObjetivo + 5) {
           this.fallarFase2Andamiaje('DESESTABILIZACION');
         }
       }
@@ -640,8 +698,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     }
 
     if (fase === 3) {
-      if (this.temperatura > 100) this.temperatura = 0;
-      if (this.pesoCristales > 50) this.pesoCristales = 0;
+      if (this.temperatura > this.umbralTemperatura) this.temperatura = 0;
+      if (this.pesoCristales > this.presionObjetivo) this.pesoCristales = 0;
       
       const conf = this.falloFase3AndamiajeConfig;
       let targetDepth = this.profundidadMaxima;
@@ -649,7 +707,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
       if (conf.valor && conf.valor > 0) {
         targetDepth = Math.min(conf.valor, this.profundidadMaxima);
       } else if (this.estrategias.estrategiaAguaCorrecta) {
-        targetDepth = 500;
+        targetDepth = this.profundidadAgua;
       }
       
       if (this.profundidadActual < targetDepth) {
@@ -665,11 +723,11 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
       }
       return;
     }
+
   }
 
   private fallarFase3Andamiaje(tipoFallo: string) {
     this.detenerGameLoop();
-    this.ejecutando = false;
     this.erroresAcumulados++;
     this.errores = ['Configuración incorrecta del andamiaje.'];
 
@@ -677,23 +735,29 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     
     if (tipoFallo === 'ANTES_DE_AGUA') {
       this.estadoTaladro = 'detenido';
+      this.estadoPunta = 'apagado';
       msg = 'Te detuviste antes de llegar al agua.';
     } else if (tipoFallo === 'PROFUNDIDAD_INCORRECTA') {
       this.estadoTaladro = 'explosion';
+      this.estadoPunta = 'sobrepresion';
       this.aguaContaminada = true;
       msg = '¡El taladro perforó la reserva, rompió la piedra base y ensució el agua pura! Has arruinado la misión.';
     } else if (tipoFallo === 'APAGADO') {
       this.estadoTaladro = 'descompuesto' as any;
+      this.estadoPunta = 'apagado';
       msg = 'Apagaste el motor. Ahora la máquina no tiene energía para extraer el agua.';
     } else if (tipoFallo === 'CONTAMINACION') {
       this.estadoTaladro = 'explosion';
+      this.estadoPunta = 'sobrepresion';
       this.aguaContaminada = true;
       msg = '¡El taladro perforó la reserva, rompió la piedra base y ensució el agua pura! Has arruinado la misión.';
     } else if (tipoFallo === 'NO_EXTRAER') {
       this.estadoTaladro = 'detenido';
+      this.estadoPunta = 'apagado';
       msg = 'Llegaste al agua, pero le dijiste a la máquina que NO la extraiga (false).';
     } else {
       this.estadoTaladro = 'explosion';
+      this.estadoPunta = 'sobrepresion';
       this.aguaContaminada = true;
     }
 
@@ -720,11 +784,15 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     }
     if (tipo === 'peso') {
       this.estadoTaladro = 'empacando';
+      this.estadoPunta = 'perforando';
+      this.mostrarParticulasMoradas = true;
+      setTimeout(() => { this.mostrarParticulasMoradas = false; }, 500);
       this.pesoCristales = 0;
       this.bitacora = 'La banda empacó los cristales antes de romperse.';
     }
     if (tipo === 'agua') {
       this.estadoTaladro = 'estable';
+      this.estadoPunta = 'extrayendo';
       this.extrayendoAgua = true;
       this.bitacora = 'El taladro se detuvo a la profundidad exacta y extrajo el agua.';
     }
@@ -769,31 +837,37 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
 
   private dispararModalGameOver(bitacoraMsg: string): void {
     this.bitacora = bitacoraMsg;
+    this.vidas = Math.max(0, this.vidas - 1);
     if (this.modalFalloTimeout) clearTimeout(this.modalFalloTimeout);
     this.modalFalloTimeout = setTimeout(() => {
-      this.falloFase = true;
+      this.ejecutando = false;
+      this.gameOver = this.vidas === 0;
+      this.falloFase = !this.gameOver;
       this.cdr.detectChanges();
     }, 2500);
   }
 
   fallarFase1Andamiaje(tipoFallo: string): void {
     this.detenerGameLoop();
-    this.ejecutando = false;
     this.erroresAcumulados++;
     this.errores = ['Configuración incorrecta del andamiaje.'];
 
     let msg = '';
     if (tipoFallo === 'AHOGO') {
       this.estadoTaladro = 'ahogo' as any;
+      this.estadoPunta = 'ahogado';
       msg = 'El motor se ahogó por liberar vapor antes de tiempo.';
     } else if (tipoFallo === 'SOBRECALENTAMIENTO') {
       this.estadoTaladro = 'explosion';
+      this.estadoPunta = 'sobrepresion';
       msg = 'El taladro se sobrecalentó.';
     } else if (tipoFallo === 'DESCOMPUESTO') {
       this.estadoTaladro = 'descompuesto' as any;
+      this.estadoPunta = 'apagado';
       msg = 'Apagar el motor de golpe dañó los engranajes.';
     } else {
       this.estadoTaladro = 'explosion';
+      this.estadoPunta = 'sobrepresion';
       msg = 'El taladro explotó por configuración incorrecta.';
     }
     this.dispararModalGameOver(msg);
@@ -801,24 +875,32 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
 
   fallarFase2Andamiaje(tipoFallo: string): void {
     this.detenerGameLoop();
-    this.ejecutando = false;
     this.erroresAcumulados++;
-    this.errores = ['La presion debe ser exactamente 50 para no desestabilizar la maquina.'];
+    this.errores = [`La presion debe ser exactamente ${this.presionObjetivo} para no desestabilizar la maquina.`];
 
     let msg = '';
     if (tipoFallo === 'DESCOMPUESTO') {
       this.estadoTaladro = 'descompuesto' as any;
-      msg = 'Apagar el motor de golpe desestabilizo la maquina.';
+      this.estadoPunta = 'apagado';
+      msg = 'Apagar el motor de golpe desestabilizó la máquina.';
+    } else if (tipoFallo === 'SOBRECALENTAMIENTO') {
+      this.estadoTaladro = 'explosion';
+      this.estadoPunta = 'sobrepresion';
+      msg = 'Aumentar la fuerza causó presión alta y explotó el taladro.';
+    } else if (tipoFallo === 'AHOGO') {
+      this.estadoTaladro = 'ahogo' as any;
+      this.estadoPunta = 'ahogado';
+      msg = 'Liberar vapor causó presión baja y ahogó la máquina.';
     } else {
       this.estadoTaladro = 'desestabilizado';
-      msg = 'La presion no se estabilizo y la maquina se sacudio bruscamente.';
+      this.estadoPunta = 'desestabilizado';
+      msg = 'La presión no se estabilizó y la máquina se sacudió bruscamente.';
     }
     this.dispararModalGameOver(msg);
   }
 
   private fallarFase(tipo: TipoEventoTaladro): void {
     this.detenerGameLoop();
-    this.ejecutando = false;
     this.erroresAcumulados++;
     this.errores = this.erroresPendientes.length > 0
       ? this.erroresPendientes
@@ -827,12 +909,15 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     let msg = '';
     if (tipo === 'temperatura') {
       this.estadoTaladro = 'explosion';
+      this.estadoPunta = 'sobrepresion';
       msg = 'La temperatura llegó al límite y el taladro explotó.';
     } else if (tipo === 'peso') {
       this.estadoTaladro = 'banda-rota';
+      this.estadoPunta = 'apagado';
       msg = 'La carga superó el límite y rompió la banda transportadora.';
     } else if (tipo === 'agua') {
       this.estadoTaladro = 'explosion';
+      this.estadoPunta = 'sobrepresion';
       msg = '¡El taladro pasó de largo y se estrelló contra el fondo! Faltó extraer el agua a la profundidad correcta.';
     }
     this.dispararModalGameOver(msg);
@@ -855,6 +940,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     this.erroresPendientes = [];
     this.estrategias = this.banderasVacias();
     this.estadoTaladro = 'detenido';
+    this.estadoPunta = this.faseActual.numero === 3 ? 'perforando' : 'inactivo';
+    this.mostrarParticulasMoradas = false;
     this.bitacora = `Fase ${this.faseActual.numero} preparada. Construye la estrategia dentro del evento.`;
     this.pestanaInventario = 'acciones';
     
@@ -894,15 +981,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     this.detenerTemporizador();
     const intentos = this.intentosCalificables;
 
-    // Misma rúbrica configurada para el Nivel 1 en el backend:
-    // 3 estrellas hasta 60 s, 2 hasta 120 s y 1 después de ese tiempo.
     this.calificacion = intentos <= 1 ? 10 : intentos <= 3 ? 8 : 6;
-    this.estrellas = this.tiempoSegundos <= this.tiempoTresEstrellas
-      ? 3
-      : this.tiempoSegundos <= this.tiempoDosEstrellas ? 2 : 1;
-    if (intentos > this.maxIntentosSinPenalidad) {
-      this.estrellas = Math.max(1, this.estrellas - 1);
-    }
+    this.estrellas = calcularEstrellas(this.vidas, this.ayudaUsada);
     this.guardarProgreso();
   }
 
@@ -952,19 +1032,65 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
       parametros = parametrosRecibidos as ParametrosEvaluacion;
     }
 
+    const configuracion = parametros?.configuracion_nivel;
+    if (configuracion?.tipo === 'sensores_taladro' && configuracion.nivel_id === 2) {
+      const sensores = configuracion as ConfiguracionNivelDos;
+      this.umbralTemperatura = sensores.umbral_temperatura;
+      this.presionObjetivo = sensores.presion_objetivo;
+      this.profundidadAgua = sensores.profundidad_objetivo;
+      this.profundidadMaxima = Math.max(600, this.profundidadAgua + 100);
+      this.escalasProfundidad = Array.from(
+        { length: Math.floor(this.profundidadMaxima / 50) + 1 },
+        (_, indice) => indice * 50
+      );
+      this.motor.configurarTaladro({
+        umbralTemperatura: this.umbralTemperatura,
+        presionObjetivo: this.presionObjetivo,
+        profundidadObjetivo: this.profundidadAgua
+      });
+      this.fases = (nivel2Data.fases as unknown as FaseNivelDos[]).map(fase =>
+        this.personalizarTextosFase(fase)
+      );
+    }
+
     this.antiCopiaActivo = parametros?.anti_copia ?? false;
+    // Las actividades de aula se resuelven sin objetos de ayuda.
+    const ayudasHabilitadas = false;
+    this.inventarioNivel.libro.activo = ayudasHabilitadas;
+    this.inventarioNivel.vida.activo = ayudasHabilitadas;
     this.tiempoTresEstrellas = parametros?.tiempo_3_estrellas ?? 60;
     this.tiempoDosEstrellas = parametros?.tiempo_2_estrellas ?? 120;
     this.maxIntentosSinPenalidad = parametros?.intentos_max_sin_penalidad ?? 3;
     const fasesSeleccionadas = parametros?.fases_seleccionadas
       ?.map(Number)
-      .filter(numero => Number.isInteger(numero) && numero >= 1 && numero <= 4);
+      .filter(numero => Number.isInteger(numero) && numero >= 1 && numero <= 3);
 
     if (fasesSeleccionadas?.length) {
       const seleccion = new Set(fasesSeleccionadas);
-      const rawFases = nivel2Data.fases as unknown as FaseNivelDos[];
-      this.fases = rawFases.filter(fase => seleccion.has(fase.numero));
+      this.fases = this.fases.filter(fase => seleccion.has(fase.numero));
     }
+  }
+
+  private personalizarTextosFase(fase: FaseNivelDos): FaseNivelDos {
+    if (fase.numero === 1) {
+      return {
+        ...fase,
+        objetivo: `Programa al taladro para liberar vapor cuando su temperatura supere los ${this.umbralTemperatura}°.` ,
+        pista: `Compara la temperatura con ${this.umbralTemperatura} usando > y coloca liberarVapor dentro de la condición.`
+      };
+    }
+    if (fase.numero === 2) {
+      return {
+        ...fase,
+        objetivo: `Mantén la presión exactamente en ${this.presionObjetivo} para estabilizar la máquina.`,
+        pista: `Compara la presión con ${this.presionObjetivo} usando == y ejecuta mantenerFuerza.`
+      };
+    }
+    return {
+      ...fase,
+      objetivo: `Activa la extracción de agua cuando el taladro alcance ${this.profundidadAgua} metros.`,
+      pista: `Usa == ${this.profundidadAgua}, detén el taladro y asigna true a extraerAgua.`
+    };
   }
 
   private guardarProgreso(): void {
@@ -989,6 +1115,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
       reto_nivel_id: 2,
       tiempo_segundos: this.tiempoSegundos,
       intentos: this.intentosCalificables,
+      vidas_restantes: this.vidas,
+      ayudas_usadas: this.esActividadAula ? false : this.ayudaUsada,
       codigo_solucion: codigoSolucion,
       aula_id: this.aulaActualId,
       reto_personalizado_id: this.retoActualId
@@ -1033,7 +1161,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     this.loopCosmetico = setInterval(() => {
       this.temperatura += 10; 
   
-      if (this.temperatura >= 100) {
+      if (this.temperatura >= this.umbralTemperatura) {
         this.estadoTaladro = 'liberando-vapor';
   
         setTimeout(() => {
@@ -1045,7 +1173,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
       if (this.faseActual.numero >= 3) {
         // Genera un número aleatorio entre -2 y +2
         const fluctuacion = Math.floor(Math.random() * 5) - 2; 
-        this.pesoCristales = 50 + fluctuacion; // Oscilará visualmente entre 48 y 52
+        this.pesoCristales = this.presionObjetivo + fluctuacion;
       }
     }, 500);
   }

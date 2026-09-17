@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { GameHeaderComponent } from '../game-header/game-header.component';
+import { TarjetaConfig } from '../baraja-tarjetas/baraja-tarjetas.component';
+import { Instruccion, LayoutJuegoComponent } from '../layout-juego/layout-juego.component';
 import {
   AccionFabrica,
   FaseControlCalidad,
@@ -19,6 +19,10 @@ import {
 } from '../services/aulas.service';
 import { LoaderService } from '../services/loader.service';
 import { ProgresoService } from '../services/progreso.service';
+import { calcularEstrellas } from '../core/estrellas';
+import nivel4Data from '../../assets/data/aventuraniveles/nivel-4.json';
+import nivel5Data from '../../assets/data/aventuraniveles/nivel-5.json';
+import { ConfiguracionNivelFabrica as ConfiguracionAulaFabrica } from '../core/configuracion-niveles-aula';
 
 type TonoTarjeta = 'azul' | 'verde' | 'dorado' | 'violeta';
 type EstadoEscena =
@@ -57,330 +61,42 @@ interface FaseNivelFabrica {
   tarjetas: TarjetaControl[];
 }
 
+interface PlantillaNivelFabrica {
+  lineaInicio?: string;
+  lineaFin?: string;
+  placeholder: string;
+}
+
+interface ConfiguracionNivelFabrica {
+  bitacoraInicial: string;
+  plantilla: PlantillaNivelFabrica;
+  fases: FaseNivelFabrica[];
+}
+
 @Component({
   selector: 'app-nivel-cuatro-prototipo',
   standalone: true,
-  imports: [CommonModule, FormsModule, GameHeaderComponent],
+  imports: [CommonModule, LayoutJuegoComponent],
   templateUrl: './nivel-cuatro-prototipo.component.html',
   styleUrls: [
     '../nivel-dos-prototipo/nivel-dos-prototipo.component.scss',
     './nivel-cuatro-prototipo.component.scss'
   ]
 })
-export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
-  readonly fasesBase: FaseNivelFabrica[] = [
-    {
-      numero: 1,
-      titulo: 'Rescatar el diamante',
-      concepto: 'SI · preguntar antes de actuar',
-      objetivo: 'Llega un diamante. Elige la tarjeta que pregunta “¿es Diamante?” y, si la respuesta es sí, lo guarda.',
-      pista: 'Busca la tarjeta “SI es Diamante → guardar”. SI ejecuta su acción únicamente cuando la pregunta es verdadera.',
-      materiales: ['Diamante'],
-      tarjetas: [
-        {
-          codigo: 'si (fabrica.materialActual == "Carbon") {\n  fabrica.guardar();\n}',
-          etiqueta: 'SI es Carbón → guardar',
-          tipo: 'DISTRACTOR',
-          tono: 'dorado'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Explosivo") {\n  fabrica.guardar();\n}',
-          etiqueta: 'SI es Explosivo → guardar',
-          tipo: 'DISTRACTOR',
-          tono: 'violeta'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Diamante") {\n  fabrica.guardar();\n}',
-          etiqueta: 'SI es Diamante → guardar',
-          tipo: 'CONDICIÓN SI',
-          tono: 'azul'
-        },
-        {
-          codigo: 'fabrica.guardar();',
-          etiqueta: 'Guardar sin preguntar',
-          tipo: 'DISTRACTOR',
-          tono: 'verde'
-        }
-      ]
-    },
-    {
-      numero: 2,
-      titulo: 'Proteger el horno',
-      concepto: 'SI / SINO · elegir entre dos caminos',
-      objetivo: 'Pueden llegar explosivo o carbón. Primero detecta y destruye el explosivo; SINO, envía el carbón al horno.',
-      pista: 'Inserta en este orden: “SI es Explosivo → destruir” y después “SINO → quemar lo restante”.',
-      materiales: ['Carbon', 'Explosivo'],
-      tarjetas: [
-        {
-          codigo: 'sino {\n  fabrica.guardar();\n}',
-          etiqueta: 'SINO → guardar lo restante',
-          tipo: 'DISTRACTOR',
-          tono: 'azul'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Explosivo") {\n  fabrica.destruir();\n}',
-          etiqueta: 'SI es Explosivo → destruir',
-          tipo: 'CONDICIÓN SI',
-          tono: 'dorado'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Carbon") {\n  fabrica.destruir();\n}',
-          etiqueta: 'SI es Carbón → destruir',
-          tipo: 'DISTRACTOR',
-          tono: 'violeta'
-        },
-        {
-          codigo: 'sino {\n  fabrica.quemar();\n}',
-          etiqueta: 'SINO → quemar lo restante',
-          tipo: 'RAMA SINO',
-          tono: 'verde'
-        }
-      ]
-    },
-    {
-      numero: 3,
-      titulo: 'Abrir una tercera ruta',
-      concepto: 'SINO SI · hacer una segunda pregunta',
-      objetivo: 'Primero pregunta si es diamante y guárdalo. Si no lo era, usa SINO SI para detectar y destruir el explosivo.',
-      pista: 'Inserta “SI es Diamante → guardar” y luego “SINO SI es Explosivo → destruir”.',
-      materiales: ['Explosivo', 'Diamante'],
-      tarjetas: [
-        {
-          codigo: 'sino si (fabrica.materialActual == "Diamante") {\n  fabrica.destruir();\n}',
-          etiqueta: 'SINO SI es Diamante → destruir',
-          tipo: 'DISTRACTOR',
-          tono: 'dorado'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Diamante") {\n  fabrica.guardar();\n}',
-          etiqueta: 'SI es Diamante → guardar',
-          tipo: 'CONDICIÓN SI',
-          tono: 'azul'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Explosivo") {\n  fabrica.destruir();\n}',
-          etiqueta: 'Otro SI separado',
-          tipo: 'DISTRACTOR',
-          tono: 'verde'
-        },
-        {
-          codigo: 'sino si (fabrica.materialActual == "Explosivo") {\n  fabrica.destruir();\n}',
-          etiqueta: 'SINO SI es Explosivo → destruir',
-          tipo: 'RAMA SINO SI',
-          tono: 'violeta'
-        }
-      ]
-    },
-    {
-      numero: 4,
-      titulo: 'Turno de control total',
-      concepto: 'SI / SINO SI / SINO · tres caminos',
-      objetivo: 'Clasifica todo el lote: guarda diamantes, destruye explosivos y manda al horno el carbón restante.',
-      pista: 'Orden: “SI es Diamante → guardar”, “SINO SI es Explosivo → destruir” y “SINO → quemar lo restante”.',
-      materiales: ['Carbon', 'Diamante', 'Explosivo', 'Diamante', 'Carbon'],
-      tarjetas: [
-        {
-          codigo: 'si (fabrica.materialActual == "Carbon") {\n  fabrica.destruir();\n}',
-          etiqueta: 'SI es Carbón → destruir',
-          tipo: 'DISTRACTOR',
-          tono: 'dorado'
-        },
-        {
-          codigo: 'sino si (fabrica.materialActual == "Explosivo") {\n  fabrica.destruir();\n}',
-          etiqueta: 'SINO SI es Explosivo → destruir',
-          tipo: 'RAMA SINO SI',
-          tono: 'violeta'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Diamante") {\n  fabrica.guardar();\n}',
-          etiqueta: 'SI es Diamante → guardar',
-          tipo: 'CONDICIÓN SI',
-          tono: 'azul'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Explosivo") {\n  fabrica.quemar();\n}',
-          etiqueta: 'SI es Explosivo → quemar',
-          tipo: 'DISTRACTOR',
-          tono: 'dorado'
-        },
-        {
-          codigo: 'sino {\n  fabrica.quemar();\n}',
-          etiqueta: 'SINO → quemar lo restante',
-          tipo: 'RAMA SINO',
-          tono: 'verde'
-        },
-        {
-          codigo: 'sino {\n  fabrica.guardar();\n}',
-          etiqueta: 'SINO → guardar lo restante',
-          tipo: 'DISTRACTOR',
-          tono: 'violeta'
-        }
-      ]
-    }
-  ];
+export class NivelCuatroPrototipoComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild(LayoutJuegoComponent) layoutJuego?: LayoutJuegoComponent;
 
-  readonly fasesProduccionMasiva: FaseNivelFabrica[] = [
-    {
-      numero: 1,
-      titulo: 'Encender la producción continua',
-      concepto: 'MIENTRAS · repetir una acción',
-      objetivo: 'Hay varios diamantes. Haz que la fábrica repita “guardar” MIENTRAS todavía queden materiales en la cinta.',
-      pista: 'Orden: “MIENTRAS queden materiales”, “SI es Diamante → guardar” y “FIN de MIENTRAS”.',
-      materiales: ['Diamante', 'Diamante', 'Diamante'],
-      tarjetas: [
-        {
-          codigo: 'si (fabrica.materialActual == "Diamante") {\n  fabrica.guardar();\n}',
-          etiqueta: 'SI es Diamante → guardar',
-          tipo: 'CONDICIÓN SI',
-          tono: 'azul'
-        },
-        {
-          codigo: 'mientras (fabrica.tieneMateriales == falso) {',
-          etiqueta: 'MIENTRAS la cinta esté vacía',
-          tipo: 'DISTRACTOR',
-          tono: 'violeta'
-        },
-        {
-          codigo: 'mientras (fabrica.tieneMateriales == verdadero) {',
-          etiqueta: 'MIENTRAS queden materiales',
-          tipo: 'BUCLE MIENTRAS',
-          tono: 'dorado'
-        },
-        {
-          codigo: '}',
-          etiqueta: 'FIN de MIENTRAS',
-          tipo: 'CIERRE',
-          tono: 'verde'
-        }
-      ]
-    },
-    {
-      numero: 2,
-      titulo: 'Mantener el horno seguro',
-      concepto: 'MIENTRAS + SI / SINO · repetir decisiones',
-      objetivo: 'Repite la clasificación hasta vaciar la cinta: destruye cada explosivo y, SINO, quema el carbón.',
-      pista: 'Orden: “MIENTRAS queden materiales”, “SI es Explosivo → destruir”, “SINO → quemar” y “FIN de MIENTRAS”.',
-      materiales: ['Carbon', 'Explosivo', 'Carbon', 'Explosivo', 'Carbon'],
-      tarjetas: [
-        {
-          codigo: 'sino {\n  fabrica.quemar();\n}',
-          etiqueta: 'SINO → quemar lo restante',
-          tipo: 'RAMA SINO',
-          tono: 'verde'
-        },
-        {
-          codigo: 'mientras (fabrica.tieneMateriales == verdadero) {',
-          etiqueta: 'MIENTRAS queden materiales',
-          tipo: 'BUCLE MIENTRAS',
-          tono: 'dorado'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Explosivo") {\n  fabrica.destruir();\n}',
-          etiqueta: 'SI es Explosivo → destruir',
-          tipo: 'CONDICIÓN SI',
-          tono: 'violeta'
-        },
-        {
-          codigo: 'sino {\n  fabrica.guardar();\n}',
-          etiqueta: 'SINO → guardar lo restante',
-          tipo: 'DISTRACTOR',
-          tono: 'azul'
-        },
-        {
-          codigo: '}',
-          etiqueta: 'FIN de MIENTRAS',
-          tipo: 'CIERRE',
-          tono: 'verde'
-        }
-      ]
-    },
-    {
-      numero: 3,
-      titulo: 'Automatizar rutas especiales',
-      concepto: 'MIENTRAS + SINO SI · repetir dos preguntas',
-      objetivo: 'Mientras queden materiales, guarda diamantes y después comprueba si el material es un explosivo para destruirlo.',
-      pista: 'Todo va dentro de MIENTRAS: primero “SI es Diamante → guardar” y después “SINO SI es Explosivo → destruir”.',
-      materiales: ['Explosivo', 'Diamante', 'Explosivo', 'Diamante', 'Diamante', 'Explosivo'],
-      tarjetas: [
-        {
-          codigo: 'sino si (fabrica.materialActual == "Explosivo") {\n  fabrica.destruir();\n}',
-          etiqueta: 'SINO SI es Explosivo → destruir',
-          tipo: 'RAMA SINO SI',
-          tono: 'violeta'
-        },
-        {
-          codigo: '}',
-          etiqueta: 'FIN de MIENTRAS',
-          tipo: 'CIERRE',
-          tono: 'verde'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Diamante") {\n  fabrica.guardar();\n}',
-          etiqueta: 'SI es Diamante → guardar',
-          tipo: 'CONDICIÓN SI',
-          tono: 'azul'
-        },
-        {
-          codigo: 'mientras (fabrica.tieneMateriales == verdadero) {',
-          etiqueta: 'MIENTRAS queden materiales',
-          tipo: 'BUCLE MIENTRAS',
-          tono: 'dorado'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Explosivo") {\n  fabrica.destruir();\n}',
-          etiqueta: 'Otro si separado',
-          tipo: 'DISTRACTOR',
-          tono: 'verde'
-        }
-      ]
-    },
-    {
-      numero: 4,
-      titulo: 'Avalancha de producción',
-      concepto: 'MIENTRAS + tres caminos · automatización completa',
-      objetivo: 'Procesa los 10 materiales sin detenerte: guarda diamantes, destruye explosivos y quema el carbón restante.',
-      pista: 'Dentro de MIENTRAS usa, en orden: SI para Diamante, SINO SI para Explosivo y SINO para el resto. Cierra el bucle al final.',
-      materiales: ['Carbon', 'Diamante', 'Explosivo', 'Diamante', 'Carbon', 'Explosivo', 'Carbon', 'Diamante', 'Explosivo', 'Carbon'],
-      tarjetas: [
-        {
-          codigo: 'sino {\n  fabrica.quemar();\n}',
-          etiqueta: 'SINO → quemar lo restante',
-          tipo: 'RAMA SINO',
-          tono: 'verde'
-        },
-        {
-          codigo: 'mientras (fabrica.tieneMateriales == verdadero) {',
-          etiqueta: 'MIENTRAS queden materiales',
-          tipo: 'BUCLE MIENTRAS',
-          tono: 'dorado'
-        },
-        {
-          codigo: 'si (fabrica.materialActual == "Diamante") {\n  fabrica.guardar();\n}',
-          etiqueta: 'SI es Diamante → guardar',
-          tipo: 'CONDICIÓN SI',
-          tono: 'azul'
-        },
-        {
-          codigo: '}',
-          etiqueta: 'FIN de MIENTRAS',
-          tipo: 'CIERRE',
-          tono: 'dorado'
-        },
-        {
-          codigo: 'sino si (fabrica.materialActual == "Explosivo") {\n  fabrica.destruir();\n}',
-          etiqueta: 'SINO SI es Explosivo → destruir',
-          tipo: 'RAMA SINO SI',
-          tono: 'violeta'
-        },
-        {
-          codigo: 'mientras (fabrica.tieneMateriales == verdadero) {\n  fabrica.guardar();\n}',
-          etiqueta: 'Guardar todo',
-          tipo: 'DISTRACTOR',
-          tono: 'verde'
-        }
-      ]
-    }
-  ];
+  private readonly tonoColores: Record<TonoTarjeta, { boton: string; consola: string }> = {
+    azul: { boton: '#174bd4', consola: '#82b1ff' },
+    verde: { boton: '#288650', consola: '#a5d6a7' },
+    dorado: { boton: '#df4517', consola: '#ffab91' },
+    violeta: { boton: '#8e1ba4', consola: '#ce93d8' }
+  };
+  private readonly configuracionNivel4 = nivel4Data as unknown as ConfiguracionNivelFabrica;
+  private readonly configuracionNivel5 = nivel5Data as unknown as ConfiguracionNivelFabrica;
+  readonly fasesBase = this.configuracionNivel4.fases;
+  readonly fasesProduccionMasiva = this.configuracionNivel5.fases;
+
 
   fases: FaseNivelFabrica[] = [...this.fasesBase];
   esNivelCinco = false;
@@ -398,6 +114,13 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
   calificacion = 0;
   ayudaVisible = false;
   mensajeObjeto = '';
+  configuracionTarjetasActual: TarjetaConfig[] = [];
+  inventarioNivel = {
+    libro: { activo: true },
+    clarividencia: { activo: true, consumida: false },
+    vida: { activo: true, consumida: false },
+    tiempo: { activo: true, consumida: false }
+  };
   estadoObjetos = {
     clarividencia: false,
     tiempo: false,
@@ -425,9 +148,10 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
   private retoActualId?: string;
   private esActividadAula = false;
   private solucionesPorFase = new Map<number, string>();
-  private tiempoTresEstrellas = 75;
-  private tiempoDosEstrellas = 150;
-  private maxIntentosSinPenalidad = 3;
+
+  get modoJuegoActual(): 'aventura' | 'aula' {
+    return this.esActividadAula || !!localStorage.getItem('aulaActiva') ? 'aula' : 'aventura';
+  }
 
   constructor(
     private motor: MotorEjecucionService,
@@ -444,10 +168,13 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
     this.fases = this.esNivelCinco
       ? [...this.fasesProduccionMasiva]
       : [...this.fasesBase];
-    this.tiempoTresEstrellas = this.esNivelCinco ? 100 : 75;
-    this.tiempoDosEstrellas = this.esNivelCinco ? 200 : 150;
+    this.bitacora = this.configuracionNivelActual.bitacoraInicial;
     this.prepararFaseActual();
     this.cargarContextoInicial();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.renderizarPergamino(), 0);
   }
 
   get faseActual(): FaseNivelFabrica {
@@ -463,13 +190,18 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
   }
 
   get codigoCompleto(): string {
-    if (this.esNivelCinco) return this.codigoUsuario;
-    return `evento(fabrica.nuevoMaterial) {\n${this.codigoUsuario}\n}`;
+    const { lineaInicio, lineaFin } = this.configuracionNivelActual.plantilla;
+    return [lineaInicio, this.codigoUsuario, lineaFin].filter(Boolean).join('\n');
+  }
+
+  private get configuracionNivelActual(): ConfiguracionNivelFabrica {
+    return this.esNivelCinco ? this.configuracionNivel5 : this.configuracionNivel4;
   }
 
   get numerosLinea(): number[] {
     const lineasInteriores = this.codigoUsuario.trim() ? this.codigoUsuario.split('\n').length : 1;
-    const lineasFijas = this.esNivelCinco ? 0 : 2;
+    const plantilla = this.configuracionNivelActual.plantilla;
+    const lineasFijas = [plantilla.lineaInicio, plantilla.lineaFin].filter(Boolean).length;
     return Array.from({ length: lineasInteriores + lineasFijas }, (_, indice) => indice + 1);
   }
 
@@ -513,12 +245,19 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
       : 'BRONK · SUPERVISOR DE CALIDAD';
   }
 
+  manejarUsoTarjeta(tarjeta: TarjetaConfig): void {
+    const tarjetaOriginal = this.faseActual.tarjetas.find(item => item.codigo === tarjeta.accion);
+    if (tarjetaOriginal) this.insertarTarjeta(tarjetaOriginal);
+  }
+
   insertarTarjeta(tarjeta: TarjetaControl): void {
     if (this.ejecutando || this.falloFase || this.gameOver || this.nivelCompletado) return;
+    this.layoutJuego?.consola?.guardarEstadoPlantilla(this.codigoUsuario);
     this.codigoUsuario = this.codigoUsuario.trim()
       ? `${this.codigoUsuario.trimEnd()}\n${tarjeta.codigo}`
       : tarjeta.codigo;
     this.errores = [];
+    this.renderizarPergamino();
   }
 
   borrarLinea(): void {
@@ -527,12 +266,22 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
     lineas.pop();
     this.codigoUsuario = lineas.join('\n');
     this.errores = [];
+    this.renderizarPergamino();
   }
 
   limpiarPergamino(): void {
     if (this.ejecutando || this.falloFase) return;
     this.codigoUsuario = '';
     this.errores = [];
+    if (this.layoutJuego?.consola) this.layoutJuego.consola.historialPlantilla = [];
+    this.renderizarPergamino();
+  }
+
+  retrocederPaso(codigoAnterior: string): void {
+    if (this.ejecutando || this.falloFase || this.gameOver || this.nivelCompletado) return;
+    this.codigoUsuario = codigoAnterior;
+    this.errores = [];
+    this.renderizarPergamino();
   }
 
   bloquearTransferencia(evento: ClipboardEvent | DragEvent): void {
@@ -544,6 +293,7 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
   }
 
   usarObjeto(objeto: ObjetoFabrica): void {
+    if (this.ejecutando || this.falloFase || this.gameOver || this.nivelCompletado) return;
     if (objeto === 'libro') {
       this.ayudaVisible = true;
       this.mensajeObjeto = '';
@@ -553,24 +303,33 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
     if (objeto === 'clarividencia') {
       if (this.estadoObjetos.clarividencia) return;
       this.estadoObjetos.clarividencia = true;
+      this.inventarioNivel.clarividencia.consumida = true;
       this.mensajeObjeto = `CLARIVIDENCIA: ${this.faseActual.pista}`;
+      if (this.layoutJuego?.consola) {
+        this.layoutJuego.consola.solucionesMagicas[this.esNivelCinco ? 5 : 4] =
+          this.solucionVisibleActual();
+        this.layoutJuego.activarClarividencia();
+      }
       return;
     }
 
     if (objeto === 'vida') {
       if (this.estadoObjetos.vida) return;
       if (this.vidas >= 3) {
+        this.layoutJuego?.baraja?.agitarPocion('roja');
         this.mensajeObjeto = 'Tus tres corazones están completos. Guarda la poción para cuando la necesites.';
         return;
       }
       this.vidas++;
       this.estadoObjetos.vida = true;
+      this.inventarioNivel.vida.consumida = true;
       this.mensajeObjeto = 'Poción de vida usada: recuperaste un corazón.';
       return;
     }
 
     if (this.estadoObjetos.tiempo) return;
     if (this.tiempoSegundos === 0) {
+      this.layoutJuego?.baraja?.agitarPocion('verde');
       this.mensajeObjeto = 'El reloj todavía está en cero. Guarda la poción para más adelante.';
       return;
     }
@@ -579,11 +338,30 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
       this.tiempoInicioMs = Date.now() - this.tiempoSegundos * 1000;
     }
     this.estadoObjetos.tiempo = true;
+    this.inventarioNivel.tiempo.consumida = true;
     this.mensajeObjeto = 'Poción de tiempo usada: recuperaste treinta segundos.';
   }
 
-  ejecutarCodigo(): void {
+  manejarUsoPocion(tipo: 'roja' | 'verde' | 'amarilla' | 'libro'): void {
+    const objeto: Record<typeof tipo, ObjetoFabrica> = {
+      roja: 'vida',
+      verde: 'tiempo',
+      amarilla: 'clarividencia',
+      libro: 'libro'
+    };
+    this.usarObjeto(objeto[tipo]);
+  }
+
+  get ayudasUsadas(): boolean {
+    return this.estadoObjetos.clarividencia || this.estadoObjetos.vida || this.estadoObjetos.tiempo;
+  }
+
+  ejecutarCodigo(codigoDesdePergamino?: string): void {
     if (this.ejecutando || this.falloFase || this.gameOver || this.nivelCompletado) return;
+
+    if (codigoDesdePergamino !== undefined) {
+      this.codigoUsuario = this.extraerCodigoUsuario(codigoDesdePergamino);
+    }
 
     this.iniciarTemporizador();
     this.limpiarTareasPendientes();
@@ -642,12 +420,16 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
       tiempo: false,
       vida: false
     };
+    this.inventarioNivel.clarividencia.consumida = false;
+    this.inventarioNivel.vida.consumida = false;
+    this.inventarioNivel.tiempo.consumida = false;
+    this.layoutJuego?.resetearInventario();
     this.solucionesPorFase.clear();
     this.prepararFaseActual();
   }
 
   salir(): void {
-    this.router.navigate(['/aventura']);
+    this.router.navigate([this.modoJuegoActual === 'aula' ? '/pantalla-principal' : '/aventura']);
   }
 
   ngOnDestroy(): void {
@@ -733,12 +515,7 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
     this.detenerTemporizador();
     const intentos = this.intentosCalificables;
     this.calificacion = intentos <= 1 ? 10 : intentos <= 3 ? 8 : 6;
-    this.estrellas = this.tiempoSegundos <= this.tiempoTresEstrellas
-      ? 3
-      : this.tiempoSegundos <= this.tiempoDosEstrellas ? 2 : 1;
-    if (intentos > this.maxIntentosSinPenalidad) {
-      this.estrellas = Math.max(1, this.estrellas - 1);
-    }
+    this.estrellas = calcularEstrellas(this.vidas, this.ayudasUsadas);
     this.guardarProgreso();
   }
 
@@ -790,9 +567,27 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
     }
 
     this.antiCopiaActivo = parametros?.anti_copia ?? false;
-    this.tiempoTresEstrellas = parametros?.tiempo_3_estrellas ?? (this.esNivelCinco ? 100 : 75);
-    this.tiempoDosEstrellas = parametros?.tiempo_2_estrellas ?? (this.esNivelCinco ? 200 : 150);
-    this.maxIntentosSinPenalidad = parametros?.intentos_max_sin_penalidad ?? 3;
+    // Este método solo se ejecuta en contexto de aula: allí no existen ayudas.
+    const ayudasHabilitadas = false;
+    this.inventarioNivel.libro.activo = ayudasHabilitadas;
+    this.inventarioNivel.clarividencia.activo = ayudasHabilitadas;
+    this.inventarioNivel.vida.activo = ayudasHabilitadas;
+    this.inventarioNivel.tiempo.activo = ayudasHabilitadas;
+
+    const catalogoOriginal = this.esNivelCinco
+      ? this.fasesProduccionMasiva
+      : this.fasesBase;
+    const configuracion = parametros?.configuracion_nivel;
+    const configuracionFabrica = configuracion?.tipo === 'materiales_fabrica'
+      && configuracion.nivel_id === (this.esNivelCinco ? 5 : 4)
+      ? configuracion as ConfiguracionAulaFabrica
+      : undefined;
+    const catalogoFases = catalogoOriginal.map(fase => ({
+      ...fase,
+      materiales: [
+        ...(configuracionFabrica?.materiales_por_fase[String(fase.numero)] ?? fase.materiales)
+      ]
+    }));
 
     const fasesSeleccionadas = parametros?.fases_seleccionadas
       ?.map(Number)
@@ -800,13 +595,12 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
 
     if (fasesSeleccionadas?.length) {
       const seleccion = new Set(fasesSeleccionadas);
-      const catalogoFases = this.esNivelCinco
-        ? this.fasesProduccionMasiva
-        : this.fasesBase;
       this.fases = catalogoFases.filter(fase => seleccion.has(fase.numero));
-      this.faseActualIndice = 0;
-      this.prepararFaseActual();
+    } else {
+      this.fases = catalogoFases;
     }
+    this.faseActualIndice = 0;
+    this.prepararFaseActual();
   }
 
   private guardarProgreso(): void {
@@ -828,6 +622,8 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
       reto_nivel_id: this.esNivelCinco ? 5 : 4,
       tiempo_segundos: this.tiempoSegundos,
       intentos: this.intentosCalificables,
+      vidas_restantes: this.vidas,
+      ayudas_usadas: this.esActividadAula ? false : this.ayudasUsadas,
       codigo_solucion: codigoSolucion,
       aula_id: this.aulaActualId,
       reto_personalizado_id: this.retoActualId
@@ -891,6 +687,87 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
     }
   }
 
+  private actualizarConfiguracionTarjetas(): void {
+    this.configuracionTarjetasActual = this.faseActual.tarjetas.map(tarjeta => {
+      const colores = this.tonoColores[tarjeta.tono];
+      return {
+        nombre: tarjeta.etiqueta,
+        accion: tarjeta.codigo,
+        colorBoton: colores.boton,
+        colorConsola: colores.consola
+      };
+    });
+  }
+
+  private renderizarPergamino(): void {
+    if (!this.layoutJuego) return;
+
+    const lineas: Instruccion[] = [];
+    const plantilla = this.configuracionNivelActual.plantilla;
+    if (plantilla.lineaInicio) {
+      lineas.push({
+        texto: plantilla.lineaInicio,
+        color: '#c586c0',
+        tieneError: false,
+        fija: true
+      });
+    }
+
+    if (this.codigoUsuario.trim()) {
+      this.codigoUsuario.split('\n').forEach(linea => {
+        lineas.push({ texto: linea, color: '#dcecff', tieneError: false });
+      });
+    } else {
+      lineas.push({
+        texto: plantilla.placeholder,
+        color: '#6b7280',
+        tieneError: false,
+        esPlaceholder: true
+      });
+    }
+
+    if (plantilla.lineaFin) {
+      lineas.push({ texto: plantilla.lineaFin, color: '#c586c0', tieneError: false, fija: true });
+    }
+
+    this.layoutJuego.lineasCodigo = lineas;
+    if (this.layoutJuego.consola) this.layoutJuego.consola.lineas = lineas;
+  }
+
+  private extraerCodigoUsuario(codigoCompleto: string): string {
+    const lineas = codigoCompleto.replace(/\r/g, '').split('\n');
+    const plantilla = this.configuracionNivelActual.plantilla;
+    if (plantilla.lineaInicio && lineas[0]?.trim() === plantilla.lineaInicio.trim()) {
+      lineas.shift();
+      if (plantilla.lineaFin && lineas[lineas.length - 1]?.trim() === plantilla.lineaFin.trim()) {
+        lineas.pop();
+      }
+    }
+    return lineas
+      .filter(linea => linea.trim() !== plantilla.placeholder.trim())
+      .join('\n')
+      .trim();
+  }
+
+  private solucionVisibleActual(): string[] {
+    const prioridad: Record<TarjetaControl['tipo'], number> = {
+      'BUCLE MIENTRAS': 0,
+      'CONDICIÓN SI': 1,
+      'RAMA SINO SI': 2,
+      'RAMA SINO': 3,
+      'CIERRE': 4,
+      'DISTRACTOR': 99
+    };
+    const codigo = this.faseActual.tarjetas
+      .filter(tarjeta => tarjeta.tipo !== 'DISTRACTOR')
+      .sort((a, b) => prioridad[a.tipo] - prioridad[b.tipo])
+      .map(tarjeta => tarjeta.codigo)
+      .join('\n');
+    const { lineaInicio, lineaFin } = this.configuracionNivelActual.plantilla;
+    const solucion = [lineaInicio, codigo, lineaFin].filter(Boolean).join('\n');
+    return solucion.split('\n');
+  }
+
   private prepararFaseActual(): void {
     this.limpiarTareasPendientes();
     this.codigoUsuario = '';
@@ -903,6 +780,9 @@ export class NivelCuatroPrototipoComponent implements OnInit, OnDestroy {
     this.explosivosDestruidos = 0;
     this.carbonQuemado = 0;
     this.errores = [];
+    this.actualizarConfiguracionTarjetas();
+    if (this.layoutJuego?.consola) this.layoutJuego.consola.historialPlantilla = [];
+    this.renderizarPergamino();
     this.materialesEnCinta = this.faseActual.materiales.map((tipo, indice) => ({
       id: indice + 1,
       tipo,

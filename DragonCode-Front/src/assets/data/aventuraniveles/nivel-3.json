@@ -1,0 +1,77 @@
+{
+  "nivel": 3,
+  "titulo": "La Cueva de las Variables",
+  "conceptoPedagogico": "Variables y tipos de datos básicos",
+  "plantilla": {
+    "placeholder": "// Elige una tarjeta para guardar la variable"
+  },
+  "fases": [
+    {
+      "numero": 1,
+      "titulo": "Revelar la cueva",
+      "concepto": "Booleano · verdadero o falso",
+      "objetivo": "Guarda el estado verdadero en luz para que Drako pueda descubrir a sus enemigos.",
+      "pista": "true es un booleano. No lleva comillas y representa un estado activado.",
+      "instruccionFija": "drako.revelarCueva(luz);",
+      "reglas": { "variablesEsperadas": { "luz": true }, "asignacionesMinimas": 1 },
+      "tarjetas": [
+        { "codigo": "luz = \"true\"", "etiqueta": "Texto \"true\"", "tipo": "TEXTO", "tono": "dorado" },
+        { "codigo": "luz = false", "etiqueta": "Estado apagado", "tipo": "BOOLEANO", "tono": "violeta" },
+        { "codigo": "luz = true", "etiqueta": "Estado encendido", "tipo": "BOOLEANO", "tono": "verde" },
+        { "codigo": "luz = 1", "etiqueta": "Número 1", "tipo": "ENTERO", "tono": "azul" }
+      ]
+    },
+    {
+      "numero": 2,
+      "titulo": "Preparar el elemento",
+      "concepto": "String · información entre comillas",
+      "objetivo": "Guarda el texto \"Fuego\" en elemento para preparar el hechizo correcto.",
+      "pista": "Los textos necesitan comillas. Sin ellas, Fuego sería interpretado como una variable inexistente.",
+      "instruccionFija": "drako.prepararHechizo(elemento);",
+      "reglas": { "variablesEsperadas": { "elemento": "Fuego" }, "asignacionesMinimas": 1 },
+      "tarjetas": [
+        { "codigo": "elemento = 3", "etiqueta": "Número 3", "tipo": "ENTERO", "tono": "azul" },
+        { "codigo": "elemento = \"Fuego\"", "etiqueta": "Texto \"Fuego\"", "tipo": "TEXTO", "tono": "dorado" },
+        { "codigo": "elemento = true", "etiqueta": "Valor activado", "tipo": "BOOLEANO", "tono": "verde" },
+        { "codigo": "elemento = Fuego", "etiqueta": "Nombre sin comillas", "tipo": "SIN COMILLAS", "tono": "violeta" }
+      ]
+    },
+    {
+      "numero": 3,
+      "titulo": "Calcular los ataques",
+      "concepto": "Entero · cantidad exacta",
+      "objetivo": "Guarda el número 3 en cantidad: debe existir un proyectil por cada murciélago.",
+      "pista": "3 es un entero. Si escribes \"3\" con comillas, estarás almacenando texto.",
+      "instruccionFija": "drako.invocarAtaques(cantidad);",
+      "reglas": { "variablesEsperadas": { "cantidad": 3 }, "asignacionesMinimas": 1 },
+      "tarjetas": [
+        { "codigo": "cantidad = 5", "etiqueta": "Cinco ataques", "tipo": "ENTERO", "tono": "violeta" },
+        { "codigo": "cantidad = \"3\"", "etiqueta": "Texto \"3\"", "tipo": "TEXTO", "tono": "dorado" },
+        { "codigo": "cantidad = true", "etiqueta": "Valor activado", "tipo": "BOOLEANO", "tono": "verde" },
+        { "codigo": "cantidad = 3", "etiqueta": "Tres ataques", "tipo": "ENTERO", "tono": "azul" }
+      ]
+    },
+    {
+      "numero": 4,
+      "titulo": "El murciélago alfa",
+      "concepto": "Integración de tipos de datos",
+      "objetivo": "El jefe de la cueva apareció. Repite las tres variables correctas para que Drako ejecute el combate completo.",
+      "pista": "El jefe exige combinar todo: luz como booleano, elemento como texto y cantidad como entero.",
+      "instruccionFija": "drako.iniciarCombate(luz, elemento, cantidad);",
+      "reglas": {
+        "variablesEsperadas": { "luz": true, "elemento": "Fuego", "cantidad": 3 },
+        "asignacionesMinimas": 3
+      },
+      "tarjetas": [
+        { "codigo": "cantidad = 3", "etiqueta": "Tres ataques", "tipo": "ENTERO", "tono": "azul" },
+        { "codigo": "elemento = true", "etiqueta": "Valor activado", "tipo": "BOOLEANO", "tono": "verde" },
+        { "codigo": "luz = \"true\"", "etiqueta": "Texto \"true\"", "tipo": "TEXTO", "tono": "dorado" },
+        { "codigo": "elemento = \"Fuego\"", "etiqueta": "Texto \"Fuego\"", "tipo": "TEXTO", "tono": "violeta" },
+        { "codigo": "cantidad = \"3\"", "etiqueta": "Texto \"3\"", "tipo": "TEXTO", "tono": "dorado" },
+        { "codigo": "luz = true", "etiqueta": "Estado encendido", "tipo": "BOOLEANO", "tono": "verde" },
+        { "codigo": "cantidad = 5", "etiqueta": "Cinco ataques", "tipo": "ENTERO", "tono": "violeta" },
+        { "codigo": "elemento = 3", "etiqueta": "Número 3", "tipo": "ENTERO", "tono": "azul" }
+      ]
+    }
+  ]
+}

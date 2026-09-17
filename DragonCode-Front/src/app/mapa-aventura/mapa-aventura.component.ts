@@ -4,10 +4,14 @@ import { RouterModule } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ProgresoService } from '../services/progreso.service';
 import { LoaderService } from '../services/loader.service';
+import { NIVELES_DRAGONCODE, TOTAL_NIVELES, obtenerNivel } from '../core/catalogo-niveles';
 
 export interface LevelDescriptor {
   id: number;
   titulo: string;
+  tema: string;
+  descripcion: string;
+  fases: number;
   completado: boolean;
   bloqueado: boolean;
 }
@@ -20,7 +24,8 @@ export interface LevelDescriptor {
   styleUrl: './mapa-aventura.component.scss'
 })
 export class MapaAventuraComponent implements OnInit {
-  readonly totalNiveles = 5;
+  readonly totalNiveles = TOTAL_NIVELES;
+  readonly catalogoNiveles = NIVELES_DRAGONCODE;
   niveles: LevelDescriptor[] = [];
 
   constructor(
@@ -54,24 +59,17 @@ export class MapaAventuraComponent implements OnInit {
   }
 
   private construirMapa(completados: Set<number>): void {
-    const titulos: Record<number, string> = {
-      1: 'El Ogro',
-      2: 'Taladro a Vapor',
-      3: 'La Cueva de las Variables',
-      4: 'Control de Calidad',
-      5: 'Producción en Masa'
-    };
-    const ultimoNivelImplementado = 5;
-
     this.niveles = Array.from({ length: this.totalNiveles }, (_, i) => {
       const id = i + 1;
+      const nivel = obtenerNivel(id);
       return {
         id,
-        titulo: titulos[id] ?? `Nivel ${id}`,
+        titulo: nivel?.titulo ?? `Nivel ${id}`,
+        tema: nivel?.tema ?? 'Fundamentos de programación',
+        descripcion: nivel?.descripcion ?? 'Completa el desafío para continuar tu aventura.',
+        fases: nivel?.fases ?? 4,
         completado: completados.has(id),
-        // TODO: [DEV MODE] Eliminar antes de producción. 
-        // Original: bloqueado: id > ultimoNivelImplementado || (id > 1 && !completados.has(id - 1))
-        bloqueado: id > ultimoNivelImplementado // Desbloquea todos los niveles que ya estén implementados
+        bloqueado: id > 1 && !completados.has(id) && !completados.has(id - 1)
       };
     });
   }
