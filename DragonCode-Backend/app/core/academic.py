@@ -16,6 +16,12 @@ def normalizar_fecha_utc(fecha: Optional[datetime]) -> Optional[datetime]:
     return fecha.astimezone(timezone.utc).replace(tzinfo=None)
 
 
+def fecha_utc_para_respuesta(fecha: Optional[datetime]) -> Optional[datetime]:
+    """Marca como UTC las fechas almacenadas sin zona antes de serializarlas."""
+    normalizada = normalizar_fecha_utc(fecha)
+    return normalizada.replace(tzinfo=timezone.utc) if normalizada is not None else None
+
+
 def plazo_vencido(fecha_limite: Optional[datetime], ahora: Optional[datetime] = None) -> bool:
     if fecha_limite is None:
         return False

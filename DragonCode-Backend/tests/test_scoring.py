@@ -4,25 +4,11 @@ from app.core.scoring import calcular_calificacion, calcular_estrellas
 
 
 class CalcularEstrellasTests(unittest.TestCase):
-    parametros = {
-        "tiempo_3_estrellas": 60,
-        "tiempo_2_estrellas": 120,
-        "intentos_max_sin_penalidad": 2,
-    }
-
-    def test_otorga_tres_estrellas_en_el_primer_umbral(self):
-        self.assertEqual(calcular_estrellas(60, 1, self.parametros), 3)
-
-    def test_otorga_dos_estrellas_en_el_segundo_umbral(self):
-        self.assertEqual(calcular_estrellas(120, 1, self.parametros), 2)
-
-    def test_otorga_una_estrella_fuera_del_segundo_umbral(self):
-        self.assertEqual(calcular_estrellas(121, 1, self.parametros), 1)
-
-    def test_penaliza_un_intento_excesivo_sin_bajar_de_una_estrella(self):
-        self.assertEqual(calcular_estrellas(60, 3, self.parametros), 2)
-        self.assertEqual(calcular_estrellas(121, 3, self.parametros), 1)
-
+    def test_rubrica_por_vidas_y_ayudas(self):
+        for vidas, ayudas, esperadas in ((3, False, 3), (3, True, 2), (2, False, 2),
+                                        (2, True, 1), (1, False, 1), (1, True, 1)):
+            with self.subTest(vidas=vidas, ayudas=ayudas):
+                self.assertEqual(calcular_estrellas(vidas, ayudas), esperadas)
 
 class CalcularCalificacionTests(unittest.TestCase):
     def test_aplica_la_rubrica_documentada(self):

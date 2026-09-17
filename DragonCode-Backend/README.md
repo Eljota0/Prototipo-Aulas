@@ -32,9 +32,40 @@ por ejemplo `2026-08-24T18:00:00-05:00` para Ecuador.
 - `GET /api/notificaciones/`: lista las notificaciones del usuario actual.
 - `PATCH /api/notificaciones/{id}/leer`: marca una notificación como leída.
 - `PATCH /api/notificaciones/leer-todas`: marca todas las notificaciones como leídas.
+- `GET /health/live`: confirma que el proceso HTTP está activo; recomendado para el health check de Render.
+- `GET /health/ready`: confirma que el backend puede consultar PostgreSQL.
+
+## Preparación de producción
+
+En desarrollo, `APP_ENV=development` conserva los valores locales. En Render se debe usar
+`APP_ENV=production`; antes de arrancar, la API comprobará que `SECRET_KEY` sea propia y segura,
+que `DATABASE_URL` apunte a PostgreSQL y que `CORS_ORIGINS` solo contenga el dominio HTTPS del
+frontend. La API no imprime los valores secretos cuando una comprobación falla.
+
+`AUTO_CREATE_SCHEMA` puede mantenerse en `true` durante el desarrollo local. En producción debe
+omitirse o configurarse en `false`: allí el esquema se actualiza exclusivamente con
+`alembic upgrade head`. `SEED_INITIAL_DATA` controla la carga idempotente del catálogo oficial y
+permanece activo de forma predeterminada. La documentación interactiva se publica solo en desarrollo.
+
+Las conexiones usan `pool_pre_ping` para descartar conexiones inactivas y admiten
+`DATABASE_POOL_RECYCLE_SECONDS` (300 segundos de forma predeterminada).
+
+El cierre de actividades vencidas se revisa periódicamente. La frecuencia se ajusta con
+`ACADEMIC_DEADLINE_CHECK_SECONDS` (60 segundos de forma predeterminada y mínimo 10).
+
+Los inicios de sesión fallidos se limitan por combinación de cliente y correo. Los valores
+`AUTH_LOGIN_MAX_FAILURES`, `AUTH_LOGIN_WINDOW_SECONDS` y `AUTH_LOGIN_BLOCK_SECONDS`
+permiten ajustar el umbral, la ventana y el bloqueo temporal. La protección vive en memoria
+del proceso; si Render se escala a varias réplicas deberá reemplazarse por un almacenamiento
+compartido como Redis.
+
+Las escrituras de perfil, progreso, tienda, aulas y seguimiento se confirman como una sola
+transacción. Si PostgreSQL rechaza la escritura, la sesión se revierte y la API responde sin
+exponer el detalle interno ni dejar premios, entregas o avisos parciales.
 
 ## Pruebas
 
 ```bash
+pip install -r requirements-dev.txt
 python -m unittest discover -s tests -v
 ```

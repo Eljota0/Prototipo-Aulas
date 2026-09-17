@@ -4,12 +4,18 @@ from datetime import datetime, timedelta, timezone
 from app.core.academic import (
     calcular_resumen_calificaciones,
     estado_academico,
+    fecha_utc_para_respuesta,
     normalizar_fecha_utc,
     plazo_vencido,
 )
 
 
 class FechasAcademicasTests(unittest.TestCase):
+    def test_marca_utc_en_fechas_de_respuesta(self):
+        almacenada = datetime(2026, 9, 10, 1, 51)
+        respuesta = fecha_utc_para_respuesta(almacenada)
+        self.assertEqual(respuesta.isoformat(), "2026-09-10T01:51:00+00:00")
+
     def test_normaliza_una_fecha_de_ecuador_a_utc(self):
         ecuador = timezone(timedelta(hours=-5))
         fecha_local = datetime(2026, 8, 24, 10, 0, tzinfo=ecuador)

@@ -22,7 +22,7 @@ NIVEL_DOS = {
     "orden": 2,
     "titulo": "Taladro a Vapor",
     "descripcion": (
-        "Resuelve cuatro fases programando eventos y condicionales para mantener "
+        "Resuelve tres fases programando eventos y condicionales para mantener "
         "estable un taladro mágico."
     ),
     "tipo_reto": TipoReto.eventos,
@@ -31,7 +31,7 @@ NIVEL_DOS = {
         "tiempo_2_estrellas": 120,
         "intentos_max_sin_penalidad": 3,
         "anti_copia": False,
-        "fases_seleccionadas": [1, 2, 3, 4],
+        "fases_seleccionadas": [1, 2, 3],
     },
     "recompensa_estrellas": 5,
 }

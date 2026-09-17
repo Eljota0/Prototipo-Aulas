@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
+from app.core.academic_closure import cerrar_retos_vencidos
+from app.core.persistence import confirmar_transaccion
 from app.database import get_db
 from app.models.models import Notificacion, Usuario
 from app.schemas.notificacion import NotificacionResponse
@@ -16,6 +18,10 @@ def mis_notificaciones(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ) -> Any:
+    if cerrar_retos_vencidos(db, anfitrion_id=current_user.id):
+        confirmar_transaccion(
+            db, "No se pudo actualizar el estado de las actividades. Vuelve a intentarlo."
+        )
     return db.query(Notificacion).filter(
         Notificacion.usuario_id == current_user.id,
     ).order_by(Notificacion.fecha_creacion.desc()).all()
@@ -30,7 +36,9 @@ def leer_todas(
         Notificacion.usuario_id == current_user.id,
         Notificacion.leida == False,
     ).update({Notificacion.leida: True}, synchronize_session=False)
-    db.commit()
+    confirmar_transaccion(
+        db, "No se pudieron marcar las notificaciones como leídas. Vuelve a intentarlo."
+    )
     return {"notificaciones_actualizadas": actualizadas}
 
 
@@ -48,6 +56,8 @@ def leer_notificacion(
         raise HTTPException(status_code=404, detail="Notificación no encontrada.")
 
     notificacion.leida = True
-    db.commit()
+    confirmar_transaccion(
+        db, "No se pudo marcar la notificación como leída. Vuelve a intentarlo."
+    )
     db.refresh(notificacion)
     return notificacion

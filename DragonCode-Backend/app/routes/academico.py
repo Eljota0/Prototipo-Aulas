@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.academic import (
@@ -10,6 +11,8 @@ from app.core.academic import (
     normalizar_fecha_utc,
 )
 from app.core.deps import get_current_user
+from app.core.academic_closure import cerrar_retos_vencidos
+from app.core.persistence import confirmar_transaccion
 from app.core.scoring import calcular_calificacion
 from app.database import get_db
 from app.models.models import (
@@ -64,11 +67,15 @@ def actualizar_programacion_reto(
 ) -> Any:
     """Define, reemplaza o elimina la fecha límite de una actividad."""
     _obtener_aula_del_anfitrion(aula_id, current_user.id, db)
+    if cerrar_retos_vencidos(db, aula_id=aula_id):
+        confirmar_transaccion(
+            db, "No se pudo actualizar el estado de las actividades. Vuelve a intentarlo."
+        )
     reto = _obtener_reto_del_aula(aula_id, reto_id, db)
     if reto.fecha_cierre is not None:
         raise HTTPException(status_code=409, detail="No se puede reprogramar una actividad cerrada.")
     reto.fecha_limite = normalizar_fecha_utc(datos.fecha_limite)
-    db.commit()
+    confirmar_transaccion(db, "No se pudo guardar la fecha límite. Vuelve a intentarlo.")
     db.refresh(reto)
     return reto
 
@@ -85,6 +92,10 @@ def cerrar_reto(
 ) -> Any:
     """Cierra una actividad e informa a los estudiantes que siguen pendientes."""
     aula = _obtener_aula_del_anfitrion(aula_id, current_user.id, db)
+    if cerrar_retos_vencidos(db, aula_id=aula_id):
+        confirmar_transaccion(
+            db, "No se pudo actualizar el estado de las actividades. Vuelve a intentarlo."
+        )
     reto = _obtener_reto_del_aula(aula_id, reto_id, db)
 
     if reto.fecha_cierre is None:
@@ -109,7 +120,7 @@ def cerrar_reto(
                     ),
                 ))
 
-        db.commit()
+        confirmar_transaccion(db, "No se pudo cerrar la actividad. Vuelve a intentarlo.")
         db.refresh(reto)
 
     return reto
@@ -123,7 +134,22 @@ def seguimiento_aula(
 ) -> ReporteAulaResponse:
     """Genera el reporte académico completo que consumirá el futuro frontend."""
     aula = _obtener_aula_del_anfitrion(aula_id, current_user.id, db)
-    inscripciones = db.query(AulaJugador).filter(AulaJugador.aula_id == aula_id).all()
+    if cerrar_retos_vencidos(db, aula_id=aula_id):
+        confirmar_transaccion(
+            db, "No se pudo actualizar el estado de las actividades. Vuelve a intentarlo."
+        )
+    # Un mismo orden en inscritos y calificaciones facilita revisar grupos grandes.
+    inscripciones = (
+        db.query(AulaJugador)
+        .join(Usuario, AulaJugador.jugador_id == Usuario.id)
+        .filter(AulaJugador.aula_id == aula_id)
+        .order_by(
+            func.lower(Usuario.apellido),
+            func.lower(Usuario.nombre),
+            func.lower(Usuario.email),
+        )
+        .all()
+    )
     retos = db.query(RetoPersonalizado).filter(
         RetoPersonalizado.aula_id == aula_id,
     ).order_by(RetoPersonalizado.fecha_creacion).all()

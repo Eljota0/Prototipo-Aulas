@@ -31,6 +31,10 @@ class InitialDataTests(unittest.TestCase):
         self.assertEqual([nivel.orden for nivel in niveles], [1, 2, 3, 4, 5])
         self.assertEqual(niveles[1].titulo, "Taladro a Vapor")
         self.assertEqual(niveles[1].tipo_reto, TipoReto.eventos)
+        self.assertEqual(
+            niveles[1].parametros_evaluacion["fases_seleccionadas"],
+            [1, 2, 3],
+        )
         self.assertEqual(niveles[2].titulo, "La Cueva de las Variables")
         self.assertEqual(niveles[2].tipo_reto, TipoReto.variables)
         self.assertEqual(

@@ -1,11 +1,11 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime, Enum, Text, JSON, Uuid
+from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime, Enum, Text, JSON, Uuid, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
-from datetime import datetime
 import enum
 
 from app.database import Base
+from app.core.academic import ahora_utc
 
 JSON_DOCUMENT = JSON().with_variant(JSONB, "postgresql")
 
@@ -42,8 +42,8 @@ class Usuario(Base):
     estrellas_totales = Column(Integer, default=0)
     avatar_actual_id = Column(Integer, ForeignKey("tienda_avatares.id"), nullable=True)
     avatares_desbloqueados = Column(JSON_DOCUMENT, default=lambda: [])
-    ultimo_acceso = Column(DateTime, default=datetime.utcnow)
-    fecha_registro = Column(DateTime, default=datetime.utcnow)
+    ultimo_acceso = Column(DateTime, default=ahora_utc)
+    fecha_registro = Column(DateTime, default=ahora_utc)
 
     # Relaciones
     avatar_actual = relationship("TiendaAvatar")
@@ -70,7 +70,7 @@ class AulaVirtual(Base):
     codigo_acceso = Column(String, unique=True, nullable=False)
     nombre_aula = Column(String, nullable=False)
     estado = Column(Enum(EstadoAula, native_enum=False), nullable=False, default=EstadoAula.activa)
-    fecha_creacion = Column(DateTime, default=datetime.utcnow)
+    fecha_creacion = Column(DateTime, default=ahora_utc)
 
     # Relaciones
     anfitrion = relationship("Usuario", back_populates="aulas_creadas")
@@ -79,11 +79,14 @@ class AulaVirtual(Base):
 
 class AulaJugador(Base):
     __tablename__ = "aula_jugadores"
+    __table_args__ = (
+        UniqueConstraint("aula_id", "jugador_id", name="uq_aula_jugadores_aula_jugador"),
+    )
 
     id = Column(Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
     aula_id = Column(Uuid(as_uuid=False), ForeignKey("aulas_virtuales.id"), nullable=False)
     jugador_id = Column(Uuid(as_uuid=False), ForeignKey("usuarios.id"), nullable=False)
-    fecha_ingreso = Column(DateTime, default=datetime.utcnow)
+    fecha_ingreso = Column(DateTime, default=ahora_utc)
 
     # Relaciones
     aula = relationship("AulaVirtual", back_populates="inscripciones")
@@ -105,6 +108,9 @@ class RetoNivel(Base):
 
 class ProgresoJugador(Base):
     __tablename__ = "progreso_jugador"
+    __table_args__ = (
+        UniqueConstraint("jugador_id", "reto_nivel_id", name="uq_progreso_jugador_jugador_nivel"),
+    )
 
     id = Column(Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
     jugador_id = Column(Uuid(as_uuid=False), ForeignKey("usuarios.id"), nullable=False)
@@ -131,7 +137,7 @@ class RetoPersonalizado(Base):
     tipo_reto = Column(Enum(TipoReto, native_enum=False), nullable=False, default=TipoReto.laberinto)
     parametros_evaluacion = Column(JSON_DOCUMENT, nullable=False)
     recompensa_estrellas = Column(Integer, default=5)
-    fecha_creacion = Column(DateTime, default=datetime.utcnow)
+    fecha_creacion = Column(DateTime, default=ahora_utc)
     fecha_limite = Column(DateTime, nullable=True)
     fecha_cierre = Column(DateTime, nullable=True)
 
@@ -141,6 +147,12 @@ class RetoPersonalizado(Base):
 
 class ProgresoAula(Base):
     __tablename__ = "progreso_aula"
+    __table_args__ = (
+        UniqueConstraint(
+            "jugador_id", "reto_personalizado_id",
+            name="uq_progreso_aula_jugador_reto",
+        ),
+    )
 
     id = Column(Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
     jugador_id = Column(Uuid(as_uuid=False), ForeignKey("usuarios.id"), nullable=False)
@@ -165,7 +177,7 @@ class Notificacion(Base):
     titulo = Column(String, nullable=False)
     mensaje = Column(Text, nullable=False)
     leida = Column(Boolean, default=False)
-    fecha_creacion = Column(DateTime, default=datetime.utcnow)
+    fecha_creacion = Column(DateTime, default=ahora_utc)
 
     # Relaciones
     usuario = relationship("Usuario", back_populates="notificaciones_recibidas")

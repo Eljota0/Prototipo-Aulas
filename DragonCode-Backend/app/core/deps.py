@@ -1,11 +1,12 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+import jwt
 from sqlalchemy.orm import Session
+from hmac import compare_digest
 
 from app.database import get_db
 from app.models.models import Usuario
-from app.core.security import SECRET_KEY, ALGORITHM
+from app.core.security import SECRET_KEY, ALGORITHM, credential_revision
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
@@ -17,15 +18,23 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token, SECRET_KEY, algorithms=[ALGORITHM],
+            options={"require": ["exp", "sub"]},
+        )
         email: str = payload.get("sub")
-        if email is None:
+        revision = payload.get("credential_revision")
+        if (not isinstance(email, str) or not isinstance(revision, str)
+                or len(revision) != 64 or not revision.isascii()):
             raise credentials_exception
-    except JWTError:
+    except jwt.InvalidTokenError:
         raise credentials_exception
 
     user = db.query(Usuario).filter(Usuario.email == email).first()
-    if user is None:
+    if user is None or payload.get("id") != user.id:
+        raise credentials_exception
+    # Los tokens antiguos sin revisión también requieren un nuevo inicio de sesión.
+    if not compare_digest(revision, credential_revision(user.id, user.password_hash)):
         raise credentials_exception
     return user
 
