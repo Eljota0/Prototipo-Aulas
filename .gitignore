@@ -1,0 +1,24 @@
+# Secretos y configuración local
+**/.env
+!**/.env.example
+
+# Dependencias y entornos locales
+**/node_modules/
+**/venv/
+**/.venv/
+
+# Salidas, cachés y cobertura
+**/dist/
+**/coverage/
+**/.angular/
+**/.pytest_cache/
+**/__pycache__/
+**/*.py[cod]
+
+# Archivos temporales del sistema y editores
+*.log
+*.tmp
+*.bak
+*.backup
+.DS_Store
+Thumbs.db
