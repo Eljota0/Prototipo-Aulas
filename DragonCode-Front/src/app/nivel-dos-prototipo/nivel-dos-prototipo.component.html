@@ -25,11 +25,6 @@
       <div class="vidas" [attr.aria-label]="vidas + ' vidas disponibles'">
         <span *ngFor="let vida of [1, 2, 3]" [class.perdida]="vida > vidas">♥</span>
       </div>
-      <div class="contador-reparacion" aria-label="Fases superadas">
-        <span class="icono-herramienta">◆</span>
-        <strong>{{ fasesSuperadas }} / {{ fases.length }}</strong>
-      </div>
-      <div class="contador-fase">{{ faseActualIndice + 1 }} - {{ fases.length }}</div>
     </div>
 
     <div class="escena-maquina"
@@ -47,14 +42,13 @@
 
       <div class="overlay-humo" aria-hidden="true"></div>
 
-      <!-- Título Centro -->
+      <!-- Indicadores originales del escenario del Nivel 2 -->
       <div class="hud-titulo-centro">
         {{ tituloFaseCorto }}
       </div>
 
-      <!-- Contador Derecha (Estilo Ogro) -->
-      <div class="hud-contador-der">
-        {{ faseActual.numero }} - 3
+      <div class="hud-contador-der" [attr.aria-label]="'Fase ' + faseActual.numero + ' de ' + fases.length">
+        {{ faseActual.numero }} - {{ fases.length }}
       </div>
 
       <div class="caverna-luz"></div>
