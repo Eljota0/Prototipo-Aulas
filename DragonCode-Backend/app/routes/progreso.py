@@ -217,6 +217,10 @@ def mi_progreso(
     return [
         {
             "reto_nivel_id": p.reto_nivel_id,
+            # La interfaz navega por el orden pedagógico, no por la clave
+            # interna de la base de datos. Ambos valores se conservan para
+            # que el contrato siga siendo compatible con clientes anteriores.
+            "nivel_orden": p.reto.orden,
             "completado": p.completado,
             "estrellas_obtenidas": p.estrellas_obtenidas,
             "intentos": p.intentos,

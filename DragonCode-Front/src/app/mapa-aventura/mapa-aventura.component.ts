@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { finalize } from 'rxjs';
-import { ProgresoService } from '../services/progreso.service';
+import { obtenerOrdenProgreso, ProgresoService } from '../services/progreso.service';
 import { LoaderService } from '../services/loader.service';
 import { NIVELES_DRAGONCODE, TOTAL_NIVELES, obtenerNivel } from '../core/catalogo-niveles';
 
@@ -50,7 +50,7 @@ export class MapaAventuraComponent implements OnInit {
         const completados = new Set(
           progresos
             .filter(progreso => progreso.completado)
-            .map(progreso => progreso.reto_nivel_id)
+            .map(obtenerOrdenProgreso)
         );
         this.construirMapa(completados);
       },

@@ -16,7 +16,7 @@ import {
   ReporteAula,
   SeguimientoActividad
 } from '../services/aulas.service';
-import { ProgresoService } from '../services/progreso.service';
+import { obtenerOrdenProgreso, ProgresoService } from '../services/progreso.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
@@ -194,10 +194,8 @@ export class PantallaPrincipalComponent implements OnInit {
   private cargarMiProgreso(): void {
     this.progresoService.miProgreso().subscribe({
       next: (progresos) => {
-        // El backend retorna lista de { reto_nivel_id, estrellas_obtenidas, ... }
-        // reto_nivel_id coincide con el número de nivel (1-5)
         progresos.forEach(p => {
-          const mundo = this.worldsProgress.find(w => w.level === p.reto_nivel_id);
+          const mundo = this.worldsProgress.find(w => w.level === obtenerOrdenProgreso(p));
           if (mundo) {
             mundo.stars = p.estrellas_obtenidas ?? 0;
           }

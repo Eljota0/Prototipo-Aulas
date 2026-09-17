@@ -27,7 +27,8 @@ describe('MapaAventuraComponent', () => {
                 fecha_completado: '2026-08-31T00:00:00'
               },
               {
-                reto_nivel_id: 2,
+                reto_nivel_id: 42,
+                nivel_orden: 2,
                 completado: true,
                 estrellas_obtenidas: 3,
                 intentos: 1,

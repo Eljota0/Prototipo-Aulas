@@ -3,7 +3,7 @@ import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { Observable, catchError, map, of } from 'rxjs';
 
 import { AulasService, RetoPersonalizadoResponse } from '../../services/aulas.service';
-import { ProgresoService } from '../../services/progreso.service';
+import { obtenerOrdenProgreso, ProgresoService } from '../../services/progreso.service';
 import { TOTAL_NIVELES } from '../catalogo-niveles';
 
 type ResultadoAcceso = boolean | UrlTree;
@@ -66,7 +66,7 @@ export const nivelAventuraGuard: CanActivateFn = (route): ResultadoAcceso | Obse
       const completados = new Set(
         progresos
           .filter(progreso => progreso.completado)
-          .map(progreso => progreso.reto_nivel_id)
+          .map(obtenerOrdenProgreso)
       );
       const disponible = completados.has(nivelId) || completados.has(nivelId - 1);
       return disponible ? true : router.createUrlTree(['/aventura']);

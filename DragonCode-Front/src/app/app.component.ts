@@ -10,6 +10,14 @@ import {
 import { CommonModule } from '@angular/common';
 import { ToastComponent } from './components/toast/toast.component';
 import { LoaderService } from './services/loader.service';
+import { NotificationService } from './services/notification.service';
+
+const MENSAJE_RECARGA_KEY = 'dragoncode:recarga-modulos';
+
+export function esErrorCargaDiferida(error: unknown): boolean {
+  const mensaje = error instanceof Error ? error.message : String(error ?? '');
+  return /chunk|dynamically imported module|module script/i.test(mensaje);
+}
 
 @Component({
   selector: 'app-root',
@@ -22,7 +30,17 @@ export class AppComponent {
   mostrarFooter = true;
   private readonly rutasAuth = ['/login', '/crear-cuenta', '/recuperar-cuenta'];
 
-  constructor(private router: Router, private loaderService: LoaderService) {
+  constructor(
+    private router: Router,
+    private loaderService: LoaderService,
+    private notificationService: NotificationService
+  ) {
+    const mensajeRecarga = sessionStorage.getItem(MENSAJE_RECARGA_KEY);
+    if (mensajeRecarga) {
+      sessionStorage.removeItem(MENSAJE_RECARGA_KEY);
+      setTimeout(() => this.notificationService.show(mensajeRecarga, 'success'));
+    }
+
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
         const esNavegacionEntreAuth = this.esRutaAuth(this.router.url)
@@ -31,6 +49,15 @@ export class AppComponent {
         if (!esNavegacionEntreAuth) {
           this.loaderService.mostrar('CARGANDO...');
         }
+      }
+
+      if (event instanceof NavigationError && esErrorCargaDiferida(event.error)) {
+        sessionStorage.setItem(
+          MENSAJE_RECARGA_KEY,
+          'DragonCode se actualizó. Los niveles ya están listos para continuar.'
+        );
+        window.location.reload();
+        return;
       }
 
       if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {

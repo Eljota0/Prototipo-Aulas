@@ -44,7 +44,8 @@ describe('nivelAventuraGuard', () => {
 
   it('permite el siguiente nivel y bloquea saltarse niveles por URL', async () => {
     progresoService.miProgreso.and.returnValue(of([{
-      reto_nivel_id: 2,
+      reto_nivel_id: 42,
+      nivel_orden: 2,
       completado: true,
       estrellas_obtenidas: 2,
       intentos: 2,
@@ -57,6 +58,23 @@ describe('nivelAventuraGuard', () => {
     const bloqueado = await ejecutarGuard(4);
     expect(bloqueado instanceof UrlTree).toBeTrue();
     expect(router.serializeUrl(bloqueado as UrlTree)).toBe('/aventura');
+  });
+
+  it('permite repetir cada nivel completado y abrir inmediatamente el siguiente', async () => {
+    for (const nivelCompletado of [1, 2, 3, 4]) {
+      progresoService.miProgreso.and.returnValue(of([{
+        reto_nivel_id: 100 + nivelCompletado,
+        nivel_orden: nivelCompletado,
+        completado: true,
+        estrellas_obtenidas: 3,
+        intentos: 1,
+        tiempo_segundos: 60,
+        fecha_completado: '2026-09-17T20:00:00Z'
+      }]));
+
+      expect(await ejecutarGuard(nivelCompletado)).toBeTrue();
+      expect(await ejecutarGuard(nivelCompletado + 1)).toBeTrue();
+    }
   });
 
   it('permite una actividad válida del Nivel 5 sin consultar Aventura', async () => {

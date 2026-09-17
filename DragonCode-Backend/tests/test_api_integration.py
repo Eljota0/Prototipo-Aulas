@@ -640,6 +640,18 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
         self.assertEqual(aventura.json()["estrellas_totales_usuario"], 3)
         self.assertEqual(self.entregar().json()["estrellas_totales_usuario"], 3)
 
+    def test_progreso_expone_id_interno_y_orden_publico_del_nivel(self):
+        contexto = {"aula_id": None, "reto_personalizado_id": None}
+        self.assertEqual(self.entregar(**contexto).status_code, 200)
+
+        progreso = self.client.get(
+            "/api/progreso/mis-niveles",
+            headers=self.headers["jugador"],
+        ).json()[0]
+
+        self.assertEqual(progreso["reto_nivel_id"], self.niveles[1])
+        self.assertEqual(progreso["nivel_orden"], 1)
+
     def test_compra_equipa_y_persiste_sin_reponer_el_saldo_al_repetir(self):
         contexto = {"aula_id": None, "reto_personalizado_id": None}
         for nivel in (1, 2):

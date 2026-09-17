@@ -24,11 +24,20 @@ export interface ProgresoResponse {
 
 export interface ProgresoNivel {
   reto_nivel_id: number;
+  nivel_orden?: number;
   completado: boolean;
   estrellas_obtenidas: number;
   intentos: number;
   tiempo_segundos: number;
   fecha_completado: string | null;
+}
+
+/**
+ * Obtiene el número público del nivel. El ID queda reservado para relacionar
+ * registros internos y puede no coincidir con el orden después de una migración.
+ */
+export function obtenerOrdenProgreso(progreso: ProgresoNivel): number {
+  return progreso.nivel_orden ?? progreso.reto_nivel_id;
 }
 
 // ─────────────────────────────────────────────────────────────────
