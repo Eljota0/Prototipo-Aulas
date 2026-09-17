@@ -4,7 +4,7 @@ Esta guía prepara la versión integrada sin guardar secretos en Git. El desplie
 
 ## 1. Orden de publicación
 
-1. Confirmar que la rama integrada contiene los cambios del compañero.
+1. Confirmar que `main` contiene los cambios del compañero y que el árbol de trabajo está limpio.
 2. Ejecutar las pruebas de backend y frontend.
 3. Revisar y aplicar las migraciones pendientes de Supabase una sola vez.
 4. Publicar el backend en Render y comprobar `/health/live` y `/health/ready`.
@@ -23,7 +23,7 @@ alembic upgrade head
 alembic current
 ```
 
-La revisión esperada es `20260909_07`. No ejecutar este paso mientras el compañero esté aplicando cambios de esquema ni sin verificar primero el respaldo.
+La revisión esperada es `20260915_08`. No ejecutar este paso mientras el compañero esté aplicando cambios de esquema ni sin verificar primero el respaldo.
 
 ## 3. Render
 
@@ -40,9 +40,12 @@ Variables obligatorias:
 - `SECRET_KEY`: valor aleatorio propio de al menos 32 caracteres
 - `ALGORITHM=HS256`
 - `CORS_ORIGINS`: dominio HTTPS exacto de Vercel, sin `/` final
+- `AUTO_CREATE_SCHEMA=false`
+- `SEED_INITIAL_DATA=false`
 
 Variables recomendadas:
 
+- `PYTHON_VERSION=3.12.14`
 - `ACCESS_TOKEN_EXPIRE_MINUTES=1440`
 - `DATABASE_POOL_RECYCLE_SECONDS=300`
 - `ACADEMIC_DEADLINE_CHECK_SECONDS=60`
@@ -70,4 +73,6 @@ La configuración de producción usa `https://dragoncode-back.onrender.com/api`.
 - Abrir notificaciones y comprobar lectura individual y global.
 - Repetir las pantallas críticas en móvil vertical y horizontal.
 
-Google, recuperación de cuenta y correo externo se habilitan después, cuando existan credenciales y dominios definitivos.
+Google, recuperación de cuenta y correo externo se habilitan después del primer
+despliegue, cuando existan credenciales y dominios definitivos. Cada integración
+debe publicarse en un commit independiente y repetir esta prueba de humo.

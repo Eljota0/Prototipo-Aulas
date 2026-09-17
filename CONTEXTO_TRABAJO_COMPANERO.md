@@ -6,10 +6,12 @@ Esta guía explica el estado actual de DragonCode y cómo realizar cambios en
 ## 1. Estado actual del proyecto
 
 - El Nivel 1 del ogro continúa funcionando con sus cuatro fases.
-- El Nivel 2 del Taladro a Vapor está implementado con cuatro fases, motor de
+- El Nivel 2 del Taladro a Vapor está implementado con tres fases por decisión
+  funcional del equipo, motor de
   evaluación, calificación, estrellas e integración con el mapa.
 - El backend está conectado a Supabase mediante variables locales en `.env`.
-- Supabase contiene los niveles oficiales 1 y 2 y las migraciones están al día.
+- El catálogo y las migraciones contienen los cinco niveles oficiales; los
+  niveles 1, 3, 4 y 5 conservan cuatro fases.
 - El equipo trabaja únicamente sobre la rama `main`.
 
 Antes de comenzar cualquier tarea se debe actualizar la copia local.

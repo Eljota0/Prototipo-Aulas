@@ -1,6 +1,6 @@
 # Avance general de DragonCode
 
-Última actualización: 2026-09-16. Rama de trabajo: `integracion/frontend-backend-20260908`.
+Última actualización: 2026-09-17. Rama objetivo de entrega: `main`.
 
 Este registro distingue implementación, verificación automática y aceptación manual. El 09/09 se contrastaron los requisitos y la matriz de trazabilidad de la tesis final con el código y las pruebas disponibles. Es una revisión de alcance y pendientes, no una certificación de cumplimiento ni una prueba integral de producción.
 
@@ -22,7 +22,7 @@ Como cierre contrarreloj, el núcleo puede quedar listo para defensa en **una jo
 | Estrellas, calificaciones y tienda | RF-07 conectado en los cinco niveles; nota 10/8/6 independiente. RF-18: saldo de Aventura separado de Aulas, tienda conectada y catálogo cargado | Probar compra/equipamiento con cuenta real y regresión manual del nivel 2 |
 | Notificaciones | API interna, privacidad y avisos idempotentes de vencimiento/reporte verificadas | Prueba de interfaz; correo externo al final |
 | Responsive y uso táctil | Victoria del nivel 1 y menú de Aventura comprobados en móvil, tableta, escritorio y horizontal. La pantalla principal y el selector de aulas usan controles táctiles reales con objetivos mínimos de 44 px | Completar la aceptación en dispositivos físicos y recorrer visualmente los cinco niveles; la simulación de navegador no sustituye esa prueba |
-| Seguridad y despliegue | Integración local sin publicar; validación de configuración de producción, conexiones resilientes y rutas de salud listas | Validación de soluciones en servidor, límites de peticiones, revisión de dependencias y despliegue coordinado Vercel/Render/Supabase |
+| Seguridad y despliegue | Validación de configuración de producción, conexiones resilientes y rutas de salud listas | Validación de la versión publicada, límites de peticiones y despliegue coordinado Vercel/Render/Supabase |
 
 ## Cerrado en el bloque actual
 
@@ -105,13 +105,13 @@ Fuente: `C:\Users\LENOVO\Desktop\Corrección 4 de Tesis DragonCode - Quinatoa - 
 | RNF-01, RNF-02, RNF-04 | Angular 17 standalone y evaluadores presentes, con pruebas. Falta regresión integral de comandos y resultados personalizados de los cinco niveles. La tesis describe validación en frontend: endurecer el servidor es una medida de integridad, no una justificación para afirmar que exige reescribir todo el motor en Python. |
 | RNF-03, RNF-05, RNF-06 | bcrypt/JWT presentes; queda revisión de configuración segura y HTTPS del despliegue integrado, responsive/táctil completo y concurrencia real PostgreSQL. SQLite y simulación móvil no certifican estos últimos puntos. |
 
-La tesis menciona servicios ya desplegados, pero no se verificó su estado remoto en este bloque y la rama integrada actual sigue sin publicar. Coordinar repositorios de frontend/backend y las raíces de despliegue con el compañero antes de enviar cambios. No confundir una versión pública anterior con la versión local corregida.
+La tesis menciona servicios ya desplegados, pero cualquier publicación anterior debe validarse contra el commit actual de `main`. Coordinar las raíces de despliegue de frontend y backend antes de activar Render o Vercel; no asumir que una versión pública antigua contiene estas correcciones.
 
 ## Política de seguimiento
 
 Al terminar cada bloque registrar: qué cambió, pruebas ejecutadas, qué confirmó el usuario y el siguiente riesgo prioritario. Un módulo no pasa a «cerrado» únicamente porque tenga una pantalla o un endpoint.
 
-No se ha hecho commit ni push de estos bloques posteriores a la integración, ni se ha desplegado esta versión. No se han ejecutado migraciones ni editado registros reales para las pruebas de este bloque. Conservar el respaldo local y el trabajo del compañero.
+En el corte original de este bloque todavía no se habían registrado ni publicado sus cambios. Las pruebas no ejecutaron migraciones ni editaron registros reales. El estado de entrega vigente se documenta al final de este archivo.
 
 ## Continuación de backend (10/09)
 
@@ -131,7 +131,7 @@ No se ha hecho commit ni push de estos bloques posteriores a la integración, ni
 - La hoja de estilos remota se normalizó a UTF-8 y se limpiaron residuos de formato sin alterar sus reglas visuales.
 - Tras confirmar con el compañero que la cuarta fase fue retirada intencionalmente, el Nivel 2 y su selector de actividades permanecen en tres fases.
 - Evidencia posterior a la combinación, al cierre de ayudas de aula y a la mejora del menú: compilación Angular de producción aprobada, **152/152** pruebas frontend y **84/84** pruebas backend. Ambos servicios respondieron y `/health/ready` confirmó acceso a la base en la última verificación de servicios.
-- La rama todavía está 2 commits por delante y 1 por detrás de `origin/main` porque la integración no se ha registrado en commits. Después de la aceptación manual se deben crear commits por alcance, incorporar formalmente el commit remoto conservando la resolución verificada y recién entonces publicar.
+- La actualización remota del compañero quedó incorporada conservando su historial y su autoría. La entrega final se organiza en commits por alcance antes de avanzar `main`, sin reescribir ni forzar el historial remoto.
 
 ## Cierre de catálogo y calidad visual (15/09)
 
@@ -152,3 +152,11 @@ No se ha hecho commit ni push de estos bloques posteriores a la integración, ni
 - Verificación posterior: **154/154 pruebas frontend**, **86/86 pruebas backend**, compilación Angular de producción correcta, `pip check` limpio y servicios local/API listos (`/health/live` y `/health/ready`).
 - Deuda conocida: `npm audit` informa ocho avisos agrupados en Angular 17 (cinco moderados y tres altos). La corrección ofrecida exige una migración mayor a Angular 20/21 y no debe aplicarse con `--force` antes de la defensa. La aplicación no usa SSR, hidratación ni i18n y ya se eliminó su bypass HTML propio, pero la actualización del framework debe hacerse luego en una rama dedicada con la misma batería de pruebas.
 - Escalado futuro: el límite de intentos de login vive en memoria y es adecuado para una sola instancia. Si Render se configura con varias réplicas, ese estado debe trasladarse a Redis u otro almacenamiento compartido.
+
+## Preparación de entrega a `main` (17/09)
+
+- El usuario confirmó manualmente que el Nivel 2 conserva el título central y un único contador original `1 - 3`, sin el indicador duplicado que cubría la escena.
+- Se corrigió la navegación de Aventura para usar el orden pedagógico del nivel en lugar de asumir que la clave interna de Supabase siempre coincide con ese número. Los cinco componentes diferidos tienen una prueba de carga y el sistema recupera una pestaña que conserve fragmentos antiguos después de un despliegue.
+- El trabajo de `origin/main` está contenido íntegramente en la entrega: la comparación previa a publicar indicó cero commits remotos pendientes y una integración local descendiente de `origin/main`. No se utilizará `push --force`.
+- Verificación final previa a organizar commits: **185/185 pruebas frontend**, **91/91 pruebas backend** con **107 subpruebas**, y compilación Angular de producción aprobada.
+- `.env`, entornos virtuales, dependencias, compilaciones y cachés permanecen excluidos por `.gitignore`. Google OAuth, recuperación/OTP y correo externo se implementarán después del primer despliegue, cuando existan dominios HTTPS definitivos.
