@@ -47,6 +47,17 @@ export class AuthService {
   }
 
   /**
+   * Inicia sesión con un token de Google. Guarda el JWT automáticamente.
+   */
+  loginWithGoogle(credential: string): Observable<TokenResponse> {
+    return this.http.post<TokenResponse>('/auth/google', { credential }).pipe(
+      tap(response => {
+        localStorage.setItem(this.TOKEN_KEY, response.access_token);
+      })
+    );
+  }
+
+  /**
    * Cierra la sesión del usuario eliminando el token y redirigiendo al login.
    */
   logout(): void {

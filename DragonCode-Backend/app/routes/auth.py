@@ -10,12 +10,13 @@ from typing import Any
 
 from app.database import get_db
 from app.models.models import Usuario
-from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, CambiarPasswordRequest
+from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, CambiarPasswordRequest, GoogleAuthRequest
 from app.core.security import get_password_hash, verify_password, create_user_access_token
 from app.core.deps import get_current_user
 from app.core.rate_limit import login_attempt_limiter
 from app.core.academic import ahora_utc
-
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 class RutaAutenticacion(APIRoute):
     """No devolver entradas con contraseñas en errores de validación de FastAPI."""
@@ -182,3 +183,78 @@ def cambiar_password(
         db.rollback()
         raise HTTPException(status_code=500, detail="No se pudo confirmar el cambio de contraseña.") from None
     return Response(status_code=204)
+
+
+@router.post("/google", response_model=Token)
+def login_con_google(datos: GoogleAuthRequest, db: Session = Depends(get_db)) -> Any:
+    """Verifica un token de Google y crea o vincula la cuenta."""
+    import os
+    import secrets
+
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+    if not client_id:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El inicio de sesión con Google no está configurado en este momento.",
+        )
+
+    try:
+        import requests
+        # 1. Verificar que el token fue emitido para nuestro Client ID (Seguridad)
+        res_info = requests.get(f"https://oauth2.googleapis.com/tokeninfo?access_token={datos.credential}", timeout=10)
+        if not res_info.ok:
+            raise ValueError("Token inválido o expirado")
+        token_info = res_info.json()
+        if token_info.get("aud") != client_id:
+            raise ValueError("Audiencia del token incorrecta")
+
+        # 2. Obtener el perfil del usuario
+        res_user = requests.get("https://www.googleapis.com/oauth2/v3/userinfo", headers={"Authorization": f"Bearer {datos.credential}"}, timeout=10)
+        if not res_user.ok:
+            raise ValueError("No se pudo obtener el perfil")
+        payload = res_user.json()
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="El token de Google no es válido o ha expirado.",
+        )
+
+    email = (payload.get("email") or "").strip().lower()
+    if not email or not payload.get("email_verified"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La cuenta de Google no tiene un correo verificado.",
+        )
+
+    nombre = (payload.get("given_name") or "Usuario").strip() or "Usuario"
+    apellido = (payload.get("family_name") or "DragonCode").strip() or "DragonCode"
+
+    user = db.query(Usuario).filter(func.lower(Usuario.email) == email).first()
+
+    if user is None:
+        # Cuenta nueva: generar un password_hash aleatorio que nadie conoce.
+        hash_aleatorio = get_password_hash(secrets.token_urlsafe(48))
+        user = Usuario(
+            email=email,
+            password_hash=hash_aleatorio,
+            nombre=nombre[:100],
+            apellido=apellido[:100],
+        )
+        db.add(user)
+        try:
+            db.commit()
+            db.refresh(user)
+        except IntegrityError:
+            db.rollback()
+            # Colisión concurrente: el usuario ya fue creado por otra petición.
+            user = db.query(Usuario).filter(func.lower(Usuario.email) == email).first()
+            if user is None:
+                raise HTTPException(status_code=500, detail="No se pudo crear la cuenta.") from None
+        except SQLAlchemyError:
+            db.rollback()
+            raise HTTPException(status_code=500, detail="No se pudo crear la cuenta.") from None
+
+    _registrar_ultimo_acceso(db, user)
+    access_token = create_user_access_token(user)
+    return {"access_token": access_token, "token_type": "bearer"}

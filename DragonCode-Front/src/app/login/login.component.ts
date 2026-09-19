@@ -1,10 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { LoaderService } from '../services/loader.service';
 import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
+import { environment } from '../../environments/environment';
+
+declare const google: any;
 
 interface Rune {
   symbol: string;
@@ -52,7 +55,8 @@ export class LoginComponent implements OnInit {
     private loaderService: LoaderService,
     private authService: AuthService,
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -63,6 +67,7 @@ export class LoginComponent implements OnInit {
     }
     this.setRandomAvatar();
     this.generateRunes();
+    this.inicializarGoogle();
     setTimeout(() => {
       this.loaderService.ocultar();
     }, 300);
@@ -87,12 +92,47 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  private tokenClient: any;
+
   iniciarConGoogle(): void {
-    // Conserva la acción visual hasta conectar OAuth con el backend real.
-    this.notificationService.show(
-      'Integración con Google en desarrollo (requiere OAuth2 en producción).',
-      'success'
-    );
+    if (!this.tokenClient) {
+      this.notificationService.show(
+        'Google Sign-In no está disponible. Recarga la página e intenta de nuevo.',
+        'error'
+      );
+      return;
+    }
+    this.tokenClient.requestAccessToken();
+  }
+
+  private inicializarGoogle(): void {
+    if (typeof google === 'undefined' || !google.accounts) {
+      setTimeout(() => this.inicializarGoogle(), 500);
+      return;
+    }
+
+    this.tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: environment.googleClientId,
+      scope: 'email profile',
+      callback: (response: any) => {
+        if (response.error) {
+          // El usuario cerró la ventana emergente o canceló
+          return;
+        }
+        this.ngZone.run(() => {
+          this.isLoading = true;
+          this.authService.loginWithGoogle(response.access_token).subscribe({
+            next: () => {
+              this.isLoading = false;
+              this.router.navigate(['/pantalla-principal']);
+            },
+            error: () => {
+              this.isLoading = false;
+            }
+          });
+        });
+      }
+    });
   }
 
   private setRandomAvatar(): void {

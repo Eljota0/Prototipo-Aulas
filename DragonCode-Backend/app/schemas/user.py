@@ -79,5 +79,9 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class GoogleAuthRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    credential: str = Field(min_length=1, max_length=8192, strict=True)
+
 class TokenData(BaseModel):
     email: Optional[str] = None
