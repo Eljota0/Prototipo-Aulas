@@ -96,4 +96,18 @@ export class AuthService {
   getRol(): string | null {
     return this.getPayload()?.rol ?? null;
   }
+
+  /**
+   * Solicita un enlace de recuperación de contraseña al backend.
+   */
+  solicitarRecuperacion(email: string): Observable<any> {
+    return this.http.post<any>('/auth/recuperar-password', { email });
+  }
+
+  /**
+   * Restablece la contraseña usando el token recibido por correo.
+   */
+  resetPassword(token: string, nueva_password: string): Observable<any> {
+    return this.http.post<any>('/auth/reset-password', { token, nueva_password });
+  }
 }

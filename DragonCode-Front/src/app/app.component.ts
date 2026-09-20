@@ -28,7 +28,7 @@ export function esErrorCargaDiferida(error: unknown): boolean {
 })
 export class AppComponent {
   mostrarFooter = true;
-  private readonly rutasAuth = ['/login', '/crear-cuenta', '/recuperar-cuenta'];
+  private readonly rutasAuth = ['/login', '/crear-cuenta', '/recuperar-cuenta', '/reset-password'];
 
   constructor(
     private router: Router,

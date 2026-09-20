@@ -83,5 +83,26 @@ class GoogleAuthRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     credential: str = Field(min_length=1, max_length=8192, strict=True)
 
+class RecuperarPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    email: EmailStr
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalizar_email(cls, valor):
+        if not isinstance(valor, str):
+            raise ValueError("El correo electrónico debe ser texto.")
+        return valor.strip().lower()
+
+class ResetPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
+    token: str = Field(min_length=1, max_length=2048, strict=True)
+    nueva_password: str = Field(min_length=6, max_length=72, strict=True)
+
+    @field_validator("nueva_password")
+    @classmethod
+    def validar_password(cls, password):
+        return validar_password_segura(password)
+
 class TokenData(BaseModel):
     email: Optional[str] = None

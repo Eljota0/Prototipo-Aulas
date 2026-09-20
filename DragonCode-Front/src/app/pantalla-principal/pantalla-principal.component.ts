@@ -123,7 +123,6 @@ export class PantallaPrincipalComponent implements OnInit {
   plazoSeleccionado: PlazoActividad = 'sin_limite';
   cargandoCrearAula  = false;
   aulaCreada: AulaResponse | null = null;
-  mostrarEdicionAvanzada = false;
 
   parametrosReto: ParametrosEvaluacion = {
     tiempo_3_estrellas:        60,
@@ -356,7 +355,6 @@ export class PantallaPrincipalComponent implements OnInit {
     this.fechaLimiteActividad = '';
     this.mostrarAgregarActividad = false;
     this.aulaParaActividad = null;
-    this.mostrarEdicionAvanzada = false;
     this.parametrosReto    = { 
       tiempo_3_estrellas: 60, 
       tiempo_2_estrellas: 120, 
@@ -408,6 +406,14 @@ export class PantallaPrincipalComponent implements OnInit {
       this.notificationService.show('Debes seleccionar al menos una fase.', 'error');
       return;
     }
+
+    // El recorrido es el contenido editable del nivel 1. Debe definirse
+    // antes de que el profesor pueda continuar con la publicación.
+    if (this.nivelSeleccionado === 1 && this.parametrosReto.configuracion_nivel?.tipo !== 'mapa_ogro') {
+      this.abrirEditorNivelUno();
+      return;
+    }
+
     this.pasoCrearAula = 3;
   }
 
@@ -436,7 +442,6 @@ export class PantallaPrincipalComponent implements OnInit {
   seleccionarNivel(nivelId: number): void {
     if (nivelId === this.nivelSeleccionado) return;
     this.nivelSeleccionado = nivelId;
-    this.mostrarEdicionAvanzada = false;
     this.parametrosReto.fases_seleccionadas = [...this.fasesDisponiblesNivel];
     this.parametrosReto.configuracion_nivel = crearConfiguracionNivelPredeterminada(nivelId);
   }
@@ -445,12 +450,7 @@ export class PantallaPrincipalComponent implements OnInit {
     this.parametrosReto.configuracion_nivel = configuracion;
   }
 
-  abrirEdicionAvanzada(): void {
-    if (this.nivelSeleccionado !== 1) {
-      this.mostrarEdicionAvanzada = !this.mostrarEdicionAvanzada;
-      return;
-    }
-
+  private abrirEditorNivelUno(): void {
     this.borradorAulaService.guardar({
       modo: this.mostrarAgregarActividad ? 'agregar-actividad' : 'crear-aula',
       nuevoNombreAula: this.nuevoNombreAula,
@@ -474,8 +474,6 @@ export class PantallaPrincipalComponent implements OnInit {
     this.plazoSeleccionado = borrador.plazoSeleccionado as PlazoActividad;
     this.fechaLimiteActividad = borrador.fechaLimiteActividad;
     this.aulaParaActividad = borrador.aulaParaActividad;
-    this.mostrarEdicionAvanzada = false;
-
     if (borrador.modo === 'agregar-actividad' && borrador.aulaParaActividad) {
       this.pasoCrearAula = 1;
       this.creandoNuevaAula = false;
@@ -498,6 +496,11 @@ export class PantallaPrincipalComponent implements OnInit {
     // creando otra aula si la vista conserva el botón general de confirmación.
     if (this.mostrarAgregarActividad && this.aulaParaActividad) {
       this.confirmarAgregarActividad();
+      return;
+    }
+
+    if (this.nivelSeleccionado === 1 && this.parametrosReto.configuracion_nivel?.tipo !== 'mapa_ogro') {
+      this.abrirEditorNivelUno();
       return;
     }
 
@@ -806,7 +809,6 @@ export class PantallaPrincipalComponent implements OnInit {
     };
     this.plazoSeleccionado = 'sin_limite';
     this.fechaLimiteActividad = '';
-    this.mostrarEdicionAvanzada = false;
   }
 
   volverDesdeSeleccionNivel(): void {
@@ -820,7 +822,6 @@ export class PantallaPrincipalComponent implements OnInit {
   cancelarAgregarActividad(): void {
     this.mostrarAgregarActividad = false;
     this.aulaParaActividad = null;
-    this.mostrarEdicionAvanzada = false;
     this.pasoCrearAula = 1;
   }
 
@@ -834,6 +835,10 @@ export class PantallaPrincipalComponent implements OnInit {
 
   confirmarAgregarActividad(): void {
     if (!this.aulaParaActividad) return;
+    if (this.nivelSeleccionado === 1 && this.parametrosReto.configuracion_nivel?.tipo !== 'mapa_ogro') {
+      this.abrirEditorNivelUno();
+      return;
+    }
     if (!this.parametrosReto.fases_seleccionadas?.length) {
       this.notificationService.show('Debes seleccionar al menos una fase.', 'error');
       return;

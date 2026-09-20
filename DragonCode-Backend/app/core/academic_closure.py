@@ -19,6 +19,7 @@ from app.models.models import (
     Notificacion,
     ProgresoAula,
     RetoPersonalizado,
+    Usuario,
 )
 
 
@@ -95,6 +96,47 @@ def cerrar_retos_vencidos(
                 f"{resumen['promedio_calificacion']}/10."
             ),
         ))
+
+        # Preparar lista de alumnos para el correo
+        lista_alumnos = []
+        jugadores_ids = [insc.jugador_id for insc in inscripciones]
+        if jugadores_ids:
+            jugadores = db.query(Usuario).filter(Usuario.id.in_(jugadores_ids)).order_by(Usuario.apellido, Usuario.nombre).all()
+            for j in jugadores:
+                prog = progreso_por_jugador.get(j.id)
+                if prog and prog.completado:
+                    cal = prog.calificacion_numerica or calcular_calificacion(prog.intentos or 1)
+                    estado_texto = f"{cal}/10"
+                else:
+                    estado_texto = "Sin entrega"
+                
+                lista_alumnos.append({
+                    "nombre_completo": f"{j.apellido} {j.nombre}",
+                    "calificacion": estado_texto
+                })
+
+        fecha_formateada = (reto.fecha_cierre or momento).strftime("%d/%m/%Y")
+
+        # Enviar reporte detallado por correo electrónico al anfitrión
+        try:
+            from app.core.email import enviar_reporte_actividad
+            anfitrion = db.query(Usuario).filter(Usuario.id == aula.anfitrion_id).first()
+            if anfitrion:
+                enviar_reporte_actividad(
+                    email_destino=anfitrion.email,
+                    nombre_aula=aula.nombre_aula,
+                    titulo_actividad=reto.titulo,
+                    fecha_cierre=fecha_formateada,
+                    completados=resumen['completados'],
+                    total_jugadores=resumen['total_jugadores'],
+                    pendientes=resumen['pendientes'],
+                    promedio=resumen['promedio_calificacion'],
+                    lista_alumnos=lista_alumnos
+                )
+        except Exception:
+            # Un fallo de correo no debe impedir el cierre de la actividad
+            pass
+
         cerrados += 1
 
     return cerrados

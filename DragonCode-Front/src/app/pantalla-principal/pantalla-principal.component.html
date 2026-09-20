@@ -402,18 +402,10 @@
                         </div>
                       }
                     }
-                    <button type="button" class="cyber-glow-btn glow-purple activity-advanced-button"
-                            (click)="abrirEdicionAvanzada()">
-                      @if (nivelSeleccionado === 1) {
-                        {{ parametrosReto.configuracion_nivel?.tipo === 'mapa_ogro' ? 'EDITAR MAPA GUARDADO' : 'EDITAR MAPA DEL NIVEL' }}
-                      } @else {
-                        {{ mostrarEdicionAvanzada ? 'OCULTAR EDICIÓN AVANZADA' : 'EDITAR PARÁMETROS' }}
-                      }
-                    </button>
                     @if (nivelSeleccionado === 1 && parametrosReto.configuracion_nivel?.tipo === 'mapa_ogro') {
-                      <p class="activity-editor-status">Diseño personalizado guardado para esta actividad.</p>
+                      <p class="activity-editor-status">Recorrido personalizado guardado para esta actividad.</p>
                     }
-                    @if (nivelSeleccionado !== 1 && mostrarEdicionAvanzada) {
+                    @if (nivelSeleccionado !== 1) {
                       <app-configurador-nivel-aula
                         [nivelId]="nivelSeleccionado"
                         [fasesSeleccionadas]="parametrosReto.fases_seleccionadas || []"
@@ -554,7 +546,9 @@
                     (click)="volverDesdeSeleccionNivel()">← ATRÁS</button>
             <button type="button" class="cyber-glow-btn glow-green"
                     style="padding:10px 0; flex:1;"
-                    (click)="siguientePaso2()">SIGUIENTE →</button>
+                    (click)="siguientePaso2()">
+              {{ nivelSeleccionado === 1 && parametrosReto.configuracion_nivel?.tipo !== 'mapa_ogro' ? 'EDITAR RECORRIDO →' : 'CONFIGURAR NIVEL →' }}
+            </button>
           </div>
         }
 
@@ -565,18 +559,10 @@
             Configura los criterios de evaluación{{ mostrarAgregarActividad && aulaParaActividad ? ' para “' + aulaParaActividad.nombre_aula + '”' : ' para tu clase' }}.
           </p>
           <div style="margin: 16px 0; display:flex; flex-direction:column; gap:14px; width: 100%; text-align: left;">
-            <button type="button" class="cyber-glow-btn glow-purple activity-advanced-button"
-                    (click)="abrirEdicionAvanzada()">
-              @if (nivelSeleccionado === 1) {
-                {{ parametrosReto.configuracion_nivel?.tipo === 'mapa_ogro' ? 'EDITAR MAPA GUARDADO' : 'EDITAR MAPA DEL NIVEL' }}
-              } @else {
-                {{ mostrarEdicionAvanzada ? 'OCULTAR EDICIÓN AVANZADA' : 'EDITAR PARÁMETROS' }}
-              }
-            </button>
             @if (nivelSeleccionado === 1 && parametrosReto.configuracion_nivel?.tipo === 'mapa_ogro') {
-              <p class="activity-editor-status">Diseño personalizado guardado para esta actividad.</p>
+              <p class="activity-editor-status">Recorrido personalizado guardado. Usa “Atrás” y vuelve a configurar el nivel si necesitas cambiarlo.</p>
             }
-            @if (nivelSeleccionado !== 1 && mostrarEdicionAvanzada) {
+            @if (nivelSeleccionado !== 1) {
               <app-configurador-nivel-aula
                 [nivelId]="nivelSeleccionado"
                 [fasesSeleccionadas]="parametrosReto.fases_seleccionadas || []"

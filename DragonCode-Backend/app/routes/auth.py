@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
@@ -10,7 +10,7 @@ from typing import Any
 
 from app.database import get_db
 from app.models.models import Usuario
-from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, CambiarPasswordRequest, GoogleAuthRequest
+from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, CambiarPasswordRequest, GoogleAuthRequest, RecuperarPasswordRequest, ResetPasswordRequest
 from app.core.security import get_password_hash, verify_password, create_user_access_token
 from app.core.deps import get_current_user
 from app.core.rate_limit import login_attempt_limiter
@@ -258,3 +258,73 @@ def login_con_google(datos: GoogleAuthRequest, db: Session = Depends(get_db)) ->
     _registrar_ultimo_acceso(db, user)
     access_token = create_user_access_token(user)
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/recuperar-password")
+def solicitar_recuperacion(
+    datos: RecuperarPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    from app.core.security import create_password_recovery_token
+    from app.core.email import enviar_correo_recuperacion
+
+    user = db.query(Usuario).filter(Usuario.email == datos.email).first()
+    
+    print(f"--- REQ RECUPERACIÓN PARA: {datos.email} ---")
+    if user:
+        print("USUARIO ENCONTRADO EN LA BD LOCAL.")
+    else:
+        print("USUARIO NO ENCONTRADO EN LA BD LOCAL.")
+    
+    # Política Anti-Enumeración: Siempre devolvemos el mismo mensaje, exista o no el correo
+    mensaje_exito = {"message": "Si el correo existe en nuestro sistema, hemos enviado un enlace para restablecer la contraseña. Por favor revisa la carpeta de Spam."}
+    
+    if user:
+        token = create_password_recovery_token(user)
+        print(f"TOKEN GENERADO: {token[:10]}...")
+        # Enviamos el correo de forma directa ya que BackgroundTasks estaba fallando silenciosamente
+        try:
+            enviar_correo_recuperacion(user.email, token)
+            print("CORREO ENVIADO CON ÉXITO AL USUARIO")
+        except Exception as e:
+            print(f"ERROR AL ENVIAR CORREO: {e}")
+            
+    return mensaje_exito
+
+@router.post("/reset-password")
+def restablecer_password(datos: ResetPasswordRequest, db: Session = Depends(get_db)):
+    import jwt
+    from app.core.security import SECRET_KEY, ALGORITHM, credential_revision, get_password_hash
+    
+    try:
+        payload = jwt.decode(datos.token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        tipo = payload.get("type")
+        revision_token = payload.get("credential_revision")
+        
+        if not email or tipo != "recovery":
+            raise ValueError()
+            
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="El enlace ha expirado. Por favor solicita uno nuevo.")
+    except (jwt.InvalidTokenError, ValueError):
+        raise HTTPException(status_code=400, detail="El enlace no es válido.")
+        
+    user = db.query(Usuario).filter(Usuario.email == email).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="El enlace no es válido.")
+        
+    # Validamos que el token no haya sido usado (la revisión actual debe coincidir con la del token)
+    revision_actual = credential_revision(user.id, user.password_hash)
+    if revision_token != revision_actual:
+        raise HTTPException(status_code=400, detail="Este enlace ya fue utilizado o no es válido.")
+        
+    try:
+        user.password_hash = get_password_hash(datos.nueva_password)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error interno al cambiar la contraseña.")
+        
+    return {"message": "Tu contraseña ha sido actualizada exitosamente."}

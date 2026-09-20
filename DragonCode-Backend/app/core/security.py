@@ -43,6 +43,17 @@ def create_user_access_token(user):
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
+def create_password_recovery_token(user):
+    """Genera un token temporal para recuperar contraseña válido por 15 minutos."""
+    return create_access_token(
+        {
+            "sub": user.email,
+            "type": "recovery",
+            "credential_revision": credential_revision(user.id, user.password_hash),
+        },
+        expires_delta=timedelta(minutes=15),
+    )
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Genera un Token JWT con los datos proporcionados."""
     to_encode = data.copy()

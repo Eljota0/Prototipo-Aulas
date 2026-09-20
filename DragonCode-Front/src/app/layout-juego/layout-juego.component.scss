@@ -151,14 +151,10 @@
     flex-direction: column;
     gap: 0;
     height: 100%;
-    /* Un solo scroll contiene tablero, consola e inventario. Antes los controles
-       intentaban desplazarse dentro del espacio sobrante y podían quedar con
-       altura cero en teléfonos o en orientación horizontal. */
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior-y: contain;
-    touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+    /* El escenario queda a la vista. Solo el panel inferior se desplaza para
+       que el estudiante pueda consultar el reto mientras arma su solución. */
+    overflow: hidden;
   }
 
   .game-board {
@@ -180,13 +176,17 @@
   }
 
   .game-controls {
-    flex: 0 0 auto;
-    overflow: visible;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     width: 100%;
-    min-height: auto;
     padding: 1rem; 
   }
 
