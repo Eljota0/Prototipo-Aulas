@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { Router } from '@angular/router';
 import { NEVER, of } from 'rxjs';
 import { UserService } from '../services/user.service';
 import { PantallaPrincipalComponent } from './pantalla-principal.component';
@@ -40,28 +39,22 @@ describe('Configuración de evaluación según la tesis', () => {
 
   it('muestra solo los tres parámetros pedagógicos del nivel 2', () => {
     component.nivelSeleccionado = 2;
+    component.abrirEdicionAvanzada();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Tiempo para 3 estrellas');
     expect(fixture.nativeElement.querySelectorAll('input[type="number"]').length).toBe(3);
   });
 
-  it('muestra automáticamente los parámetros editables del nivel seleccionado', () => {
+  it('abre el editor avanzado solo cuando el profesor lo solicita', () => {
     component.seleccionarNivel(3);
     fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('EDITAR PARÁMETROS');
+    expect(fixture.nativeElement.querySelector('app-configurador-nivel-aula')).toBeNull();
+
+    component.abrirEdicionAvanzada();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('OCULTAR EDICIÓN AVANZADA');
     expect(fixture.nativeElement.querySelector('app-configurador-nivel-aula')).not.toBeNull();
-  });
-
-  it('exige editar el recorrido antes de continuar con el nivel 1', () => {
-    const router = TestBed.inject(Router);
-    const navegar = spyOn(router, 'navigate');
-    component.pasoCrearAula = 2;
-    component.nivelSeleccionado = 1;
-    component.parametrosReto.configuracion_nivel = undefined;
-
-    component.siguientePaso2();
-
-    expect(navegar).toHaveBeenCalledWith(['/crear-aula/ogro']);
-    expect(component.pasoCrearAula).toBe(2);
   });
 
   it('permite seleccionar los cinco niveles y muestra solo sus fases implementadas', () => {

@@ -56,7 +56,7 @@ describe('LayoutJuegoComponent', () => {
     expect(encabezado.mostrarAjustes).toBeFalse();
   });
 
-  it('mantiene el escenario visible y desplaza los controles en móvil', () => {
+  it('mantiene pergamino e inventario alcanzables mediante un único scroll móvil', () => {
     const anchoOriginal = window.innerWidth;
     const altoOriginal = window.innerHeight;
 
@@ -65,15 +65,17 @@ describe('LayoutJuegoComponent', () => {
       window.dispatchEvent(new Event('resize'));
       fixture.detectChanges();
 
+      const contenido = fixture.nativeElement.querySelector('.game-content-wrapper') as HTMLElement;
       const controles = fixture.nativeElement.querySelector('.game-controls') as HTMLElement;
       const inventario = fixture.nativeElement.querySelector('.cards-section') as HTMLElement;
 
-      expect(getComputedStyle(controles).overflowY).toBe('auto');
+      expect(getComputedStyle(contenido).overflowY).toBe('auto');
+      expect(getComputedStyle(controles).overflowY).toBe('visible');
       expect(parseFloat(getComputedStyle(inventario).minHeight)).toBeGreaterThanOrEqual(320);
-      expect(controles.scrollHeight).toBeGreaterThan(controles.clientHeight);
+      expect(contenido.scrollHeight).toBeGreaterThan(contenido.clientHeight);
 
-      controles.scrollTop = controles.scrollHeight;
-      expect(controles.scrollTop).toBeGreaterThan(0);
+      contenido.scrollTop = contenido.scrollHeight;
+      expect(contenido.scrollTop).toBeGreaterThan(0);
     } finally {
       window.resizeTo(anchoOriginal, altoOriginal);
       window.dispatchEvent(new Event('resize'));

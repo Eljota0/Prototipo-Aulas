@@ -1,5 +1,177 @@
 :host {
   display: block;
+  height: 100dvh;
+  overflow: hidden;
+  background-color: #1F1728;
+
+  /* HUD BAR VARIABLES */
+  --hud-height:              clamp(58px, 6.5vw, 72px);
+  --hud-padding-h:           clamp(12px, 3vw, 24px);
+  --hud-btn-size:            clamp(44px, 3vw, 48px);
+  --hud-bg-overlay:          rgba(0, 0, 0, 0.4);
+  --escala-fondotitulo:      420px;
+  --title-width:             clamp(220px, 22vw, 420px);
+  --title-overflow:          28px;
+  --title-vertical-center:   38px;
+  --hud-border-color:        rgba(127, 255, 212, 1);
+  --hud-border-width:        2px;
+  --hud-glow-duration:       4s;
+
+  /* FOG VARIABLES - Panel de Control */
+  --fog-opacity:             0.5;       /* Nivel de transparencia (0.0 a 1.0) */
+  --fog-scale:               600px;     /* Tamaño de la textura para controlar si se ve pequeña o grande */
+  --fog-speed:               80s;       /* Tiempo que tarda en moverse (menor = más rápido) */
+  --fog-blend-mode:          ;          /* Modos recomendados: screen (nubes claras), overlay (contraste), normal */
+  --fog-brightness:          0.5;       /* Nivel de "oscuridad"/brillo (1 = original, 0.5 = oscuro, 2 = brillante) */
+}
+
+@keyframes titleGlow {
+  0%   { filter: drop-shadow(0 0 4px  rgba(127, 255, 212, 0.2)); }
+  50%  { filter: drop-shadow(0 0 12px rgba(127, 255, 212, 0.6)); }
+  100% { filter: drop-shadow(0 0 4px  rgba(127, 255, 212, 0.2)); }
+}
+
+@keyframes borderGlow {
+  0%   { box-shadow: 0 2px 4px  rgba(127, 255, 212, 0.25), 0 6px 20px rgba(0,0,0,0.5); }
+  50%  { box-shadow: 0 2px 14px rgba(127, 255, 212, 0.7),  0 6px 20px rgba(0,0,0,0.5); }
+  100% { box-shadow: 0 2px 4px  rgba(127, 255, 212, 0.25), 0 6px 20px rgba(0,0,0,0.5); }
+}
+
+.hud-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
+  height: var(--hud-height);
+  padding: 0 var(--hud-padding-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-image: url('../../assets/images/ui/fondotitulo.png');
+  background-repeat: repeat;
+  background-size: var(--escala-fondotitulo);
+  image-rendering: pixelated;
+  border-bottom: var(--hud-border-width) solid var(--hud-border-color);
+  animation: borderGlow var(--hud-glow-duration) ease-in-out infinite;
+  overflow: visible;
+}
+
+.hud-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--hud-bg-overlay);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hud-left, .hud-right {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+}
+
+.hud-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  image-rendering: auto;
+}
+
+.hud-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* =========================================
+   CONTADOR DE ESTRELLAS (Flotante)
+   ========================================= */
+.stars-counter-floating {
+  position: fixed;
+  top: calc(var(--hud-height) + 20px); /* Justo debajo de la barra HUD en PC */
+  right: 20px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(10, 15, 22, 0.9);
+  border: 2px solid #f2bd4d;
+  padding: 8px 16px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.8), inset 0 0 8px rgba(242, 189, 77, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: default;
+}
+
+.stars-counter-floating:hover {
+  transform: translateY(2px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.8), inset 0 0 12px rgba(242, 189, 77, 0.4);
+}
+
+.star-icon {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 0 4px rgba(242, 189, 77, 0.8));
+}
+
+.star-text {
+  font-family: 'TuFuentePixel', monospace;
+  color: #f2bd4d;
+  font-size: 1.1rem;
+  text-shadow: 2px 2px 0px #000;
+  letter-spacing: 1px;
+}
+
+/* Ajustes para pantallas pequeñas (móviles) */
+@media (max-width: 768px) {
+  .stars-counter-floating {
+    top: calc(var(--hud-height) + 35px); /* Más abajo para no pisar el logo */
+    right: 15px;
+    padding: 5px 10px;
+    gap: 6px;
+    border-width: 1px;
+  }
+  
+  .star-icon {
+    font-size: 0.9rem;
+  }
+  
+  .star-text {
+    font-size: 0.9rem;
+  }
+}
+
+.hud-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.hud-center {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-title {
+  width: var(--title-width);
+  height: auto;
+  object-fit: contain;
+  margin-top: calc(var(--title-overflow) + var(--title-vertical-center));
+  position: relative;
+  z-index: 5;
+  animation: titleGlow var(--hud-glow-duration) ease-in-out infinite;
+  will-change: filter;
+  image-rendering: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
 }
 
 * {
@@ -7,90 +179,313 @@
 }
 
 .lobby-container {
-  position: relative;
-  min-height: calc(100dvh - 55px);
-  padding: clamp(22px, 3vw, 44px) clamp(14px, 4vw, 64px) clamp(36px, 5vw, 64px);
-  overflow-x: hidden;
-  color: #edf7f5;
-  background:
-    linear-gradient(180deg, rgba(5, 8, 16, .68), rgba(5, 8, 16, .92)),
-    url('/assets/images/pantallaprincipal/fondoaventura.png') center / cover fixed;
-  image-rendering: pixelated;
+  cursor: grab;
+  margin-top: var(--hud-height);
+  height: calc(100dvh - var(--hud-height));
+  width: 100vw;
+  overflow-y: hidden;
+  overflow-x: auto;
+  background-color: #1F1728;
+  -webkit-overflow-scrolling: touch;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.lobby-container::before {
-  content: '';
-  position: fixed;
+.lobby-container:active {
+  cursor: grabbing;
+}
+
+.adventure-map {
+  height: 100%;
+  width: calc((100dvh - var(--hud-height)) * (3084 / 1376));
+  margin: 0 auto;
+  background-image: url('../../assets/images/aventura-pantalla/fondo-aventura.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  position: relative;
+  overflow: hidden;
+}
+
+/* =========================================
+   EFECTO DE NIEBLA
+   ========================================= */
+.fog-layer {
+  position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 8%, rgba(119, 221, 202, .16), transparent 34%),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, .016) 0 2px, transparent 2px 6px);
-}
-
-.lobby-header,
-.mentor-panel,
-.levels-grid {
-  position: relative;
   z-index: 1;
-  width: min(100%, 1500px);
-  margin-inline: auto;
+  
+  /* Controles visuales inyectados desde el panel :host */
+  opacity: var(--fog-opacity);
+  filter: brightness(var(--fog-brightness));
+  
+  /* Aplicamos el mix-blend-mode solo si tiene un valor válido, pero si está vacío, el navegador usa normal */
+  mix-blend-mode: var(--fog-blend-mode, normal);
+
+  /* MÁSCARA ESTÁTICA CSS - Rendimiento perfecto porque el elemento no se anima */
+  -webkit-mask-image: 
+    radial-gradient(circle at 50.0% 20.0%, transparent 0%, black 18%), /* Rayo central */
+    /* Cristales Izquierda */
+    radial-gradient(circle at  5.0% 18.0%, transparent 0%, black 10%),
+    radial-gradient(circle at 16.0% 12.0%, transparent 0%, black 10%),
+    radial-gradient(circle at 21.0% 15.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 25.0% 15.0%, transparent 0%, black 10%),
+    radial-gradient(circle at  4.0% 45.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 16.5% 41.5%, transparent 0%, black 15%), /* Acentuado (antes 12) */
+    radial-gradient(circle at 12.0% 57.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 36.5% 26.5%, transparent 0%, black 10%), /* NUEVO: Rosa arriba derecha del barranco */
+    radial-gradient(circle at 36.0% 36.0%, transparent 0%, black  8%), /* NUEVO: Amarillo arriba derecha del barranco */
+    radial-gradient(circle at 29.0% 49.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 33.0% 77.0%, transparent 0%, black  8%), /* Corregido y acentuado (antes 30 75) */
+    radial-gradient(circle at  4.0% 73.0%, transparent 0%, black 10%),
+    radial-gradient(circle at  7.0% 85.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 13.0% 92.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 37.0% 83.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 35.0% 88.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 36.0% 92.0%, transparent 0%, black  8%), /* NUEVO: Cristal azul inferior del barranco */
+    /* Cristales Centro */
+    radial-gradient(circle at 44.0% 28.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 57.0% 25.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 48.0% 52.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 46.5% 79.0%, transparent 0%, black  8%),
+    /* Luces de la Fábrica Derecha */
+    radial-gradient(circle at 63.5% 25.0%, transparent 0%, black  5%),
+    radial-gradient(circle at 65.5% 25.0%, transparent 0%, black  5%),
+    radial-gradient(circle at 63.0% 47.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 82.0% 23.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 77.0% 68.0%, transparent 0%, black 12%),
+    /* Cristales/Hongos Derecha */
+    radial-gradient(circle at 96.0% 28.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 93.0% 44.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 90.0% 55.0%, transparent 0%, black  6%);
+  
+  -webkit-mask-composite: source-in;
+  mask-image: 
+    radial-gradient(circle at 50.0% 20.0%, transparent 0%, black 18%),
+    radial-gradient(circle at  5.0% 18.0%, transparent 0%, black 10%),
+    radial-gradient(circle at 16.0% 12.0%, transparent 0%, black 10%),
+    radial-gradient(circle at 21.0% 15.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 25.0% 15.0%, transparent 0%, black 10%),
+    radial-gradient(circle at  4.0% 45.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 16.5% 41.5%, transparent 0%, black 15%),
+    radial-gradient(circle at 12.0% 57.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 36.5% 26.5%, transparent 0%, black 10%),
+    radial-gradient(circle at 36.0% 36.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 29.0% 49.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 33.0% 77.0%, transparent 0%, black  8%),
+    radial-gradient(circle at  4.0% 73.0%, transparent 0%, black 10%),
+    radial-gradient(circle at  7.0% 85.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 13.0% 92.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 37.0% 83.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 35.0% 88.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 36.0% 92.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 44.0% 28.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 57.0% 25.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 48.0% 52.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 46.5% 79.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 63.5% 25.0%, transparent 0%, black  5%),
+    radial-gradient(circle at 65.5% 25.0%, transparent 0%, black  5%),
+    radial-gradient(circle at 63.0% 47.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 82.0% 23.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 77.0% 68.0%, transparent 0%, black 12%),
+    radial-gradient(circle at 96.0% 28.0%, transparent 0%, black  8%),
+    radial-gradient(circle at 93.0% 44.0%, transparent 0%, black  6%),
+    radial-gradient(circle at 90.0% 55.0%, transparent 0%, black  6%);
+  
+  mask-composite: intersect;
 }
 
-.lobby-header {
-  min-height: 104px;
-  margin-bottom: 18px;
-  display: grid;
-  place-items: center;
-  text-align: center;
+.fog-texture {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  
+  background-image: url('../../assets/images/aventura-pantalla/niebla-aventura.png');
+  background-repeat: repeat;
+  background-size: var(--fog-scale);
+  image-rendering: pixelated;
+  
+  /* El hijo es el único que se mueve, optimizando el rendimiento */
+  animation: moveFog var(--fog-speed) linear infinite;
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
-.title-group {
-  display: grid;
-  justify-items: center;
-  gap: 7px;
+@keyframes moveFog {
+  0%   { background-position: 0 0; }
+  100% { background-position: var(--fog-scale) 0; }
 }
 
-.title-eyebrow,
-.mentor-label,
-.level-kicker,
-.phase-count,
-.level-topic,
-.level-status,
-.badge-completed,
-.level-action {
-  font-family: 'TuFuentePixel', monospace;
-  text-transform: uppercase;
+/* =========================================
+   DESTELLOS DE CRISTALES (Sparkles)
+   =========================================
+   14 estrellitas posicionadas sobre los cristales.
+   Ciclo de 7s con delays escalonados = 3-4 visibles a la vez.
+   Costo de rendimiento: practicamente CERO.
+*/
+.sparkles-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
 }
 
-.title-eyebrow {
-  color: #83eddb;
-  font-size: clamp(.55rem, .72vw, .72rem);
-  letter-spacing: .2em;
-  text-shadow: 2px 2px 0 #000;
+.sparkle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  opacity: 0;
+  animation: twinkle 7s ease-in-out infinite;
+  will-change: opacity, transform;
 }
 
-.lobby-title {
-  margin: 0;
-  color: #ffe163;
-  font-family: 'TuFuentePixel', monospace;
-  font-size: clamp(2.15rem, 4vw, 3.65rem);
-  letter-spacing: .08em;
-  line-height: 1.05;
-  text-shadow: 5px 5px 0 #000, -2px -2px 0 #5b4200;
+/* Forma de estrella de 4 puntas usando pseudo-elementos */
+.sparkle::before,
+.sparkle::after {
+  content: '';
+  position: absolute;
+  background: white;
 }
 
-.lobby-subtitle {
-  margin: 0;
-  color: #d0e5e1;
-  font: clamp(.76rem, 1vw, 1rem)/1.5 'TuFuentePixel', monospace;
-  text-shadow: 2px 2px 0 #000;
+.sparkle::before {
+  width: 2px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  border-radius: 50%;
 }
+
+.sparkle::after {
+  width: 100%;
+  height: 2px;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  border-radius: 50%;
+}
+
+/* Animacion: brilla brevemente y descansa */
+@keyframes twinkle {
+  0%, 15%   { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  22%       { opacity: 1; transform: scale(1.0) rotate(20deg); }
+  30%       { opacity: 0.5; transform: scale(0.7) rotate(35deg); }
+  38%, 100% { opacity: 0; transform: scale(0.2) rotate(45deg); }
+}
+
+/* Segunda variante mas lenta para variedad visual */
+@keyframes twinkleSlow {
+  0%, 25%   { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  35%       { opacity: 0.9; transform: scale(1.0) rotate(10deg); }
+  45%       { opacity: 0.4; transform: scale(0.6) rotate(20deg); }
+  55%, 100% { opacity: 0; transform: scale(0.2) rotate(30deg); }
+}
+
+/* Posiciones y tamaños variados sobre los cristales */
+.sparkle-1  { left: 16.0%; top: 38.0%; width: 16px; height: 16px; animation-delay: 0s; }       /* Cristal morado grande - GRANDE */
+.sparkle-2  { left: 18.0%; top: 11.0%; width: 10px; height: 10px; animation-delay: 0.5s; }     /* Cristales azules arriba */
+.sparkle-3  { left: 25.5%; top: 13.5%; width: 12px; height: 12px; animation-delay: 1.0s; }     /* Cristal rosa/verde arriba */
+.sparkle-4  { left:  5.0%; top: 43.0%; width:  9px; height:  9px; animation-delay: 1.5s; }     /* Cristal azul izquierda */
+.sparkle-5  { left: 48.0%; top: 50.0%; width: 14px; height: 14px; animation-delay: 2.0s; }     /* Cristal central - GRANDE */
+.sparkle-6  { left:  5.0%; top: 71.0%; width: 11px; height: 11px; animation-delay: 2.5s; }     /* Cristales verdes abajo-izq */
+.sparkle-7  { left: 46.5%; top: 77.0%; width: 14px; height: 14px; animation-delay: 3.0s; }     /* Cristal morado abajo - GRANDE */
+.sparkle-8  { left: 36.5%; top: 25.5%; width:  9px; height:  9px; animation-delay: 3.5s; }     /* Cristal rosa arriba-centro */
+.sparkle-9  { left: 14.0%; top: 42.0%; width:  8px; height:  8px; animation-delay: 4.0s;
+              animation-name: twinkleSlow; animation-duration: 9s; }                             /* Segundo destello morado */
+.sparkle-10 { left: 13.0%; top: 91.0%; width: 12px; height: 12px; animation-delay: 4.5s; }     /* Cristales verdes abajo */
+.sparkle-11 { left: 30.0%; top: 74.0%; width:  8px; height:  8px; animation-delay: 5.0s; }     /* Cristal rosa inferior */
+.sparkle-12 { left: 36.0%; top: 35.0%; width: 10px; height: 10px; animation-delay: 5.5s; }     /* Cristal amarillo */
+.sparkle-13 { left: 15.0%; top: 13.0%; width:  7px; height:  7px; animation-delay: 6.0s;
+              animation-name: twinkleSlow; animation-duration: 8s; }                             /* Mini destello azul arriba */
+.sparkle-14 { left:  7.0%; top: 84.0%; width: 10px; height: 10px; animation-delay: 6.5s; }     /* Cristal verde inferior-izq */
+
+/* =========================================
+   CENIZAS ARDIENTES (Embers)
+   =========================================
+   13 particulas diminutas que flotan hacia arriba
+   desde las 3 hogueras de la fabrica.
+   Mismo principio que los sparkles: solo opacity + transform.
+*/
+.embers-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.ember {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ff9932;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+/* Ascenso recto */
+@keyframes riseEmber {
+  0%   { opacity: 0; transform: translate(0, 0) scale(1); }
+  10%  { opacity: 0.9; }
+  50%  { opacity: 0.7; transform: translate(2px, -20px) scale(0.8); }
+  80%  { opacity: 0.3; transform: translate(-1px, -40px) scale(0.5); }
+  100% { opacity: 0; transform: translate(3px, -55px) scale(0.2); }
+}
+
+/* Ascenso con desvio a la derecha */
+@keyframes riseEmberDrift {
+  0%   { opacity: 0; transform: translate(0, 0) scale(1); }
+  10%  { opacity: 0.8; }
+  50%  { opacity: 0.6; transform: translate(6px, -25px) scale(0.7); }
+  80%  { opacity: 0.2; transform: translate(10px, -45px) scale(0.4); }
+  100% { opacity: 0; transform: translate(8px, -60px) scale(0.2); }
+}
+
+/* Ascenso con desvio a la izquierda */
+@keyframes riseEmberLeft {
+  0%   { opacity: 0; transform: translate(0, 0) scale(1); }
+  10%  { opacity: 0.85; }
+  50%  { opacity: 0.5; transform: translate(-5px, -22px) scale(0.7); }
+  80%  { opacity: 0.2; transform: translate(-3px, -42px) scale(0.4); }
+  100% { opacity: 0; transform: translate(-6px, -55px) scale(0.2); }
+}
+
+/* --- Hoguera A: Casa con hoguera a la derecha (~82%, 23%) --- */
+.ember-a1 { left: 81.8%; top: 22.5%; width: 3px; height: 3px; background: #ffb347;
+            animation: riseEmber 2.8s ease-out infinite; animation-delay: 0s; }
+.ember-a2 { left: 82.5%; top: 23.0%; width: 2px; height: 2px; background: #ff9932;
+            animation: riseEmberDrift 3.2s ease-out infinite; animation-delay: 0.7s; }
+.ember-a3 { left: 82.2%; top: 22.0%; width: 2px; height: 2px; background: #ffd700;
+            animation: riseEmberLeft 2.5s ease-out infinite; animation-delay: 1.4s; }
+.ember-a4 { left: 82.0%; top: 23.5%; width: 3px; height: 3px; background: #ff8c00;
+            animation: riseEmber 3.5s ease-out infinite; animation-delay: 2.1s; }
+
+/* --- Hoguera B: Horno central de la fabrica (~63%, 47%) --- */
+.ember-b1 { left: 62.8%; top: 46.5%; width: 3px; height: 3px; background: #ffb347;
+            animation: riseEmber 2.6s ease-out infinite; animation-delay: 0.3s; }
+.ember-b2 { left: 63.5%; top: 47.0%; width: 2px; height: 2px; background: #ffd700;
+            animation: riseEmberDrift 3.0s ease-out infinite; animation-delay: 1.0s; }
+.ember-b3 { left: 63.0%; top: 46.0%; width: 2px; height: 2px; background: #ff9932;
+            animation: riseEmberLeft 3.4s ease-out infinite; animation-delay: 1.7s; }
+.ember-b4 { left: 63.3%; top: 47.5%; width: 3px; height: 3px; background: #ff8c00;
+            animation: riseEmber 2.9s ease-out infinite; animation-delay: 2.4s; }
+
+/* --- Hoguera C: Fundidora grande inferior (~77%, 67%) --- */
+.ember-c1 { left: 76.5%; top: 66.5%; width: 4px; height: 4px; background: #ffb347;
+            animation: riseEmber 2.4s ease-out infinite; animation-delay: 0s; }
+.ember-c2 { left: 77.5%; top: 67.0%; width: 3px; height: 3px; background: #ffd700;
+            animation: riseEmberDrift 2.8s ease-out infinite; animation-delay: 0.5s; }
+.ember-c3 { left: 77.0%; top: 66.0%; width: 3px; height: 3px; background: #ff9932;
+            animation: riseEmberLeft 3.1s ease-out infinite; animation-delay: 1.0s; }
+.ember-c4 { left: 76.8%; top: 67.5%; width: 2px; height: 2px; background: #ff8c00;
+            animation: riseEmber 3.3s ease-out infinite; animation-delay: 1.5s; }
+.ember-c5 { left: 77.3%; top: 66.8%; width: 4px; height: 4px; background: #ffb347;
+            animation: riseEmberDrift 2.6s ease-out infinite; animation-delay: 2.0s; }
 
 .btn-back {
-  position: absolute;
-  top: 4px;
-  left: 0;
   min-height: 48px;
   padding: 0 17px;
   display: inline-flex;
@@ -124,522 +519,309 @@
   margin-right: 7px;
 }
 
-.mentor-panel {
-  min-height: 132px;
-  margin-bottom: clamp(22px, 3vw, 34px);
-  padding: 16px 18px 16px 140px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 390px);
-  align-items: center;
-  gap: 24px;
-  background:
-    linear-gradient(90deg, rgba(20, 44, 48, .96), rgba(8, 15, 24, .97) 58%),
-    #091119;
-  border: 3px solid #4cae9d;
-  box-shadow: inset 0 0 0 3px #091311, 7px 7px 0 rgba(0, 0, 0, .78);
-}
-
-.mentor-panel::before,
-.mentor-panel::after {
-  content: '';
-  position: absolute;
-  width: 12px;
-  height: 12px;
-}
-
-.mentor-panel::before {
-  top: 8px;
-  right: 8px;
-  border-top: 2px solid #ffe163;
-  border-right: 2px solid #ffe163;
-}
-
-.mentor-panel::after {
-  right: 8px;
-  bottom: 8px;
-  border-right: 2px solid #ffe163;
-  border-bottom: 2px solid #ffe163;
-}
-
-.mentor-portrait {
-  position: absolute;
-  left: 16px;
-  bottom: 0;
-  width: 112px;
-  height: 126px;
-  overflow: hidden;
-  display: grid;
-  place-items: end center;
-}
-
-.mentor-portrait img {
-  width: 126px;
-  max-width: none;
-  transform: translateY(8px);
-  filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, .82));
-}
-
-.mentor-copy {
-  min-width: 0;
-}
-
-.mentor-label {
-  color: #83eddb;
-  font-size: .56rem;
-  letter-spacing: .14em;
-}
-
-.mentor-copy h2 {
-  margin: 8px 0 6px;
-  color: #ffe163;
-  font: clamp(.9rem, 1.2vw, 1.18rem)/1.45 'TuFuentePixel', monospace;
-  text-shadow: 2px 2px 0 #000;
-}
-
-.mentor-copy p,
-.progress-panel p,
-.level-description {
-  overflow-wrap: anywhere;
-  font-family: 'Consolas', 'Courier New', monospace;
-}
-
-.mentor-copy p {
-  margin: 0;
-  color: #b9ceca;
-  font-size: clamp(.78rem, .95vw, .95rem);
-  line-height: 1.55;
-}
-
-.progress-panel {
-  min-width: 0;
-  padding: 13px 15px;
-  background: rgba(2, 7, 10, .72);
-  border: 2px solid #294f49;
-  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, .45);
-}
-
-.progress-copy {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  color: #83eddb;
-  font: .62rem 'TuFuentePixel', monospace;
-}
-
-.progress-copy strong {
-  color: #ffe163;
-  white-space: nowrap;
-}
-
-.progress-track {
-  height: 13px;
-  margin: 10px 0 8px;
-  overflow: hidden;
-  background: #020405;
-  border: 2px solid #29433f;
-  box-shadow: inset 2px 2px 0 #000;
-}
-
-.progress-track i {
-  display: block;
-  height: 100%;
-  background: repeating-linear-gradient(90deg, #4ab9a5 0 16px, #83eddb 16px 29px, #c5fff5 29px 32px);
-  box-shadow: 0 0 12px rgba(119, 221, 202, .56);
-  transition: width .45s steps(5);
-}
-
-.progress-panel p {
-  margin: 0;
-  color: #8ea39f;
-  font-size: .7rem;
-  line-height: 1.4;
-}
+/* =========================================
+   MAP NODES
+   ========================================= */
 
 .levels-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
-  gap: clamp(13px, 1.3vw, 21px);
-}
-
-.level-card {
-  --accent: #83eddb;
-  --accent-soft: rgba(131, 237, 219, .16);
-  position: relative;
-  min-width: 0;
-  min-height: 330px;
-  padding: 18px 15px 15px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  color: #eef7f5;
-  background:
-    linear-gradient(180deg, var(--accent-soft), transparent 42%),
-    linear-gradient(135deg, rgba(255, 255, 255, .045) 0 13%, transparent 13% 86%, rgba(0, 0, 0, .25) 86%),
-    #101927;
-  border: 3px solid var(--accent);
-  box-shadow: inset 0 0 0 2px #05080d, inset 0 -30px 38px rgba(0, 0, 0, .34), 0 9px 0 #030506;
-  text-decoration: none;
-  touch-action: manipulation;
-}
-
-.level-card::before,
-.level-card::after {
-  content: '';
   position: absolute;
-  width: 13px;
-  height: 13px;
-  opacity: .88;
+  inset: 0;
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  z-index: 2;
 }
 
-.level-card::before {
-  top: 7px;
-  left: 7px;
-  border-top: 2px solid var(--accent);
-  border-left: 2px solid var(--accent);
-}
-
-.level-card::after {
-  right: 7px;
-  bottom: 7px;
-  border-right: 2px solid var(--accent);
-  border-bottom: 2px solid var(--accent);
-}
-
-.level-1 { --accent: #7ce7d2; --accent-soft: rgba(74, 197, 174, .2); }
-.level-2 { --accent: #f2bd4d; --accent-soft: rgba(242, 189, 77, .18); }
-.level-3 { --accent: #d77be7; --accent-soft: rgba(215, 123, 231, .18); }
-.level-4 { --accent: #f18356; --accent-soft: rgba(241, 131, 86, .18); }
-.level-5 { --accent: #7bd98e; --accent-soft: rgba(123, 217, 142, .18); }
-
-.card-topline,
-.card-footer {
+.map-node {
+  position: absolute;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  /* Más pequeño en PC (max 58px), pero mantiene 50px min para móviles */
+  width: clamp(50px, 4vw, 58px);
+  height: clamp(50px, 4vw, 58px);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.2s;
+  
+  --node-color: #83eddb;
+}
+
+.node-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated; /* Para mantener el estilo retro */
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+  transition: filter 0.2s ease;
+}
+
+/* Tooltip styles */
+.node-tooltip {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(10, 15, 22, 0.95);
+  border: 2px solid var(--node-color);
+  padding: 14px;
+  border-radius: 6px;
+  width: 260px; /* Ancho fijo para que la descripción se acomode bien */
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  text-align: left;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.level-kicker,
-.phase-count {
-  color: var(--accent);
-  font-size: clamp(.45rem, .55vw, .56rem);
-  letter-spacing: .05em;
-}
-
-.phase-count {
-  color: #a7bab6;
-}
-
-.level-icon-wrapper {
-  position: relative;
-  width: 82px;
-  height: 82px;
-  margin: 18px auto 16px;
-  display: grid;
-  place-items: center;
-  color: var(--accent);
-  background: linear-gradient(135deg, rgba(255, 255, 255, .07), transparent 45%), #060b12;
-  border: 3px solid var(--accent);
-  box-shadow: inset 0 0 17px var(--accent-soft), 0 0 12px var(--accent-soft), 5px 5px 0 #000;
-}
-
-.level-icon-wrapper::before {
+.node-tooltip::after {
   content: '';
   position: absolute;
-  inset: 8px;
-  border: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px;
+  border-style: solid;
+  border-color: var(--node-color) transparent transparent transparent;
 }
 
-.skill-glyph {
-  position: relative;
-  z-index: 1;
-  color: var(--accent);
-  font: 2rem/1 'TuFuentePixel', monospace;
-  text-shadow: 3px 3px 0 #000, 0 0 12px var(--accent);
+.map-node:hover .node-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
-.level-copy {
-  display: grid;
-  justify-items: center;
-  text-align: center;
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 6px;
 }
 
-.level-topic {
-  min-height: 2.8em;
-  margin: 0 0 7px;
-  display: grid;
-  place-items: center;
-  color: var(--accent);
-  font-size: clamp(.48rem, .58vw, .61rem);
-  line-height: 1.45;
-  letter-spacing: .025em;
+.tooltip-level-id {
+  font: 0.75rem 'TuFuentePixel', monospace;
+  color: var(--node-color);
+  letter-spacing: 1px;
 }
 
-.level-title {
-  min-height: 2.8em;
-  margin: 0;
-  display: grid;
-  place-items: center;
-  color: #f6fbfa;
-  font: clamp(.7rem, .8vw, .86rem)/1.45 'TuFuentePixel', monospace;
-  text-shadow: 2px 2px 0 #000;
+.tooltip-topic {
+  font-family: sans-serif;
+  font-size: 0.65rem;
+  color: #bbb;
+  text-transform: uppercase;
 }
 
-.level-description {
-  margin: 8px 0 16px;
-  color: #aebeba;
-  font-size: clamp(.7rem, .75vw, .8rem);
-  line-height: 1.45;
-  text-align: left;
-}
-
-.card-footer {
-  min-height: 34px;
-  margin-top: auto;
-  padding-top: 11px;
-  border-top: 1px solid color-mix(in srgb, var(--accent) 35%, #27322f);
-}
-
-.level-status,
-.badge-completed,
-.level-action {
-  font-size: clamp(.43rem, .48vw, .52rem);
-  line-height: 1.35;
-}
-
-.level-status,
-.badge-completed {
-  padding: 5px 6px;
-  color: #7f8987;
-  background: rgba(0, 0, 0, .38);
-  border: 1px solid #47514f;
-}
-
-.level-status.available {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-.level-action {
-  color: #dbe8e5;
-  text-align: right;
-}
-
-.unlocked-level {
-  cursor: pointer;
-  transition: transform .12s steps(2), box-shadow .12s steps(2), filter .12s steps(2);
-}
-
-.unlocked-level:hover,
-.unlocked-level:focus-visible {
-  z-index: 2;
-  outline: 3px solid rgba(255, 225, 99, .38);
-  outline-offset: 5px;
-  box-shadow: inset 0 0 0 2px #05080d, inset 0 -30px 38px rgba(0, 0, 0, .34), 0 12px 0 #030506, 0 0 24px var(--accent-soft);
-  filter: brightness(1.12);
-  transform: translateY(-4px);
-}
-
-.unlocked-level:active {
-  transform: translateY(6px);
-  box-shadow: inset 0 0 0 2px #05080d, 0 3px 0 #030506;
-}
-
-.completed-level .level-icon-wrapper::after {
-  content: '✓';
-  position: absolute;
-  z-index: 2;
-  right: -10px;
-  bottom: -10px;
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  color: #07130e;
-  background: #7bd98e;
-  border: 2px solid #d9ffe0;
-  box-shadow: 3px 3px 0 #000;
+.tooltip-title {
+  display: block;
   font: 1rem 'TuFuentePixel', monospace;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
 }
 
-.badge-completed {
-  color: #13081c;
-  background: #d77be7;
-  border-color: #f5bbff;
-  box-shadow: 2px 2px 0 #000;
+.tooltip-desc {
+  display: block;
+  font-family: sans-serif;
+  font-size: 0.8rem;
+  color: #ddd;
+  line-height: 1.4;
 }
 
-.locked-level {
-  --accent: #687270;
-  --accent-soft: rgba(104, 114, 112, .1);
+.tooltip-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dotted rgba(255,255,255,0.2);
+}
+
+.tooltip-stars {
+  display: flex;
+  gap: 3px;
+}
+
+.tooltip-stars .star-icon {
+  font-size: 0.9rem;
+  filter: grayscale(1) brightness(0.6); /* Gris apagado por defecto */
+}
+
+.tooltip-stars .star-icon.earned {
+  filter: drop-shadow(0 0 3px rgba(242, 189, 77, 0.8)); /* Dorada con brillo si la ganó */
+}
+
+.tooltip-status {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.75rem;
+}
+
+.status-locked { color: #687270; }
+.status-available { color: #f2bd4d; text-shadow: 0 0 4px rgba(242, 189, 77, 0.4); }
+.status-completed { color: #7bd98e; }
+
+/* Unlocked (Available) State */
+.unlocked-node {
+  --node-color: #f2bd4d;
+  z-index: 10;
+}
+
+.unlocked-node .node-image {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+.unlocked-node:hover {
+  transform: translate(-50%, -50%); /* Sin scale */
+}
+
+.unlocked-node:hover .node-image {
+  filter: drop-shadow(0 0 15px rgba(242, 189, 77, 1)) brightness(1.1);
+  animation: none; /* Al hacer hover mantenemos el brillo fijo */
+}
+
+/* Completed State */
+.completed-node {
+  --node-color: #7bd98e;
+  z-index: 5;
+}
+
+.completed-node .node-image {
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+}
+
+.completed-node:hover {
+  transform: translate(-50%, -50%); /* Sin scale */
+}
+
+.completed-node:hover .node-image {
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,0.8)) brightness(1.1);
+}
+
+/* Locked State */
+.locked-node {
+  --node-color: #687270;
   cursor: not-allowed;
-  filter: saturate(.28);
-  opacity: .78;
-}
-
-.locked-level .level-description,
-.locked-level .level-title,
-.locked-level .level-topic {
-  color: #838c8a;
-}
-
-.padlock-icon {
-  position: relative;
+  filter: grayscale(1) brightness(0.7);
+  opacity: 0.85;
   z-index: 1;
-  width: 34px;
-  height: 30px;
-  margin-top: 12px;
-  background: #69716f;
-  box-shadow: 3px 3px 0 #000;
 }
 
-.padlock-icon::before {
-  content: '';
+.locked-node .node-image {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+
+/* Punto Base (Estático, sin interactividad por ahora) */
+.punto-base {
   position: absolute;
-  left: 6px;
-  top: -20px;
-  width: 17px;
-  height: 22px;
-  border: 4px solid #69716f;
-  border-bottom: 0;
+  left: 17.5%;
+  top: 44.5%; /* Movido más arriba para tocar casi el cristal */
+  transform: translate(-50%, -50%);
+  width: clamp(30px, 2.4vw, 35px); /* 40% más pequeño que los nodos normales */
+  height: clamp(30px, 2.4vw, 35px);
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+  z-index: 2;
+  pointer-events: none;
 }
 
-.padlock-icon::after {
-  content: '';
+/* =========================================
+   RUTAS DEL MAPA (SVG PATHS)
+   ========================================= */
+.map-paths-svg {
   position: absolute;
-  left: 14px;
-  top: 8px;
-  width: 6px;
-  height: 12px;
-  background: #202625;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Detrás de los botones, pero encima del fondo */
+  pointer-events: none; /* Que no bloquee clicks */
 }
 
-@media (max-width: 1280px) {
-  .levels-grid {
-    grid-template-columns: repeat(3, minmax(220px, 1fr));
-  }
+.map-path {
+  fill: none;
+  stroke: #687270;
+  stroke-width: 12px; /* En el sistema de coordenadas 3084x1376 */
+  stroke-dasharray: 30; /* Longitud del segmento y espacio (entrecoratado) */
+  opacity: 0.5;
+  stroke-linecap: round;
+  transition: all 0.3s ease;
+}
 
-  .level-card {
-    min-height: 315px;
+.path-active {
+  stroke: #7FFFD4;
+  opacity: 1;
+  filter: drop-shadow(0 0 10px rgba(127, 255, 212, 0.8));
+  animation: scrollDash 1.2s linear infinite reverse;
+}
+
+@keyframes scrollDash {
+  to {
+    stroke-dashoffset: 60; /* Doble del dasharray para que sea continuo */
   }
 }
 
-@media (max-width: 900px) {
-  .mentor-panel {
-    grid-template-columns: minmax(0, 1fr);
+/* Animación de brillo para nodos desbloqueados (sin palpitar/escalar el tamaño) */
+@keyframes pulseGlow {
+  0% { 
+    filter: drop-shadow(0 0 5px rgba(242, 189, 77, 0.4));
   }
-
-  .progress-panel {
-    width: 100%;
+  50% { 
+    filter: drop-shadow(0 0 16px rgba(242, 189, 77, 1));
+  }
+  100% { 
+    filter: drop-shadow(0 0 5px rgba(242, 189, 77, 0.4));
   }
 }
 
-@media (max-width: 720px) {
-  .lobby-container {
-    padding: 18px 13px 38px;
-    background-attachment: scroll;
+/* Reducimos animaciones para accesibilidad/rendimiento */
+@media (prefers-reduced-motion: reduce) {
+  .map-node,
+  .unlocked-node .node-image,
+  .path-active {
+    transition: none;
+    animation: none;
   }
+}
 
-  .lobby-header {
-    min-height: 0;
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 17px;
-  }
-
+@media (max-width: 600px) {
   .btn-back {
-    position: static;
-    align-self: stretch;
-  }
-
-  .mentor-panel {
+    width: 38px;
+    height: 38px;
     min-height: 0;
-    padding: 16px;
-    gap: 16px;
+    padding: 0;
   }
-
-  .mentor-portrait {
+  .back-icon {
+    margin-right: 0;
+    font-size: 1rem;
+  }
+  .btn-back-text {
     display: none;
   }
-
-  .mentor-copy {
-    text-align: center;
+  
+  .game-title {
+    width: 255px;
+    margin-top: 36px;
   }
-
-  .levels-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 15px;
-  }
-
-  .level-card {
-    min-height: 318px;
-  }
-}
-
-@media (max-width: 480px) {
-  .lobby-title {
-    font-size: clamp(1.65rem, 9.5vw, 2rem);
-  }
-
-  .lobby-subtitle {
-    max-width: 28ch;
-    font-size: .68rem;
-  }
-
-  .mentor-copy h2 {
-    font-size: .78rem;
-  }
-
-  .mentor-copy p {
-    font-size: .76rem;
-  }
-
-  .levels-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .level-card {
-    min-height: 285px;
-    padding-inline: 18px;
-  }
-
-  .level-icon-wrapper {
-    width: 70px;
-    height: 70px;
-    margin-block: 15px 13px;
-  }
-
-  .level-description {
-    text-align: center;
-  }
-}
-
-@media (max-height: 520px) and (orientation: landscape) {
-  .lobby-container {
-    padding-top: 14px;
-  }
-
-  .lobby-header {
-    min-height: 76px;
-  }
-
-  .mentor-panel {
-    min-height: 104px;
-  }
-
-  .mentor-portrait {
-    height: 104px;
+  
+  .node-tooltip {
+    display: none; /* Hide tooltips on mobile to prevent overflow issues */
   }
 }
 
 @media (hover: none), (pointer: coarse) {
-  .unlocked-level:hover {
-    outline: none;
+  .unlocked-node:hover, .completed-node:hover {
+    transform: translate(-50%, -50%);
     filter: none;
-    transform: none;
   }
-
   .btn-back:hover {
     outline: none;
     transform: none;
@@ -648,8 +830,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .btn-back,
-  .progress-track i,
-  .unlocked-level {
+  .map-node,
+  .unlocked-node {
     transition: none;
+    animation: none;
   }
 }

@@ -1,79 +1,150 @@
-<div class="lobby-container">
-  <header class="lobby-header">
+<!-- HUD BAR -->
+<header class="hud-bar">
+  <div class="hud-left">
     <a routerLink="/pantalla-principal" class="btn-back" aria-label="Volver a la pantalla principal">
-      <span class="back-icon" aria-hidden="true">◄</span> VOLVER
+      <span class="back-icon" aria-hidden="true">◄</span> <span class="btn-back-text">VOLVER</span>
     </a>
-    <div class="title-group">
-      <span class="title-eyebrow">RUTA DE APRENDIZAJE</span>
-      <h1 class="lobby-title">MODO AVENTURA</h1>
-      <p class="lobby-subtitle">Aprende programación misión por misión</p>
+  </div>
+  <div class="hud-center">
+    <img src="assets/images/login/titulo.png" alt="DragonCode" class="game-title">
+  </div>
+  <div class="hud-right">
+  </div>
+</header>
+
+<!-- CONTADOR DE ESTRELLAS FLOTANTE -->
+<div class="stars-counter-floating" aria-label="Progreso de estrellas">
+  <span class="star-icon">⭐</span>
+  <span class="star-text">{{ totalEstrellas }} / {{ maxEstrellas }}</span>
+</div>
+
+<div class="lobby-container" #scrollContainer>
+  <div class="adventure-map">
+
+    <!-- EFECTO DE NIEBLA -->
+    <div class="fog-layer" aria-hidden="true">
+      <div class="fog-texture"></div>
     </div>
-  </header>
 
-  <section class="mentor-panel" aria-labelledby="mentor-title">
-    <div class="mentor-portrait" aria-hidden="true">
-      <img src="assets/images/draco/dracobase1.png" alt="">
+    <!-- DESTELLOS DE CRISTALES -->
+    <div class="sparkles-layer" aria-hidden="true">
+      <div class="sparkle sparkle-1"></div>
+      <div class="sparkle sparkle-2"></div>
+      <div class="sparkle sparkle-3"></div>
+      <div class="sparkle sparkle-4"></div>
+      <div class="sparkle sparkle-5"></div>
+      <div class="sparkle sparkle-6"></div>
+      <div class="sparkle sparkle-7"></div>
+      <div class="sparkle sparkle-8"></div>
+      <div class="sparkle sparkle-9"></div>
+      <div class="sparkle sparkle-10"></div>
+      <div class="sparkle sparkle-11"></div>
+      <div class="sparkle sparkle-12"></div>
+      <div class="sparkle sparkle-13"></div>
+      <div class="sparkle sparkle-14"></div>
     </div>
-    <div class="mentor-copy">
-      <span class="mentor-label">GUÍA DE DRAKO</span>
-      <h2 id="mentor-title">Cada desafío desbloquea una nueva habilidad</h2>
-      <p>Empieza con instrucciones sencillas y avanza hasta automatizar una fábrica completa.</p>
+
+    <!-- CENIZAS ARDIENTES DE LAS HOGUERAS -->
+    <div class="embers-layer" aria-hidden="true">
+      <!-- Hoguera superior izquierda (ventana con fuego) -->
+      <div class="ember ember-a1"></div>
+      <div class="ember ember-a2"></div>
+      <div class="ember ember-a3"></div>
+      <div class="ember ember-a4"></div>
+      <!-- Hoguera central (fuego en el horno) -->
+      <div class="ember ember-b1"></div>
+      <div class="ember ember-b2"></div>
+      <div class="ember ember-b3"></div>
+      <div class="ember ember-b4"></div>
+      <!-- Hoguera inferior grande (fundidora) -->
+      <div class="ember ember-c1"></div>
+      <div class="ember ember-c2"></div>
+      <div class="ember ember-c3"></div>
+      <div class="ember ember-c4"></div>
+      <div class="ember ember-c5"></div>
     </div>
-    <div class="progress-panel" aria-label="Progreso del modo aventura">
-      <div class="progress-copy">
-        <span>PROGRESO</span>
-        <strong>{{ nivelesCompletados }} / {{ totalNiveles }}</strong>
-      </div>
-      <div class="progress-track" aria-hidden="true">
-        <i [style.width.%]="porcentajeProgreso"></i>
-      </div>
-      <p>{{ nivelesCompletados === totalNiveles ? 'Ruta completada' : 'Completa una misión para abrir la siguiente' }}</p>
-    </div>
-  </section>
 
-  <main class="levels-grid" aria-label="Niveles del modo aventura">
-    @for (level of niveles; track level.id) {
-      <a
-        class="level-card level-{{ level.id }}"
-        [class.locked-level]="level.bloqueado"
-        [class.unlocked-level]="!level.bloqueado"
-        [class.completed-level]="level.completado"
-        [routerLink]="level.bloqueado ? null : ['/aventura/nivel', level.id]"
-        [attr.aria-disabled]="level.bloqueado"
-        [attr.tabindex]="level.bloqueado ? -1 : 0"
-        [attr.aria-label]="'Nivel ' + level.id + ': ' + level.titulo + '. ' + level.tema + '. ' + (level.bloqueado ? 'Bloqueado' : level.completado ? 'Completado' : 'Disponible')">
-        <div class="card-topline">
-          <span class="level-kicker">NIVEL 0{{ level.id }}</span>
-          <span class="phase-count">{{ level.fases }} FASES</span>
-        </div>
+    <!-- PUNTO BASE ESTÁTICO -->
+    <img src="assets/images/aventura-pantalla/punto-base.png" class="punto-base" alt="Punto Base Inicial" aria-hidden="true">
 
-        <div class="level-icon-wrapper" aria-hidden="true">
-          @if (level.bloqueado) {
-            <div class="padlock-icon"></div>
-          } @else {
-            <span class="skill-glyph">{{ level.id }}</span>
-          }
-        </div>
+    <!-- RUTAS DEL MAPA (SVG) -->
+    <svg class="map-paths-svg" viewBox="0 0 3084 1376" aria-hidden="true">
+      <!-- Path 0: Base -> Nivel 1 -->
+      <path class="map-path"
+            [class.path-active]="niveles.length > 0 && !niveles[0].bloqueado"
+            d="M 540 612 C 540 900, 600 1183, 771 1183" />
+            
+      <!-- Path 1: Nivel 1 -> Nivel 2 -->
+      <path class="map-path"
+            [class.path-active]="niveles.length > 1 && !niveles[1].bloqueado"
+            d="M 771 1183 C 1000 1183, 1000 750, 1557 736" />
+            
+      <!-- Path 2: Nivel 2 -> Nivel 3 -->
+      <path class="map-path"
+            [class.path-active]="niveles.length > 2 && !niveles[2].bloqueado"
+            d="M 1557 736 C 1600 900, 1550 1000, 1604 1170" />
+            
+      <!-- Path 3: Nivel 3 -> Nivel 4 -->
+      <path class="map-path"
+            [class.path-active]="niveles.length > 3 && !niveles[3].bloqueado"
+            d="M 1604 1170 Q 1950 1200, 2313 1128" />
+            
+      <!-- Path 4: Nivel 4 -> Nivel 5 -->
+      <path class="map-path"
+            [class.path-active]="niveles.length > 4 && !niveles[4].bloqueado"
+            d="M 2313 1128 C 2550 1128, 2550 850, 2637 784" />
+            
+      <!-- Path 5: Nivel 5 -> Final -->
+      <path class="map-path"
+            [class.path-active]="niveles.length > 4 && niveles[4].completado"
+            d="M 2637 784 Q 2850 780, 3084 820" />
+    </svg>
 
-        <div class="level-copy">
-          <p class="level-topic">{{ level.tema }}</p>
-          <h2 class="level-title">{{ level.titulo }}</h2>
-          <p class="level-description">{{ level.descripcion }}</p>
-        </div>
+    <main class="levels-grid" aria-label="Niveles del modo aventura">
+      @for (level of niveles; track level.id) {
+        <a
+          class="map-node level-{{ level.id }}"
+          [class.locked-node]="level.bloqueado"
+          [class.unlocked-node]="!level.bloqueado"
+          [class.completed-node]="level.completado"
+          [routerLink]="level.bloqueado ? null : ['/aventura/nivel', level.id]"
+          [style.left]="getLeftPosition(level.id)"
+          [style.top]="getTopPosition(level.id)"
+          [attr.aria-disabled]="level.bloqueado"
+          [attr.tabindex]="level.bloqueado ? -1 : 0"
+          [attr.aria-label]="'Nivel ' + level.id + ': ' + level.titulo + '. ' + (level.bloqueado ? 'Bloqueado' : level.completado ? 'Completado' : 'Disponible')">
+          
+          <img [src]="'assets/images/aventura-pantalla/nivel-' + level.id + '.png'" 
+               class="node-image" 
+               alt="Nivel {{level.id}}">
 
-        <div class="card-footer">
-          @if (level.completado) {
-            <span class="badge-completed">COMPLETADO</span>
-            <span class="level-action">REPETIR</span>
-          } @else if (level.bloqueado) {
-            <span class="level-status">BLOQUEADO</span>
-            <span class="level-action">SUPERA EL NIVEL {{ level.id - 1 }}</span>
-          } @else {
-            <span class="level-status available">DISPONIBLE</span>
-            <span class="level-action">JUGAR</span>
-          }
-        </div>
-      </a>
-    }
-  </main>
+          <div class="node-tooltip">
+            <div class="tooltip-header">
+              <span class="tooltip-level-id">NIVEL 0{{ level.id }}</span>
+              <span class="tooltip-topic">{{ level.tema }}</span>
+            </div>
+            
+            <span class="tooltip-title">{{ level.titulo }}</span>
+            <span class="tooltip-desc">{{ level.descripcion }}</span>
+            
+            <div class="tooltip-footer">
+              <div class="tooltip-stars" aria-label="Estrellas obtenidas">
+                <span class="star-icon" [class.earned]="level.estrellas >= 1">⭐</span>
+                <span class="star-icon" [class.earned]="level.estrellas >= 2">⭐</span>
+                <span class="star-icon" [class.earned]="level.estrellas >= 3">⭐</span>
+              </div>
+              <span class="tooltip-status" 
+                    [class.status-locked]="level.bloqueado" 
+                    [class.status-completed]="level.completado"
+                    [class.status-available]="!level.bloqueado && !level.completado">
+                @if (level.bloqueado) { 🔒 Bloqueado }
+                @else if (level.completado) { ✅ Completado }
+                @else { 🔓 Disponible }
+              </span>
+            </div>
+          </div>
+        </a>
+      }
+    </main>
+  </div>
 </div>
