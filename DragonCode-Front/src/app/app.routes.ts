@@ -14,8 +14,14 @@ export const routes: Routes = [
     path: 'crear-cuenta',
     loadComponent: () => import('./crear-cuenta/crear-cuenta.component').then(m => m.CrearCuentaComponent)
   },
-  { path: 'recuperar-cuenta', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'cambiar-contrasena', redirectTo: '/login', pathMatch: 'full' },
+  {
+    path: 'recuperar-cuenta',
+    loadComponent: () => import('./recuperar-cuenta/recuperar-cuenta.component').then(m => m.RecuperarCuentaComponent)
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () => import('./reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
+  },
   {
     path: 'pantalla-principal',
     canActivate: [authGuard],
