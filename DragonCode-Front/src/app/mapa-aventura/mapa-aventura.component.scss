@@ -1,11 +1,12 @@
 :host {
   display: block;
-  height: 100dvh;
+  height: calc(100dvh - var(--footer-height));
   overflow: hidden;
-  background-color: #1F1728;
+  background-color: #17121E;
 
   /* HUD BAR VARIABLES */
   --hud-height:              clamp(58px, 6.5vw, 72px);
+  --footer-height:           44px; /* Altura del pie de página global */
   --hud-padding-h:           clamp(12px, 3vw, 24px);
   --hud-btn-size:            clamp(44px, 3vw, 48px);
   --hud-bg-overlay:          rgba(0, 0, 0, 0.4);
@@ -181,14 +182,20 @@
 .lobby-container {
   cursor: grab;
   margin-top: var(--hud-height);
-  height: calc(100dvh - var(--hud-height));
+  height: calc(100dvh - var(--hud-height) - var(--footer-height));
   width: 100vw;
   overflow-y: hidden;
   overflow-x: auto;
-  background-color: #1F1728;
+  background-color: #17121E;
   -webkit-overflow-scrolling: touch;
   user-select: none;
   -webkit-user-select: none;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.lobby-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .lobby-container:active {
@@ -197,7 +204,7 @@
 
 .adventure-map {
   height: 100%;
-  width: calc((100dvh - var(--hud-height)) * (3084 / 1376));
+  width: calc((100dvh - var(--hud-height) - var(--footer-height)) * (3084 / 1376));
   margin: 0 auto;
   background-image: url('../../assets/images/aventura-pantalla/fondo-aventura.png');
   background-size: cover;
@@ -561,6 +568,7 @@
 }
 
 /* Tooltip styles */
+/* Tooltip styles (Hover simple) */
 .node-tooltip {
   position: absolute;
   bottom: calc(100% + 14px);
@@ -568,19 +576,19 @@
   transform: translateX(-50%) translateY(10px);
   background: rgba(10, 15, 22, 0.95);
   border: 2px solid var(--node-color);
-  padding: 14px;
+  padding: 10px 14px;
   border-radius: 6px;
-  width: 260px; /* Ancho fijo para que la descripción se acomode bien */
-  white-space: normal;
+  white-space: nowrap;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s, transform 0.2s;
   pointer-events: none;
-  text-align: left;
+  text-align: center;
   box-shadow: 0 6px 16px rgba(0,0,0,0.8);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  align-items: center;
 }
 
 .node-tooltip::after {
@@ -600,25 +608,10 @@
   transform: translateX(-50%) translateY(0);
 }
 
-.tooltip-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  padding-bottom: 6px;
-}
-
 .tooltip-level-id {
   font: 0.75rem 'TuFuentePixel', monospace;
   color: var(--node-color);
   letter-spacing: 1px;
-}
-
-.tooltip-topic {
-  font-family: sans-serif;
-  font-size: 0.65rem;
-  color: #bbb;
-  text-transform: uppercase;
 }
 
 .tooltip-title {
@@ -628,45 +621,214 @@
   text-shadow: 1px 1px 0 #000;
 }
 
-.tooltip-desc {
-  display: block;
-  font-family: sans-serif;
-  font-size: 0.8rem;
-  color: #ddd;
-  line-height: 1.4;
-}
-
-.tooltip-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 4px;
-  padding-top: 8px;
-  border-top: 1px dotted rgba(255,255,255,0.2);
-}
-
 .tooltip-stars {
   display: flex;
   gap: 3px;
+  justify-content: center;
 }
 
 .tooltip-stars .star-icon {
   font-size: 0.9rem;
-  filter: grayscale(1) brightness(0.6); /* Gris apagado por defecto */
+  filter: grayscale(1) brightness(0.6);
 }
 
 .tooltip-stars .star-icon.earned {
-  filter: drop-shadow(0 0 3px rgba(242, 189, 77, 0.8)); /* Dorada con brillo si la ganó */
+  filter: drop-shadow(0 0 3px rgba(242, 189, 77, 0.8));
 }
 
-.tooltip-status {
+/* =========================================
+   MODAL DE NIVEL
+   ========================================= */
+.level-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.level-modal-content {
+  background: rgba(10, 15, 22, 0.98);
+  border: 4px solid #f2bd4d;
+  border-radius: 0;
+  padding: 24px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 8px 8px 0px #000, inset 0 0 15px rgba(242, 189, 77, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  animation: modalPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-close-modal {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 44px;
+  height: 44px;
+  background: #f2bd4d;
+  color: #000;
+  border: 4px solid #000;
+  border-radius: 0;
   font-family: 'TuFuentePixel', monospace;
-  font-size: 0.75rem;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.8);
+  transition: transform 0.2s, background-color 0.2s;
+  z-index: 10;
 }
 
-.status-locked { color: #687270; }
-.status-available { color: #f2bd4d; text-shadow: 0 0 4px rgba(242, 189, 77, 0.4); }
-.status-completed { color: #7bd98e; }
+.btn-close-modal:hover {
+  transform: scale(1.1);
+  background: #ffcc5c;
+}
+
+@keyframes modalPopIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px dashed rgba(255,255,255,0.2);
+  padding-bottom: 8px;
+}
+
+.modal-level-id {
+  font: 0.9rem 'TuFuentePixel', monospace;
+  color: #f2bd4d;
+  letter-spacing: 1px;
+}
+
+.modal-topic {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.8rem;
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-title {
+  font: 1.6rem 'TuFuentePixel', monospace;
+  color: #fff;
+  text-shadow: 3px 3px 0px #000;
+  margin: 0;
+}
+
+.modal-desc {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.05rem;
+  color: #ddd;
+  line-height: 1.6;
+  margin: 0 0 10px 0;
+}
+
+.modal-tech-summary {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.85rem;
+  color: #7bd98e;
+  background: #0a0f16;
+  padding: 14px;
+  border: 2px solid #334d49;
+  border-left: 4px solid #7bd98e;
+  line-height: 1.5;
+  margin-bottom: 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+.modal-tech-summary strong {
+  color: #f2bd4d;
+  font-size: 0.95rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 2px dashed rgba(255,255,255,0.2);
+}
+
+.modal-stars {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+}
+
+.modal-stars .star-icon {
+  font-size: 1.4rem;
+  filter: grayscale(1) brightness(0.6);
+}
+
+.modal-stars .star-icon.earned {
+  filter: drop-shadow(0 0 4px rgba(242, 189, 77, 0.8));
+}
+
+.modal-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.btn-play {
+  background: #f2bd4d;
+  color: #000;
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 1.4rem;
+  padding: 14px 20px;
+  border: 4px solid #000;
+  border-radius: 0;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 12px;
+  box-shadow: 6px 6px 0px #000;
+  animation: friendlyPulse 1.5s ease-in-out infinite alternate;
+  transition: transform 0.1s, box-shadow 0.1s, background-color 0.1s;
+}
+
+@keyframes friendlyPulse {
+  0% { 
+    background: #f2bd4d;
+    transform: scale(1);
+  }
+  100% { 
+    background: #ffe082;
+    transform: scale(1.02);
+  }
+}
+
+.btn-play:hover {
+  animation: none;
+  background: #ffcc5c;
+  color: #000;
+  transform: translate(2px, 2px);
+  box-shadow: 4px 4px 0px #000;
+}
+
+.play-icon {
+  font-size: 1.1rem;
+}
 
 /* Unlocked (Available) State */
 .unlocked-node {
@@ -834,5 +996,144 @@
   .unlocked-node {
     transition: none;
     animation: none;
+  }
+}
+
+/* =========================================
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   ========================================= */
+@media (max-width: 768px) {
+  .adventure-map {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+  
+  .node-image {
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)) !important;
+  }
+  
+  .unlocked-node .node-image {
+    animation: none !important;
+    filter: drop-shadow(0 0 5px rgba(242, 189, 77, 0.8)) brightness(1.1) !important;
+  }
+  
+  .sparkle:nth-child(even),
+  .ember:nth-child(even) {
+    display: none !important;
+    animation: none !important;
+  }
+  
+  .sparkle, .ember {
+    box-shadow: none !important;
+  }
+}
+
+/* =========================================
+   WIDGET DE CONSEJOS PASIVOS (DRACO)
+   ========================================= */
+.draco-consejo-widget {
+  position: fixed;
+  top: calc(var(--hud-height, 60px) + 20px);
+  left: 20px;
+  z-index: 9999;
+  pointer-events: none; /* No bloquea clicks en el mapa */
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+
+  .avatar-caja {
+    flex-shrink: 0;
+  }
+
+  .draco-avatar {
+    width: 105px; /* Escalado más pequeño que el nivel (150px) */
+    height: auto;
+    filter: drop-shadow(0 0 8px rgba(0,0,0,0.8));
+    border-radius: 50%; /* Por si usa background circular, aunque la imagen ya lo trae */
+  }
+
+  .globo-texto {
+    background-color: #fff;
+    color: #000;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 3px solid #333;
+    font-family: 'Share Tech Mono', monospace, sans-serif;
+    font-size: 0.95rem;
+    position: relative;
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+    max-width: 350px;
+    
+    
+    /* Animación suave */
+    opacity: 0;
+    transform: translateX(-15px) scale(0.95);
+    transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.8s;
+    visibility: hidden;
+    transform-origin: left center;
+
+    &.mostrar {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      visibility: visible;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: -16px;
+      top: 25px;
+      border-width: 8px 16px 8px 0;
+      border-style: solid;
+      border-color: transparent #333 transparent transparent;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: -11px;
+      top: 28px;
+      border-width: 5px 11px 5px 0;
+      border-style: solid;
+      border-color: transparent #fff transparent transparent;
+    }
+  }
+
+  @media (max-width: 768px) {
+    top: calc(var(--hud-height, 60px) + 35px);
+    left: 10px;
+    gap: 10px;
+
+    .draco-avatar {
+      width: 70px;
+    }
+
+    .globo-texto {
+      font-size: 0.8rem;
+      padding: 10px 14px;
+      max-width: 200px;
+
+      &::before {
+        top: 15px;
+      }
+      &::after {
+        top: 18px;
+      }
+    }
+  }
+}
+
+
+/* =========================================
+   EFECTO TUNEL (BORDES LATERALES)
+   ========================================= */
+@media (min-width: 1024px) {
+  .adventure-map {
+    box-shadow: inset 150px 0 150px -50px #17121E, inset -150px 0 150px -50px #17121E;
   }
 }

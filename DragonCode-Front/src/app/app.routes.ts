@@ -1,8 +1,12 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { nivelAventuraGuard } from './core/guards/nivel-aventura.guard';
+import { NivelDosPrototipoComponent } from './nivel-dos-prototipo/nivel-dos-prototipo.component';
+import { NivelTresPrototipoComponent } from './nivel-tres-prototipo/nivel-tres-prototipo.component';
 
 export const routes: Routes = [
+
+  { path: 'atajo-nivel-3', component: NivelTresPrototipoComponent},
   // Ruta por defecto que redirige al login
   { path: '', redirectTo: '/login', pathMatch: 'full' },
 

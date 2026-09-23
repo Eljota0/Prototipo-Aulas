@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ChangeDetectorRef , HostListener} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LayoutJuegoComponent } from '../layout-juego/layout-juego.component';
@@ -70,6 +70,11 @@ export interface ProtocoloAprendido {
   accionCodigo: string;
 }
 
+interface DialogNode {
+  texto: string;
+  imagen: string;
+}
+
 @Component({
   selector: 'app-nivel-dos-prototipo',
   standalone: true,
@@ -87,6 +92,21 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   ayudaUsada = false;
   readonly maxVidas = 3;
   vidas = this.maxVidas;
+
+  // === SISTEMA DE DIÁLOGOS TUTORIAL (Aislado para Nivel 2) ===
+  dialogosDraco: DialogNode[] = [
+    { texto: "¡Nada mal, novato! Superaste el primer reto con el ogro, pero no cantes victoria. Apenas estamos rascando la superficie de este calabozo.", imagen: "assets/images/exprecionsedraco/feliz.png" },
+    { texto: "El camino por estas cavernas de piedra mágica es inmenso y, créeme, encontrar agua dulce aquí abajo es casi imposible. Necesitamos asegurar provisiones para el viaje.", imagen: "assets/images/exprecionsedraco/pensativo.png" },
+    { texto: "¡Oye, mira esa máquina! Es un viejo Taladro a Vapor. Si logramos hacerlo funcionar, podremos extraer agua limpia de las profundidades.", imagen: "assets/images/exprecionsedraco/sorpendido.png" },
+    { texto: "El problema es que sus controles están fritos. Ya no podemos darle instrucciones secuenciales directas como hicimos antes.", imagen: "assets/images/exprecionsedraco/confundido.png" },
+    { texto: "Tendremos que reprogramarlo usando Eventos y Condicionales. Vamos a inyectarle bloques de código para que se quede 'escuchando' pasivamente y reaccione ÚNICAMENTE cuando algo cambie en su entorno.", imagen: "assets/images/exprecionsedraco/base.png" },
+    { texto: "Por ejemplo: SI la temperatura supera los 100 grados, ENTONCES libera vapor. ¡Arma la lógica, configura las condiciones y haz que la máquina trabaje por nosotros!", imagen: "assets/images/exprecionsedraco/feliz.png" }
+  ];
+  mostrarTutorial = true;
+  dialogoActualIndex = 0;
+  textoMostrado = '';
+  isTyping = false;
+  typeInterval: any;
 
   private readonly tonoColores: Record<string, { boton: string; consola: string }> = {
     azul:    { boton: '#174bd4', consola: '#82B1FF' },
@@ -134,6 +154,44 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   gameOver = false;
   pistaVisible = false;
   ayudaVisible = false;
+  // --- MANUAL DEL PROGRAMADOR ---
+  paginaActual = 0; // Índice base (0, 2, 4, 6)
+  totalPaginas = 8;
+  esMovil = false; // se actualiza en ngOnInit y resize
+
+  @HostListener('window:resize', [''])
+  onResize() {
+    this.esMovil = window.innerWidth <= 768;
+  }
+
+  abrirManual() { 
+    this.esMovil = window.innerWidth <= 768; 
+    this.ayudaVisible = true; 
+    this.paginaActual = 0; 
+  }
+  cerrarManual() { this.ayudaVisible = false; }
+
+  siguientePagina() {
+    const salto = this.esMovil ? 1 : 2;
+    if (this.paginaActual + salto < this.totalPaginas) {
+      this.paginaActual += salto;
+    }
+  }
+
+  anteriorPagina() {
+    const salto = this.esMovil ? 1 : 2;
+    if (this.paginaActual - salto >= 0) {
+      this.paginaActual -= salto;
+    }
+  }
+
+  get puedeAvanzar() { 
+    return this.esMovil ? this.paginaActual < this.totalPaginas - 1 : this.paginaActual < this.totalPaginas - 2; 
+  }
+  get puedeRetroceder() { 
+    return this.paginaActual > 0; 
+  }
+
   estadoTaladro: EstadoTaladro = 'detenido';
   estadoPunta: EstadoPuntaTaladro = 'inactivo';
   mostrarParticulasMoradas = false;
@@ -448,9 +506,48 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
+  iniciarDialogo() {
+    const nodoActual = this.dialogosDraco[this.dialogoActualIndex];
+    this.textoMostrado = '';
+    this.isTyping = true;
+    let i = 0;
+    
+    if (this.typeInterval) clearInterval(this.typeInterval);
+    
+    this.typeInterval = setInterval(() => {
+      this.textoMostrado += nodoActual.texto.charAt(i);
+      i++;
+      if (i >= nodoActual.texto.length) {
+        clearInterval(this.typeInterval);
+        this.isTyping = false;
+      }
+      this.cdr.detectChanges();
+    }, 30);
+  }
+
+  clickDialogo() {
+    const nodoActual = this.dialogosDraco[this.dialogoActualIndex];
+    if (this.isTyping) {
+      clearInterval(this.typeInterval);
+      this.textoMostrado = nodoActual.texto;
+      this.isTyping = false;
+    } else {
+      this.dialogoActualIndex++;
+      if (this.dialogoActualIndex < this.dialogosDraco.length) {
+        this.iniciarDialogo();
+      } else {
+        this.mostrarTutorial = false;
+      }
+    }
+  }
+
   ngOnInit(): void {
     this.motor.configurarTaladro();
     this.cargarContextoInicial();
+    
+    if (this.mostrarTutorial) {
+      this.iniciarDialogo();
+    }
   }
 
   get faseActual(): FaseNivelDos {
@@ -936,6 +1033,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     this.falloFase = false;
     this.pistaVisible = false;
     this.ayudaVisible = false;
+
+
     this.errores = [];
     this.erroresPendientes = [];
     this.estrategias = this.banderasVacias();

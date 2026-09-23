@@ -12,6 +12,17 @@
   </div>
 </header>
 
+
+<!-- WIDGET DE CONSEJOS PASIVOS (DRACO) -->
+<div class="draco-consejo-widget">
+  <div class="avatar-caja">
+    <img [src]="consejoActual?.imagen || 'assets/images/exprecionsedraco/base.png'" alt="Draco Mascot" class="draco-avatar">
+  </div>
+  <div class="globo-texto" [class.mostrar]="mostrandoConsejo">
+    <p *ngIf="consejoActual">{{ consejoActual.texto }}</p>
+  </div>
+</div>
+
 <!-- CONTADOR DE ESTRELLAS FLOTANTE -->
 <div class="stars-counter-floating" aria-label="Progreso de estrellas">
   <span class="star-icon">⭐</span>
@@ -107,7 +118,7 @@
           [class.locked-node]="level.bloqueado"
           [class.unlocked-node]="!level.bloqueado"
           [class.completed-node]="level.completado"
-          [routerLink]="level.bloqueado ? null : ['/aventura/nivel', level.id]"
+          (click)="level.bloqueado ? null : openLevelModal(level, $event)"
           [style.left]="getLeftPosition(level.id)"
           [style.top]="getTopPosition(level.id)"
           [attr.aria-disabled]="level.bloqueado"
@@ -118,33 +129,61 @@
                class="node-image" 
                alt="Nivel {{level.id}}">
 
+          <!-- TOOLTIP SIMPLE (HOVER) -->
           <div class="node-tooltip">
-            <div class="tooltip-header">
-              <span class="tooltip-level-id">NIVEL 0{{ level.id }}</span>
-              <span class="tooltip-topic">{{ level.tema }}</span>
-            </div>
-            
+            <span class="tooltip-level-id">NIVEL 0{{ level.id }}</span>
             <span class="tooltip-title">{{ level.titulo }}</span>
-            <span class="tooltip-desc">{{ level.descripcion }}</span>
-            
-            <div class="tooltip-footer">
-              <div class="tooltip-stars" aria-label="Estrellas obtenidas">
-                <span class="star-icon" [class.earned]="level.estrellas >= 1">⭐</span>
-                <span class="star-icon" [class.earned]="level.estrellas >= 2">⭐</span>
-                <span class="star-icon" [class.earned]="level.estrellas >= 3">⭐</span>
-              </div>
-              <span class="tooltip-status" 
-                    [class.status-locked]="level.bloqueado" 
-                    [class.status-completed]="level.completado"
-                    [class.status-available]="!level.bloqueado && !level.completado">
-                @if (level.bloqueado) { 🔒 Bloqueado }
-                @else if (level.completado) { ✅ Completado }
-                @else { 🔓 Disponible }
-              </span>
+            <div class="tooltip-stars">
+              <span class="star-icon" [class.earned]="level.estrellas >= 1">⭐</span>
+              <span class="star-icon" [class.earned]="level.estrellas >= 2">⭐</span>
+              <span class="star-icon" [class.earned]="level.estrellas >= 3">⭐</span>
             </div>
+            <span class="tooltip-status" 
+                  [class.status-locked]="level.bloqueado" 
+                  [class.status-completed]="level.completado"
+                  [class.status-available]="!level.bloqueado && !level.completado">
+              @if (level.bloqueado) { 🔒 Bloqueado }
+              @else if (level.completado) { ✅ Completado }
+              @else { 🔓 Disponible }
+            </span>
           </div>
         </a>
       }
     </main>
   </div>
 </div>
+
+<!-- MODAL DE NIVEL -->
+@if (selectedLevel) {
+  <div class="level-modal-overlay" (click)="closeLevelModal()">
+    <div class="level-modal-content" (click)="$event.stopPropagation()">
+      <button class="btn-close-modal" (click)="closeLevelModal()" aria-label="Cerrar ventana">✕</button>
+
+      <div class="modal-header">
+        <span class="modal-level-id">NIVEL 0{{ selectedLevel.id }}</span>
+        <span class="modal-topic">{{ selectedLevel.tema }}</span>
+      </div>
+      
+      <h2 class="modal-title">{{ selectedLevel.titulo }}</h2>
+      <p class="modal-desc">{{ selectedLevel.descripcion }}</p>
+
+      @if (selectedLevel.resumenTecnico) {
+        <div class="modal-tech-summary" [innerHTML]="selectedLevel.resumenTecnico"></div>
+      }
+      
+      <div class="modal-footer">
+        <div class="modal-stars" aria-label="Estrellas obtenidas">
+          <span class="star-icon" [class.earned]="selectedLevel.estrellas >= 1">⭐</span>
+          <span class="star-icon" [class.earned]="selectedLevel.estrellas >= 2">⭐</span>
+          <span class="star-icon" [class.earned]="selectedLevel.estrellas >= 3">⭐</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <a [routerLink]="['/aventura/nivel', selectedLevel.id]" class="btn-play">
+          <span class="play-icon">▶</span> JUGAR
+        </a>
+      </div>
+    </div>
+  </div>
+}

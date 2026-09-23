@@ -190,6 +190,7 @@
   min-height: 56px;
   min-width: 80px;
   width: max-content;
+  max-width: 100%;
   border: 2px solid #000;
   border-radius: 4px; /* Un redondeo mínimo, casi cuadrado */
   padding: 0.5rem;
@@ -248,7 +249,8 @@
   font-weight: bold;
   text-align: center;
   margin-top: 2px;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .objects-container {
@@ -466,7 +468,7 @@
   .action-card {
     padding: var(--mobile-card-padding-y) var(--mobile-card-padding-x);
     border-width: 1px;
-    max-width: calc(50% - 6px);
+    max-width: 100%;
   }
 
   .card-etiqueta { font-size: var(--mobile-card-title-size); margin-bottom: 2px; padding-bottom: 1px; }

@@ -5,6 +5,7 @@ export interface NivelDragonCode {
   tema: string;
   descripcion: string;
   fases: number;
+  resumenTecnico?: string;
 }
 
 /**
@@ -17,7 +18,8 @@ export const NIVELES_DRAGONCODE: readonly NivelDragonCode[] = [
     titulo: 'El Ogro',
     nombre: 'Nivel 1: El Ogro',
     tema: 'Algoritmos y secuencias',
-    descripcion: 'Ordena instrucciones para guiar al ogro hasta la salida.',
+    descripcion: 'Ordena instrucciones para guiar al ogro avaricioso hasta su tesoro.',
+    resumenTecnico: `Este nivel enseña que las computadoras obedecen instrucciones de un modo muy específico: <strong>de arriba hacia abajo y en estricto orden secuencial</strong>. Fomenta el <strong>pensamiento algorítmico</strong> al hacerte trazar una ruta mental paso a paso antes de programar, demostrando cómo el orden exacto de tu código altera el resultado final.`,
     fases: 4
   },
   {
