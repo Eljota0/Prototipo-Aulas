@@ -18,7 +18,7 @@ import {
 } from '../services/aulas.service';
 import { obtenerOrdenProgreso, ProgresoService } from '../services/progreso.service';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, filter, take } from 'rxjs/operators';
 import {
   NotificacionInterna,
   NotificacionesService
@@ -370,10 +370,11 @@ export class PantallaPrincipalComponent implements OnInit {
     // Cargar la lista de aulas creadas para mostrarlas inmediatamente en Paso 1
     this.aulasService.misAulas().subscribe({
       next: (aulas) => {
-        this.userProfile$.subscribe(profile => {
-          if (profile && profile.id) {
-            this.misAulasLista = aulas.filter(a => a.anfitrion_id === profile.id);
-          }
+        this.userProfile$.pipe(
+          filter(p => !!p && !!p.id),
+          take(1)
+        ).subscribe(profile => {
+          this.misAulasLista = aulas.filter(a => a.anfitrion_id === profile.id);
         });
       }
     });
@@ -526,7 +527,7 @@ export class PantallaPrincipalComponent implements OnInit {
         // B: Crear el reto personalizado dentro del aula recién creada
         const datosReto: RetoPersonalizadoCreate = {
           reto_nivel_id:        this.nivelSeleccionado,
-          titulo:               `${this.nuevoNombreAula} - Nivel ${this.nivelSeleccionado}`,
+          titulo: `${this.nivelesDisponibles.find(n => n.id === this.nivelSeleccionado)?.nombre || 'Nivel ' + this.nivelSeleccionado} (Fases: ${this.parametrosReto.fases_seleccionadas?.join('-') || 'Todas'})`,
           recompensa_estrellas: 5,
           parametros:           { ...this.parametrosReto, ayudas_habilitadas: false },
           fecha_limite:         fechaLimite
@@ -552,13 +553,14 @@ export class PantallaPrincipalComponent implements OnInit {
       
       this.aulasService.misAulas().subscribe({
         next: (aulas) => {
-          this.userProfile$.subscribe(profile => {
-            if (profile && profile.id) {
-              this.misAulasLista = aulas.filter(a => a.anfitrion_id === profile.id);
-              // Seleccionamos automáticamente el aula para mostrar los participantes
-              if (!this.aulaSeleccionadaAdmin || this.aulaSeleccionadaAdmin !== this.aulaCreada!.id) {
-                this.seleccionarAulaAdmin(this.aulaCreada!.id);
-              }
+          this.userProfile$.pipe(
+            filter(p => !!p && !!p.id),
+            take(1)
+          ).subscribe(profile => {
+            this.misAulasLista = aulas.filter(a => a.anfitrion_id === profile.id);
+            // Seleccionamos automáticamente el aula para mostrar los participantes
+            if (!this.aulaSeleccionadaAdmin || this.aulaSeleccionadaAdmin !== this.aulaCreada!.id) {
+              this.seleccionarAulaAdmin(this.aulaCreada!.id);
             }
           });
         },
@@ -708,10 +710,11 @@ export class PantallaPrincipalComponent implements OnInit {
 
     this.aulasService.misAulas().subscribe({
       next: (aulas) => {
-        this.userProfile$.subscribe(profile => {
-          if (profile && profile.id) {
-            this.misAulasLista = aulas.filter(a => a.anfitrion_id === profile.id);
-          }
+        this.userProfile$.pipe(
+          filter(p => !!p && !!p.id),
+          take(1)
+        ).subscribe(profile => {
+          this.misAulasLista = aulas.filter(a => a.anfitrion_id === profile.id);
         });
       },
       error: () => this.notificationService.show('Error al cargar tus aulas', 'error')
@@ -858,7 +861,7 @@ export class PantallaPrincipalComponent implements OnInit {
     this.cargandoCrearAula = true;
     const datosReto: RetoPersonalizadoCreate = {
       reto_nivel_id:        this.nivelSeleccionado,
-      titulo:               `${this.aulaParaActividad.nombre_aula} - Actividad`,
+      titulo: `${this.nivelesDisponibles.find(n => n.id === this.nivelSeleccionado)?.nombre || 'Nivel ' + this.nivelSeleccionado} (Fases: ${this.parametrosReto.fases_seleccionadas?.join('-') || 'Todas'})`,
       recompensa_estrellas: 5,
       parametros:           { ...this.parametrosReto, ayudas_habilitadas: false },
       fecha_limite:         fechaLimite
