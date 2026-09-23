@@ -20,11 +20,7 @@
         <div class="vidas" aria-label="Vidas disponibles">
           <span *ngFor="let vida of [1, 2, 3]" [class.perdida]="vida > vidas">♥</span>
         </div>
-        <div class="contador-reparacion" aria-label="Fases superadas">
-          <span class="icono-herramienta">◈</span>
-          <strong>{{ fasesSuperadas }} / {{ fases.length }}</strong>
-        </div>
-        <div class="contador-fase">{{ faseActualIndice + 1 }} — {{ fases.length }}</div>
+        
       </div>
 
       <div class="escena-maquina escena-magia"
@@ -37,26 +33,12 @@
         <div class="luz-magica"></div>
         <div class="oscuridad-cueva"></div>
 
-        <aside class="banco-memoria" aria-label="Variables almacenadas">
-          <div class="runa-memoria" data-tipo="booleano"
-               [class.requerida]="variableRequerida('luz')" [class.llena]="estaEnMemoria('luz')">
-            <div class="runa-cabecera"><span>BOOL</span><strong>luz</strong></div>
-            <div class="nucleo-memoria"><i aria-hidden="true"></i><code>{{ valorMemoria('luz') }}</code></div>
-            <small>{{ estaEnMemoria('luz') ? tipoMemoria('luz') : 'ESPACIO DISPONIBLE' }}</small>
-          </div>
-          <div class="runa-memoria" data-tipo="texto"
-               [class.requerida]="variableRequerida('elemento')" [class.llena]="estaEnMemoria('elemento')">
-            <div class="runa-cabecera"><span>STR</span><strong>elemento</strong></div>
-            <div class="nucleo-memoria"><i aria-hidden="true"></i><code>{{ valorMemoria('elemento') }}</code></div>
-            <small>{{ estaEnMemoria('elemento') ? tipoMemoria('elemento') : 'ESPACIO DISPONIBLE' }}</small>
-          </div>
-          <div class="runa-memoria" data-tipo="entero"
-               [class.requerida]="variableRequerida('cantidad')" [class.llena]="estaEnMemoria('cantidad')">
-            <div class="runa-cabecera"><span>INT</span><strong>cantidad</strong></div>
-            <div class="nucleo-memoria"><i aria-hidden="true"></i><code>{{ valorMemoria('cantidad') }}</code></div>
-            <small>{{ estaEnMemoria('cantidad') ? tipoMemoria('cantidad') : 'ESPACIO DISPONIBLE' }}</small>
-          </div>
-        </aside>
+        <div class="hud-titulo-centro">
+          {{ faseActual.titulo }}
+        </div>
+        <div class="hud-contador-der" [attr.aria-label]="'Fase ' + (faseActualIndice + 1) + ' de ' + fases.length">
+          {{ faseActualIndice + 1 }} - {{ fases.length }}
+        </div>
 
         <div class="campo-batalla">
           <div class="murcielagos" [class.con-jefe]="faseActual.numero === 4"
@@ -82,17 +64,32 @@
           </div>
         </div>
 
-        <div class="diagnostico diagnostico-magia">
-          <span>ESTADO DEL HECHIZO</span>
-          <strong>{{ estadoEscenaTexto }}</strong>
-          <p>{{ bitacora }}</p>
-        </div>
+        <div class="hud-inferior-wrapper hud-inferior-nivel3">
 
-        <div class="mision-flotante" aria-live="polite">
-          <span>FASE {{ faseActualIndice + 1 }}/{{ fases.length }} · {{ faseActual.concepto | uppercase }}</span>
-          <strong>{{ faseActual.titulo }}</strong>
-          <p>{{ faseActual.objetivo }}</p>
-          <small *ngIf="pistaVisible" class="mensaje-objeto">{{ mensajeObjeto }}</small>
+        <aside class="banco-memoria" aria-label="Variables almacenadas">
+          <div class="runa-memoria" data-tipo="booleano"
+               [class.requerida]="variableRequerida('luz')" [class.llena]="estaEnMemoria('luz')">
+            <div class="runa-cabecera"><span>BOOL</span><strong>luz</strong></div>
+            <div class="nucleo-memoria"><i aria-hidden="true"></i><code>{{ valorMemoria('luz') }}</code></div>
+            <small>{{ estaEnMemoria('luz') ? tipoMemoria('luz') : 'ESPACIO DISPONIBLE' }}</small>
+          </div>
+          <div class="runa-memoria" data-tipo="texto"
+               [class.requerida]="variableRequerida('elemento')" [class.llena]="estaEnMemoria('elemento')">
+            <div class="runa-cabecera"><span>STR</span><strong>elemento</strong></div>
+            <div class="nucleo-memoria"><i aria-hidden="true"></i><code>{{ valorMemoria('elemento') }}</code></div>
+            <small>{{ estaEnMemoria('elemento') ? tipoMemoria('elemento') : 'ESPACIO DISPONIBLE' }}</small>
+          </div>
+          <div class="runa-memoria" data-tipo="entero"
+               [class.requerida]="variableRequerida('cantidad')" [class.llena]="estaEnMemoria('cantidad')">
+            <div class="runa-cabecera"><span>INT</span><strong>cantidad</strong></div>
+            <div class="nucleo-memoria"><i aria-hidden="true"></i><code>{{ valorMemoria('cantidad') }}</code></div>
+            <small>{{ estaEnMemoria('cantidad') ? tipoMemoria('cantidad') : 'ESPACIO DISPONIBLE' }}</small>
+          </div>
+        </aside>
+          <div class="hud-panel-mision" style="text-align: center; font-size: clamp(0.7rem, 2vw, 1.1rem);">
+            <p>{{ faseActual.objetivo }}</p>
+            <small *ngIf="pistaVisible" class="mensaje-objeto" style="color: #ffd700; margin-top: 10px; display: block; font-size: 0.8em;">{{ mensajeObjeto }}</small>
+          </div>
         </div>
       </div>
     </section>

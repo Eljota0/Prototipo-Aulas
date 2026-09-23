@@ -2151,3 +2151,9 @@ code {
   }
 }
 
+
+@media (max-width: 768px) {
+  .hud-titulo-centro {
+    top: 45px !important; /* Fix overlap with hearts */
+  }
+}

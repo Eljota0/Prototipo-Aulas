@@ -1,13 +1,39 @@
 :host {
   display: block;
+
+  /* ==================================================
+     PANEL DE CONTROL DEL FONDO (NIVEL 3)
+     ================================================== */
+  /* Controla qué tan oscura se ve la imagen de fondo. 
+     0.0 es nada extra, 1.0 es negro total. */
+  --fondo-n3-oscuridad-extra: rgba(0, 0, 0, 0.4); 
+  
+  /* Controla el tamaño (escala) de la imagen. 
+     Puedes usar 'cover', 'contain', '100%', '150%', etc. */
+  --fondo-n3-escala: cover; 
+  
+  /* Controla la posición de la imagen de fondo */
+    --fondo-n3-posicion: center; 
+  
+    /* Controla el tamaño y la altura del nuevo suelo */
+  --suelo-n3-escala: 40%; /* Cambia esto para hacer los cráneos/estacas más grandes o pequeños */
+  --suelo-n3-posicion-y: 100%; /* 100% es pegado abajo. Reduce a 90% o 80% para subirlo sin agrandarlo */
 }
 
 .escena-magia {
   isolation: isolate;
   background:
+    /* 1. Efecto túnel horizontal (bordes oscuros) */
     linear-gradient(90deg, rgba(0, 0, 0, .82) 0 5%, transparent 17% 83%, rgba(0, 0, 0, .82) 95% 100%),
+    /* 2. Efecto sombreado vertical (más oscuro abajo) */
     linear-gradient(180deg, rgba(10, 2, 21, .04), rgba(2, 1, 4, .58) 94%),
-    url('/assets/images/aventura/nivel1/terreno/fondo-cueva.png') center / cover;
+        /* 3. Oscuridad global ajustable */
+    linear-gradient(var(--fondo-n3-oscuridad-extra), var(--fondo-n3-oscuridad-extra)),
+        /* 3.5 Nuevo Suelo */
+    url('/assets/images/aventura/nivel3/suelo-nivel-3.png') center var(--suelo-n3-posicion-y) / auto var(--suelo-n3-escala) repeat-x,
+
+    /* 4. Nueva imagen del Nivel 3 */
+    url('/assets/images/aventura/nivel3/fondo-nivel-3.png') var(--fondo-n3-posicion) / var(--fondo-n3-escala) no-repeat;
   image-rendering: pixelated;
 }
 
@@ -38,26 +64,38 @@
 .cueva-oscura .oscuridad-cueva { opacity: .91; }
 .cueva-oscura .luz-magica { opacity: .08; }
 
+.hud-inferior-nivel3 {
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(5px, 1.5vw, 15px);
+  padding: 0 clamp(10px, 10vw, 40px); /* Reduce horizontal width */
+}
+
+.hud-inferior-nivel3 .hud-panel-mision {
+  width: 100%;
+}
+
 .banco-memoria {
-  position: absolute;
+  position: relative;
   z-index: 6;
-  left: 4%;
-  top: 18%;
-  width: 63%;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 7px;
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 15px;
 }
 
 .runa-memoria {
   --acento-runa: #637471;
   position: relative;
   min-width: 0;
-  min-height: 86px;
-  padding: 0 7px 7px;
+  min-height: auto;
+  padding: 8px;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
   overflow: hidden;
   color: #91a09d;
   background:
@@ -111,8 +149,8 @@
   color: #08100e;
   background: var(--acento-runa);
   border: 1px solid rgba(255, 255, 255, .26);
-  font-family: 'TuFuentePixel', monospace;
-  font-size: .38rem;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 0.35rem;
   line-height: 1;
   box-shadow: 2px 2px 0 #000;
 }
@@ -120,8 +158,8 @@
 .runa-cabecera strong {
   overflow: hidden;
   color: #d7dfdd;
-  font-family: 'TuFuentePixel', monospace;
-  font-size: .55rem;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 0.45rem;
   text-overflow: ellipsis;
 }
 
@@ -145,17 +183,19 @@
 .nucleo-memoria code {
   overflow: hidden;
   color: #a6b1af;
-  font-size: .72rem;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 0.45rem;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .runa-memoria small {
-  padding-left: 19px;
+  
   color: #596763;
-  font-family: 'TuFuentePixel', monospace;
-  font-size: .38rem;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 0.3rem;
+  text-align: center;
   letter-spacing: .04em;
 }
 
@@ -187,19 +227,7 @@
   bottom: 18%;
 }
 
-.campo-batalla::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 82%;
-  height: 24%;
-  background: url('/assets/images/aventura/nivel1/terreno/suelo.png') center / 25% 100%;
-  border: 3px solid #17100e;
-  box-shadow: 0 13px 18px #000;
-  image-rendering: pixelated;
-  transform: translateX(-50%) perspective(400px) rotateX(52deg);
-}
+
 
 .murcielagos {
   position: absolute;
@@ -442,11 +470,8 @@
 .sobrecarga .campo-batalla { animation: temblor-magia .12s steps(2) infinite; }
 @keyframes temblor-magia { to { transform: translate(5px, -3px); filter: brightness(1.6) sepia(.7); } }
 
-.diagnostico-magia {
-  width: min(28%, 195px);
-  border-color: #66538c;
-}
-.diagnostico-magia strong { color: #d4b7ff; }
+
+
 
 .codigo-variables textarea {
   padding: 0;
@@ -486,15 +511,56 @@
 }
 
 @media (max-width: 1180px) {
-  .banco-memoria { width: 66%; }
+  .hud-inferior-nivel3 {
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(5px, 1.5vw, 15px);
+  padding: 0 clamp(10px, 10vw, 40px); /* Reduce horizontal width */
+}
+
+.hud-inferior-nivel3 .hud-panel-mision {
+  width: 100%;
+}
+
+.banco-memoria {
+  position: relative;
+  z-index: 6;
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 15px;
+}
   .runa-memoria { min-height: 72px; }
   .drako-hechicero { left: 1%; width: min(39%, 230px); }
   .murcielagos { left: 37%; }
 }
 
 @media (max-width: 767px) {
-  .banco-memoria { left: 3%; right: 3%; width: auto; top: 17%; }
-  .diagnostico-magia { display: none; }
+  .hud-inferior-nivel3 {
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(5px, 1.5vw, 15px);
+  padding: 0 clamp(10px, 10vw, 40px); /* Reduce horizontal width */
+}
+
+.hud-inferior-nivel3 .hud-panel-mision {
+  width: 100%;
+}
+
+.banco-memoria {
+  position: relative;
+  z-index: 6;
+  width: 100%;
+  max-width: 900px;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 15px;
+}
+  
   .campo-batalla { top: 33%; }
   .drako-hechicero { left: 0; width: min(38%, 195px); }
   .murcielagos { left: 32%; }
@@ -548,5 +614,44 @@
 @media (max-width: 480px) {
   :host ::ng-deep app-baraja-tarjetas .action-card {
     flex-basis: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hud-inferior-nivel3 {
+    padding: 0 clamp(5px, 2vw, 10px);
+  }
+  .banco-memoria {
+    gap: 4px;
+    max-width: 100%;
+  }
+  .runa-memoria {
+    padding: 4px;
+    gap: 2px;
+  }
+  .runa-cabecera {
+    padding: 2px 0;
+    gap: 2px;
+    flex-wrap: wrap; /* Allows text to wrap if absolutely needed */
+    justify-content: center;
+  }
+  .runa-cabecera span {
+    font-size: 0.28rem;
+    padding: 2px;
+  }
+  .runa-cabecera strong {
+    font-size: 0.35rem;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .nucleo-memoria code {
+    font-size: 0.38rem;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    word-break: break-all;
+  }
+  .runa-memoria small {
+    font-size: 0.25rem;
   }
 }
