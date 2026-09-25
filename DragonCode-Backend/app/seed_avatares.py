@@ -10,12 +10,19 @@ from app.models.models import TiendaAvatar
 
 
 CATALOGO = (
-    ("Drako Base", "drakobase.png", 0),
-    ("Drako Aprendiz", "drakoaprendiz.png", 5),
-    ("Drako Capa", "drakocapa.png", 5),
-    ("Drako Chancla", "drakochancla.png", 5),
-    ("Drako Haaland", "drakohaaland.png", 5),
-    ("Drako Mbappé", "drakombappe.png", 5),
+    ("Draco Base", "drakobase.png", 0),
+    ("Draco Aprendiz", "drakoaprendiz.png", 3),
+    ("Draco Capa", "drakocapa.png", 3),
+    ("Draco Chancla", "drakochancla.png", 3),
+    ("Draco Haaland", "drakohaaland.png", 3),
+    ("Draco Mbappé", "drakombappe.png", 3),
+    ("Draco Graduado", "nuevas_skins/drakograduado.png", 3),
+    ("Draco Karate", "nuevas_skins/drakokarate.png", 3),
+    ("Draco Payaso", "nuevas_skins/drakopayaso.png", 3),
+    ("Draco Sacerdote", "nuevas_skins/drakosacerdote.png", 3),
+    ("Draco Samurái", "nuevas_skins/drakosamurai.png", 3),
+    ("Draco Superhéroe", "nuevas_skins/drakosuperheroe.png", 3),
+    ("Draco Vaquero", "nuevas_skins/drakovaquero.png", 3),
 )
 
 

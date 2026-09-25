@@ -127,9 +127,10 @@ describe('NivelOgroComponent: confirmación de entrega', () => {
     localStorage.removeItem('aulaActiva');
     component.vidasActuales = 2;
     component.ayudasUsadas = true;
+    component.tarjetasUsadas = true;
     await component.procesarColaComandos();
     expect(progreso.guardarProgreso).toHaveBeenCalledWith(jasmine.objectContaining({
-      vidas_restantes: 2, ayudas_usadas: true
+      vidas_restantes: 2, ayudas_usadas: true, tarjetas_usadas: true, vidas_perdidas: 0
     }));
   });
 

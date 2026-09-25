@@ -71,6 +71,7 @@ describe('NivelDosPrototipoComponent', () => {
   it('envía vidas y ayudas al guardar el nivel completado', () => {
     component.vidas = 2;
     component.ayudaUsada = true;
+    component.erroresAcumulados = 1;
     (component as any).solucionesPorFase.set(1, 'evento(taladro.temperatura) {}');
 
     (component as any).finalizarNivel();
@@ -78,7 +79,10 @@ describe('NivelDosPrototipoComponent', () => {
     expect(progreso.guardarProgreso).toHaveBeenCalledOnceWith(jasmine.objectContaining({
       reto_nivel_id: 2,
       vidas_restantes: 2,
-      ayudas_usadas: true
+      ayudas_usadas: true,
+      tarjetas_usadas: false,
+      vidas_perdidas: 1,
+      intentos: 2
     }));
   });
 

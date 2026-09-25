@@ -2157,3 +2157,14 @@ code {
     top: 45px !important; /* Fix overlap with hearts */
   }
 }
+
+/* Mismo recurso de vidas que el nivel del ogro. */
+.vidas .icono-vida {
+  width: clamp(18px, 4vw, 24px);
+  height: clamp(18px, 4vw, 24px);
+  object-fit: contain;
+  flex-shrink: 0;
+  image-rendering: auto;
+  transition: filter .3s;
+  &.perdida { filter: brightness(0); }
+}

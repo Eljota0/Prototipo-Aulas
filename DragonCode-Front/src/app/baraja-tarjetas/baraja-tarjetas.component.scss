@@ -477,6 +477,47 @@
   .inventory-title { font-size: 0.75rem; }
 }
 
+/* En celular, el panel inferior del juego gestiona el desplazamiento.
+   Cada pestaña aporta su altura natural, sin estirar las filas vacías. */
+@media (max-width: 767px) {
+  :host, .inventory-container, .inventory-body {
+    height: auto;
+  }
+
+  .inventory-body, .cards-scroll-area {
+    flex: 0 0 auto;
+  }
+
+  .inventory-section {
+    height: auto !important;
+    flex-grow: 0;
+  }
+
+  .cards-scroll-area {
+    overflow: visible;
+  }
+
+  .cards-scroll-area > .cards-grid {
+    /* La ola sube 10px; el margen conserva también la sombra al pulsar. */
+    padding: 16px 8px 12px;
+  }
+
+  .objects-section .objects-container {
+    height: auto;
+    box-sizing: border-box;
+    flex-wrap: wrap !important;
+    overflow: visible;
+    gap: 16px 8px;
+    padding: 24px 12px 20px;
+  }
+
+  .objeto-socket {
+    flex: 0 0 65px;
+    /* No se comprimen las imágenes; si falta ancho pasan a otra fila. */
+    min-height: 65px;
+  }
+}
+
 /* ==========================================================================
    ZOOM 150% / Pantallas pequeñas de alta densidad
    Cuando la ventana es pequeña por zoom del navegador (ej. 150%)

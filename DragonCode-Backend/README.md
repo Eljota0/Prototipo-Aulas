@@ -65,6 +65,17 @@ exponer el detalle interno ni dejar premios, entregas o avisos parciales.
 
 ## Pruebas
 
+### Actualización de la tienda: 13 avatares
+
+La migración `20260924_09` agrega las siete skins de `nuevas_skins`, usa el nombre
+visible «Draco» y fija las skins de pago en 3 estrellas; Base sigue siendo gratis.
+Con la base de datos del entorno configurada, ejecutar `alembic upgrade head`.
+Conserva los identificadores existentes, compras y avatares equipados; no modifica
+saldos ni devuelve automáticamente diferencias de compras anteriores. Su downgrade
+no borra el catálogo para evitar eliminar avatares que ya tengan propietarios.
+El seed registra el catálogo en bases nuevas, pero no actualiza precios existentes:
+para esas bases es necesaria la migración.
+
 ```bash
 pip install -r requirements-dev.txt
 python -m unittest discover -s tests -v

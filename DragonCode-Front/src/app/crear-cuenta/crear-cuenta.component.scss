@@ -52,15 +52,48 @@
 /* --- DRACO HERRERO --- */
 .draco-sprite {
   width: var(--draco-tamano); 
-  height: auto;
+  aspect-ratio: 2788 / 1536;
   flex-shrink: 0;
-  object-fit: contain;
   image-rendering: pixelated; 
   margin-bottom: var(--draco-margen-inferior); 
   position: relative;
   z-index: 10; 
-  /* LA MAGIA: Conecta los frames con salto discreto (step-end) */
-  animation: dracoForgeLoop var(--draco-velocidad) step-end infinite, suaveAparicion 0.4s ease-out forwards;
+  animation: suaveAparicion 0.4s ease-out forwards;
+}
+
+.draco-sprite__estatico {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Conserva el espacio transparente original. La ventana cubre x=450..1950
+   del lienzo 2788×1536: incluye las chispas sin mostrar al Draco vecino. */
+.draco-sprite__ventana {
+  position: absolute;
+  top: 0;
+  left: calc(450 / 2788 * 100%);
+  width: calc(1500 / 2788 * 100%);
+  height: 100%;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+.draco-sprite__hoja {
+  position: absolute;
+  width: calc(6902 / 1500 * 100%);
+  max-width: none;
+  height: 100%;
+  left: 3.6%;
+  top: 0.1953125%;
+}
+
+.draco-sprite--listo {
+  .draco-sprite__estatico { visibility: hidden; }
+  .draco-sprite__ventana { visibility: visible; }
+  .draco-sprite__hoja {
+    animation: dracoForgeLoop var(--draco-velocidad) step-end infinite;
+  }
 }
 
 /* --- CONTENEDOR DE LA TABLA --- */
@@ -560,11 +593,17 @@ $ash-colors: #BC4B42, #E43C19, #EC4121, #8B2216;
 
 /* --- LÍNEA DE TIEMPO: ANIMACIÓN DE FORJA --- */
 @keyframes dracoForgeLoop {
-  0%   { content: url('../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero1.png'); }
-  25%  { content: url('../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero2.png'); }
-  50%  { content: url('../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero3.png'); }
-  75%  { content: url('../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero4.png'); }
-  100% { content: url('../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero1.png'); }
+  /* Traslaciones medidas contra la cabeza del fotograma original:
+     (+504,+3), (-1251,0), (-2999,0), (-4668,0).
+     Se descuenta x=450 de la ventana y se normaliza a su ancho de 1500. */
+  0%, 100% { left: 3.6%; top: 0.1953125%; }
+  25% { left: -113.4%; top: 0; }
+  50% { left: -229.9333333333%; top: 0; }
+  75% { left: -341.2%; top: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draco-sprite--listo .draco-sprite__hoja { animation: none; }
 }
 
 
@@ -703,4 +742,70 @@ $ash-colors: #BC4B42, #E43C19, #EC4121, #8B2216;
   -webkit-box-shadow: 0 0 0px 1000px #111111 inset !important;
   -webkit-text-fill-color: #ffffff !important;
   caret-color: #ffffff !important;
+}
+/* Pantalla exclusiva de la petición de registro. Cada celda mide 704 × 476. */
+.registro-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  background: #18131A;
+  visibility: hidden;
+  pointer-events: none;
+
+  &--activo {
+    visibility: visible;
+    pointer-events: auto;
+
+    .registro-loader__sprite {
+      animation: martillo-registro 1.2s steps(1, end) infinite;
+    }
+  }
+}
+
+.registro-loader__martillo {
+  width: min(280px, 75vw);
+  aspect-ratio: 704 / 476;
+  overflow: hidden;
+}
+
+.registro-loader__sprite {
+  display: block;
+  width: 400%;
+  max-width: none;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.registro-loader__texto {
+  margin: 0;
+  color: #ffffff;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(1rem, 4vw, 1.5rem);
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+/* 1 → 2 → 3 → 4 → 3 → 2 → 1, sin celdas vacías ni deslizamientos. */
+@keyframes martillo-registro {
+  0%, 100% { transform: translateX(0); }
+  16.6667%, 83.3333% { transform: translateX(-25%); }
+  33.3333%, 66.6667% { transform: translateX(-50%); }
+  50% { transform: translateX(-75%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .registro-loader--activo .registro-loader__sprite {
+    animation: none;
+  }
+
+  .registro-loader .puntos-animados::after {
+    animation: none;
+    content: '...';
+  }
 }

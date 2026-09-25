@@ -11,6 +11,8 @@ export interface GuardarProgresoRequest {
   codigo_solucion: string;   // El código que escribió el jugador
   vidas_restantes: number;
   ayudas_usadas: boolean;
+  tarjetas_usadas?: boolean;
+  vidas_perdidas?: number;
   aula_id?: string;          // Opcional: si el jugador está en un aula
   reto_personalizado_id?: string; // UUID del reto específico completado en el aula
 }

@@ -43,6 +43,10 @@
 
   .game-content-wrapper {
     width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(340px, 24vw, 430px);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 0.75rem;
   }
 
   .game-board {
@@ -198,8 +202,8 @@
 
   .cards-section {
     width: 100%;
-    height: clamp(320px, 60dvh, 520px);
-    min-height: 320px;
+    height: auto;
+    min-height: 0;
     flex: 0 0 auto;
   }
 
@@ -218,4 +222,36 @@
       margin: 0;
     }
   }
+
+  /* En juego, solo se desplazan los controles. El editor conserva su layout.
+     El límite relativo deja espacio utilizable incluso en móviles bajos. */
+  .game-layout-wrapper:not(.editor-activo) {
+    height: calc(100dvh - 50px); /* Altura móvil de app-game-header. */
+
+    .game-content-wrapper {
+      overflow: hidden;
+    }
+
+    .game-board {
+      height: min(var(--mobile-board-min-height), 45dvh);
+      min-height: 0;
+      flex: 0 0 min(var(--mobile-board-min-height), 45dvh);
+    }
+
+    .game-controls {
+      flex: 1 1 0;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior-y: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
 }
+
+  @media (max-width: 1100px) {
+    .game-layout-wrapper.editor-activo .game-content-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
+  }

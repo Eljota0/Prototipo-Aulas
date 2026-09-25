@@ -1,3 +1,4 @@
+import { VictoriaAventuraComponent } from '../victoria/victoria-aventura.component';
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
@@ -19,7 +20,7 @@ import {
 } from '../services/aulas.service';
 import { LoaderService } from '../services/loader.service';
 import { ProgresoService } from '../services/progreso.service';
-import { calcularEstrellas } from '../core/estrellas';
+import { calcularEstrellas, calcularEstrellasAventura } from '../core/estrellas';
 import nivel4Data from '../../assets/data/aventuraniveles/nivel-4.json';
 import nivel5Data from '../../assets/data/aventuraniveles/nivel-5.json';
 import { ConfiguracionNivelFabrica as ConfiguracionAulaFabrica } from '../core/configuracion-niveles-aula';
@@ -76,7 +77,7 @@ interface ConfiguracionNivelFabrica {
 @Component({
   selector: 'app-nivel-cuatro-prototipo',
   standalone: true,
-  imports: [CommonModule, LayoutJuegoComponent],
+  imports: [VictoriaAventuraComponent, CommonModule, LayoutJuegoComponent],
   templateUrl: './nivel-cuatro-prototipo.component.html',
   styleUrls: [
     '../nivel-dos-prototipo/nivel-dos-prototipo.component.scss',
@@ -515,7 +516,8 @@ export class NivelCuatroPrototipoComponent implements OnInit, AfterViewInit, OnD
     this.detenerTemporizador();
     const intentos = this.intentosCalificables;
     this.calificacion = intentos <= 1 ? 10 : intentos <= 3 ? 8 : 6;
-    this.estrellas = calcularEstrellas(this.vidas, this.ayudasUsadas);
+    this.estrellas = this.esActividadAula ? calcularEstrellas(this.vidas, this.ayudasUsadas)
+      : calcularEstrellasAventura(this.esNivelCinco ? 5 : 4, this.ayudasUsadas, false, this.erroresAcumulados, this.intentosCalificables);
     this.guardarProgreso();
   }
 
@@ -624,6 +626,7 @@ export class NivelCuatroPrototipoComponent implements OnInit, AfterViewInit, OnD
       intentos: this.intentosCalificables,
       vidas_restantes: this.vidas,
       ayudas_usadas: this.esActividadAula ? false : this.ayudasUsadas,
+      ...(!this.esActividadAula ? { tarjetas_usadas: false, vidas_perdidas: this.erroresAcumulados } : {}),
       codigo_solucion: codigoSolucion,
       aula_id: this.aulaActualId,
       reto_personalizado_id: this.retoActualId

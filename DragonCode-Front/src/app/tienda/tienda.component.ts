@@ -35,62 +35,21 @@ export class TiendaComponent implements OnInit, OnDestroy {
   avatars: Avatar[] = [];
 
   // Solo aporta descripciones: precios, identificadores y propiedad vienen de la API.
-  private readonly descripcionesVisuales: Avatar[] = [
-    {
-      id: 1,
-      nombre_skin: 'Drako Base',
-      url_imagen: 'assets/images/tienda/avatares/drakobase.png',
-      precio_estrellas: 5,
-      activo: true,
-      desbloqueado: true,
-      descripcion: 'El clásico y confiable compañero de código.'
-    },
-    {
-      id: 2,
-      nombre_skin: 'Drako Aprendiz',
-      url_imagen: 'assets/images/tienda/avatares/drakoaprendiz.png',
-      precio_estrellas: 5,
-      activo: true,
-      desbloqueado: false,
-      descripcion: 'Listo para absorber nuevos conocimientos.'
-    },
-    {
-      id: 3,
-      nombre_skin: 'Drako Capa',
-      url_imagen: 'assets/images/tienda/avatares/drakocapa.png',
-      precio_estrellas: 5,
-      activo: true,
-      desbloqueado: false,
-      descripcion: 'Elegancia mágica para tus sesiones.'
-    },
-    {
-      id: 4,
-      nombre_skin: 'Drako Chancla',
-      url_imagen: 'assets/images/tienda/avatares/drakochancla.png',
-      precio_estrellas: 5,
-      activo: true,
-      desbloqueado: false,
-      descripcion: 'Disciplina legendaria para dominar cada reto.'
-    },
-    {
-      id: 5,
-      nombre_skin: 'Drako Haaland',
-      url_imagen: 'assets/images/tienda/avatares/drakohaaland.png',
-      precio_estrellas: 5,
-      activo: true,
-      desbloqueado: false,
-      descripcion: 'Potencia imparable para resolver desafíos.'
-    },
-    {
-      id: 6,
-      nombre_skin: 'Drako Mbappé',
-      url_imagen: 'assets/images/tienda/avatares/drakombappe.png',
-      precio_estrellas: 5,
-      activo: true,
-      desbloqueado: false,
-      descripcion: 'Velocidad máxima para avanzar en el código.'
-    }
-  ];
+  private readonly descripcionesVisuales: Record<string, string> = {
+    'drakobase.png': 'El clásico y confiable compañero de código.',
+    'drakoaprendiz.png': 'Listo para absorber nuevos conocimientos.',
+    'drakocapa.png': 'Elegancia mágica para tus sesiones.',
+    'drakochancla.png': 'Infalible para enderezar bugs malcriados',
+    'drakohaaland.png': 'Potencia imparable para resolver desafíos.',
+    'drakombappe.png': 'Velocidad máxima para avanzar en el código.',
+    'drakograduado.png': 'Cada intento lo hizo más fuerte. Hoy celebra lo que nunca dejó de intentar.',
+    'drakokarate.png': 'Cinturón negro en partir bugs, no teclados.',
+    'drakopayaso.png': 'Si el código falla, que al menos no falten las risas.',
+    'drakosacerdote.png': 'Que tu código compile y tus bugs encuentren la luz.',
+    'drakosamurai.png': 'Un corte preciso y ese bug pasa a la historia.',
+    'drakosuperheroe.png': 'Salva el día antes de que el último bug conquiste el servidor.',
+    'drakovaquero.png': 'En este código no hay espacio para dos bugs, forastero.',
+  };
   userProfile: UserProfile | null = null;
   private sub?: Subscription;
 
@@ -113,8 +72,10 @@ export class TiendaComponent implements OnInit, OnDestroy {
     this.errorCatalogo = false;
     this.userService.getAvatares().subscribe({
       next: (data) => {
-        this.avatars = data.map(avatar => ({ ...avatar, descripcion:
-          this.descripcionesVisuales.find(visual => visual.url_imagen === avatar.url_imagen)?.descripcion
+        this.avatars = data.map(avatar => ({
+          ...avatar,
+          nombre_skin: avatar.nombre_skin.replace(/^Drako\b/, 'Draco'),
+          descripcion: this.descripcionesVisuales[avatar.url_imagen.split('/').pop() ?? '']
         }));
         this.cargandoCatalogo = false;
       },
@@ -136,7 +97,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
     if (this.avatarActual === avatar.url_imagen) return;
     
     if (avatar.desbloqueado || avatar.precio_estrellas === 0) {
-      // Si ya lo tiene o es gratis (Drako Base), equiparlo directamente
+      // Si ya lo tiene o es gratis (Draco Base), equiparlo directamente
       this.equipar(avatar);
     } else {
       // Si no lo tiene, confirmar compra

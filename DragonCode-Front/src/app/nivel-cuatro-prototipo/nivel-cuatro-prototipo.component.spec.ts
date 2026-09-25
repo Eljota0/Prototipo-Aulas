@@ -323,7 +323,7 @@ describe('NivelCuatroPrototipoComponent', () => {
     ]);
     expect(componente.antiCopiaActivo).toBeTrue();
     expect(fixture.nativeElement.textContent).toContain('1 — 2');
-    expect(fixture.nativeElement.textContent).toContain('FASE 1/2');
+    expect(fixture.nativeElement.querySelector('.contador-fase').textContent.trim()).toBe('1 — 2');
     componente.ngOnDestroy();
   });
 

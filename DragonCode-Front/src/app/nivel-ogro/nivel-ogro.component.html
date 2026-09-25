@@ -1,7 +1,4 @@
-<div class="modo-creador-wrapper"
-     [class.es-creador]="esModoProfesor"
-     [class.en-edicion]="esModoProfesor && modoEditor"
-     [class.en-prueba]="esModoProfesor && jugando">
+
     <!-- === TUTORIAL OVERLAY === -->
   <div class="tutorial-overlay" *ngIf="mostrarTutorial && !esAulaActiva && !esModoProfesor" (click)="clickDialogo()" (mousedown)="$event.preventDefault()">
     <!-- &Iacute;tem destacado flotando en el centro -->
@@ -23,11 +20,13 @@
 
   <!-- El diálogo nativo no queda recortado por el tablero y mantiene el foco dentro. -->
   <dialog *ngIf="pantallaNivelCompletado" #dialogoVictoria class="modal-victoria"
+          [class.victoria-aventura]="!esAulaActiva && !esModoProfesor"
           aria-labelledby="titulo-victoria" aria-describedby="mensaje-victoria"
           (cancel)="$event.preventDefault()">
     <img src="/assets/images/exprecionsedraco/feliz.png" class="victoria-drako" alt="Draco feliz">
     <div class="victoria-contenido">
       <h1 id="titulo-victoria" tabindex="-1" autofocus>{{ esAulaActiva ? '¡ACTIVIDAD COMPLETADA!' : '¡MISIÓN COMPLETADA!' }}</h1>
+      <p *ngIf="!esAulaActiva && !esModoProfesor && arrayEstrellas.length" class="victoria-felicitacion">¡Felicidades! ¡Has completado la aventura!</p>
       <p id="mensaje-victoria">{{ mensajePuntaje }}</p>
       <div *ngIf="arrayEstrellas.length" class="victoria-estrellas" role="img"
            [attr.aria-label]="arrayEstrellas.length + (arrayEstrellas.length === 1 ? ' estrella de 3 en este intento' : ' estrellas de 3 en este intento')">
@@ -41,7 +40,7 @@
     </div>
   </dialog>
 
-<app-layout-juego class="juego-area" [configuracionTarjetas]="configTarjetasOgro" [estadoObjetos]="inventarioNivel" [antiCopiaActivo]="antiCopiaActivo" [ejecutando]="ejecutandoComandos" [nivelActual]="nivelActual" [modoJuego]="esAulaActiva ? 'aula' : 'aventura'" [modoEdicion]="esModoProfesor && modoEditor" [mostrarAjustes]="!esModoProfesor" (ejecutarJuego)="compilarYEjecutar($event)" (onUsarItem)="manejarUsoPocion($event)" (onToggleDraco)="manejarToggleDraco($event)">
+<app-layout-juego class="juego-area" [configuracionTarjetas]="configTarjetasOgro" [estadoObjetos]="inventarioNivel" [antiCopiaActivo]="antiCopiaActivo" [ejecutando]="ejecutandoComandos" [nivelActual]="nivelActual" [modoJuego]="esAulaActiva ? 'aula' : 'aventura'" [modoEdicion]="esModoProfesor && modoEditor" [mostrarAjustes]="!esModoProfesor" (ejecutarJuego)="compilarYEjecutar($event)" (onUsarItem)="manejarUsoPocion($event)" (onToggleDraco)="manejarToggleDraco($event)" (onUsarTarjeta)="tarjetasUsadas = true">
   
   <!-- Contenido Inyectado en ng-content (El Tablero) -->
   <div class="escenario-container" #contenedor>
@@ -161,10 +160,8 @@
       </div>
     </div>
   </div>
-</app-layout-juego>
 
-<!-- Panel del constructor. La lógica del nivel se mantiene en el componente. -->
-<aside class="dev-toolbar" *ngIf="esModoProfesor && modoEditor" aria-label="Herramientas del constructor de niveles">
+  <aside class="dev-toolbar" slot="panel-editor" *ngIf="esModoProfesor && modoEditor" aria-label="Herramientas del constructor de niveles">
   <header class="editor-header">
     <span class="editor-badge">MODO EDICIÓN</span>
     <h2>Constructor de desafíos</h2>
@@ -183,16 +180,25 @@
 
     <label class="editor-field">
       <span>Cantidad de mapas</span>
-      <input type="number" min="1" max="5" inputmode="numeric"
-             [value]="inputTotalNiveles"
-             (change)="inputTotalNiveles = +$any($event.target).value"
-             aria-describedby="ayuda-cantidad-mapas">
+      <select [value]="inputTotalNiveles"
+              (change)="inputTotalNiveles = +$any($event.target).value"
+              aria-describedby="ayuda-cantidad-mapas">
+        <option value="1">1 Mapa</option>
+        <option value="2">2 Mapas</option>
+        <option value="3">3 Mapas</option>
+        <option value="4">4 Mapas</option>
+        <option value="5">5 Mapas</option>
+      </select>
     </label>
     <small id="ayuda-cantidad-mapas">Puedes crear entre 1 y 5 mapas.</small>
 
     <button type="button" class="editor-btn editor-btn-primary" (click)="inicializarEditor()">
       COMENZAR A DISEÑAR
     </button>
+
+
+<!-- Panel del constructor. La lógica del nivel se mantiene en el componente. -->
+
   </section>
 
   <!-- Herramientas activas una vez creado el conjunto de mapas. -->
@@ -206,40 +212,37 @@
       <button type="button" (click)="navegarNivel(1)" [disabled]="nivelActual === totalNiveles" aria-label="Mapa siguiente">&#9654;</button>
     </nav>
 
-    <section class="editor-section">
-      <div class="editor-step compact">
-        <span>1</span>
-        <div>
-          <h3>Tamaño y dificultad</h3>
-          <p>Ajusta el espacio disponible antes de pintar.</p>
+          <section class="editor-section" *ngIf="!dimensionesFijadas">
+        <div class="editor-step compact">
+          <span>1</span>
+          <div>
+            <h3>Tamaño del mapa</h3>
+            <p>Ajusta el espacio disponible antes de pintar.</p>
+          </div>
         </div>
-      </div>
+  
+        <div class="editor-dimensions">
+          <label class="editor-field select-field">
+            <span>Columnas</span>
+            <select [value]="inputColumnas" (change)="inputColumnas = +$any($event.target).value; aplicarDimensiones()">
+              <option *ngFor="let n of [2,3,4,5,6,7,8,9,10]" [value]="n">{{n}}</option>
+            </select>
+          </label>
+          <label class="editor-field select-field">
+            <span>Filas jugables</span>
+            <select [value]="inputFilas" (change)="inputFilas = +$any($event.target).value; aplicarDimensiones()">
+              <option *ngFor="let n of [2,3,4,5]" [value]="n">{{n}}</option>
+            </select>
+          </label>
+        </div>
+  
+        <button type="button" class="editor-btn editor-btn-secondary" (click)="confirmarDimensiones()">
+          CONFIRMAR TAMAÑO
+        </button>
+        <p class="editor-warning" *ngIf="tablero && tablero.length > 0">Aplicar el tamaño borrará el terreno de este mapa.</p>
+      </section>
 
-      <div class="editor-dimensions">
-        <label class="editor-field">
-          <span>Columnas</span>
-          <input type="number" min="2" max="10" inputmode="numeric" [value]="inputColumnas"
-                 (change)="inputColumnas = +$any($event.target).value">
-        </label>
-        <label class="editor-field">
-          <span>Filas jugables</span>
-          <input type="number" min="2" max="5" inputmode="numeric" [value]="inputFilas"
-                 (change)="inputFilas = +$any($event.target).value">
-        </label>
-        <label class="editor-field">
-          <span>Vidas</span>
-          <input type="number" min="1" max="10" inputmode="numeric" [value]="maxVidas"
-                 (change)="maxVidas = +$any($event.target).value; vidasActuales = maxVidas;">
-        </label>
-      </div>
-
-      <button type="button" class="editor-btn editor-btn-secondary" (click)="aplicarDimensiones()">
-        APLICAR TAMAÑO
-      </button>
-      <p class="editor-warning">Aplicar el tamaño reinicia el mapa que estás editando.</p>
-    </section>
-
-    <section class="editor-section">
+    <section class="editor-section" *ngIf="dimensionesFijadas">
       <div class="editor-step compact">
         <span>2</span>
         <div>
@@ -297,12 +300,31 @@
         </div>
       </div>
 
+      
+      <div class="editor-vidas-box">
+        <h4>Salud del Ogro</h4>
+        <p>Define cuántos errores puede cometer.</p>
+        <label class="editor-field select-field">
+          <span>Vidas</span>
+          <select [value]="maxVidas" (change)="maxVidas = +$any($event.target).value; vidasActuales = maxVidas;">
+            <option *ngFor="let n of [1,2,3,4,5,6,7,8,9,10]" [value]="n">{{n}} Vidas</option>
+          </select>
+        </label>
+      </div>
+
       <div class="editor-tip">
         <strong>Cómo usarlo:</strong> coloca suelo antes de añadir rocas o cofres. El borrador elimina primero el objeto y después el terreno.
       </div>
     </section>
 
-    <footer class="editor-actions">
+
+      <div *ngIf="dimensionesFijadas" style="margin-top: 2rem;">
+        <button type="button" class="editor-btn" style="background: #a93226; color: white; border: 2px solid #e74c3c; width: 100%; margin-bottom: 1rem;" (click)="cambiarDimensiones()">
+          CAMBIAR TAMAÑO (BORRARÁ EL MAPA)
+        </button>
+      </div>
+      <footer class="editor-actions">
+
       <button type="button" class="editor-btn editor-btn-test" (click)="alternarModoJuego()">
         PROBAR ESTE MAPA
       </button>
@@ -317,6 +339,8 @@
 <button type="button" *ngIf="esModoProfesor && jugando" class="btn-detener-prueba" (click)="alternarModoJuego()">
   VOLVER A EDITAR
 </button>
+</app-layout-juego>
+
 
 <!-- MANUAL DEL PROGRAMADOR -->
 <div class="manual-overlay" *ngIf="mostrarManual" (click)="cerrarManual()">
@@ -363,7 +387,7 @@
               </div>
               <div class="item-estrella">
                 <div class="icono-estrella-manual" style="font-size: 1.5rem; text-shadow: 1px 1px 0 #000, 0 0 10px rgba(255,215,0,0.8);">&#11088;</div>
-                <p class="texto-manual"><strong>2. Vidas restantes:</strong> Tres corazones dan tres estrellas; dos dan dos y uno da una. Usar una poción o revelar una pista resta una estrella, sin bajar de una al ganar.</p>
+                <p class="texto-manual"><strong>2. Sin objetos:</strong> Gana otra estrella al terminar sin usar objetos del inventario, incluido el libro.</p>
               </div>
             </div>
           </ng-container>
@@ -416,7 +440,7 @@
             <div class="manual-lista-estrellas">
               <div class="item-estrella">
                 <div class="icono-estrella-manual" style="font-size: 1.5rem; text-shadow: 1px 1px 0 #000, 0 0 10px rgba(255,215,0,0.8);">&#11088;</div>
-                <p class="texto-manual"><strong>3. Sin pociones ni pistas:</strong> Conserva los tres corazones para obtener tres estrellas. Puedes escribir los comandos o usar las Tarjetas de Acción; ninguna de esas opciones penaliza.</p>
+                <p class="texto-manual"><strong>3. Solo consola:</strong> Gana la tercera estrella escribiendo los comandos en la consola sin usar Tarjetas de Acción. Perder vidas no quita esta estrella.</p>
               </div>
             </div>
             
@@ -473,7 +497,7 @@
             <div class="manual-lista-estrellas">
               <div class="item-estrella">
                 <div class="icono-estrella-manual" style="font-size: 1.5rem; text-shadow: 1px 1px 0 #000, 0 0 10px rgba(255,215,0,0.8);">&#11088;</div>
-                <p class="texto-manual"><strong>3. Sin pociones ni pistas:</strong> Conserva los tres corazones para obtener tres estrellas. Puedes escribir los comandos o usar las Tarjetas de Acción; ninguna de esas opciones penaliza.</p>
+                <p class="texto-manual"><strong>3. Solo consola:</strong> Gana la tercera estrella escribiendo los comandos en la consola sin usar Tarjetas de Acción. Perder vidas no quita esta estrella.</p>
               </div>
             </div>
             
@@ -501,4 +525,4 @@
   </div>
 </div>
 
-</div>
+

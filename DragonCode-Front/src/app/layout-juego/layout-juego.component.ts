@@ -156,7 +156,7 @@ export class LayoutJuegoComponent {
   }
 
   abandonarPartida() {
-    this.router.navigate(['/pantalla-principal']);
+    this.router.navigate([this.modoJuego === 'aventura' && !this.modoEdicion ? '/aventura' : '/pantalla-principal']);
   }
 
   // Puente: Activa la poción de clarividencia en la consola

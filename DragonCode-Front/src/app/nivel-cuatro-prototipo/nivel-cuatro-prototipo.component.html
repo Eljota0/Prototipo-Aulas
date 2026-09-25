@@ -1,3 +1,6 @@
+<app-victoria-aventura *ngIf="nivelCompletado && modoJuegoActual === 'aventura'"
+  [estrellas]="estrellas" [confirmado]="progresoGuardado"
+  [mensaje]="mensajeSincronizacion" (salir)="salir()" />
 <div class="nivel-dos-shell nivel-cuatro-shell" [class.nivel-cinco-shell]="esNivelCinco">
   <app-layout-juego class="juego-area"
     [configuracionTarjetas]="configuracionTarjetasActual"
@@ -18,12 +21,13 @@
     <section class="tablero-juego" [attr.aria-label]="esNivelCinco ? 'Fábrica minera de producción continua' : 'Fábrica minera de control de calidad'">
       <div class="hud-juego">
         <div class="vidas" aria-label="Vidas disponibles">
-          <span *ngFor="let vida of [1, 2, 3]" [class.perdida]="vida > vidas">♥</span>
+          <img *ngFor="let vida of [1, 2, 3]" class="icono-vida" [class.perdida]="vida > vidas"
+               src="assets/images/aventura/nivel1/terreno/vidas.png" alt=""
+               [attr.aria-label]="vida > vidas ? 'Vida perdida' : 'Vida disponible'">
         </div>
 
-        <div class="contador-reparacion" aria-label="Fases superadas">
-          <span class="icono-herramienta">◆</span>
-          <strong>{{ fasesSuperadas }} / {{ fases.length }}</strong>
+        <div class="contador-reparacion">
+          <strong>{{ faseActual.titulo }}</strong>
         </div>
 
         <div class="contador-fase">{{ faseActualIndice + 1 }} — {{ fases.length }}</div>
@@ -37,34 +41,35 @@
            [class.quemando]="estadoEscena === 'quemando'"
            [class.explosion]="estadoEscena === 'explosion'"
            [class.victoria]="estadoEscena === 'victoria'">
-        <div class="resplandor-fabrica"></div>
-        <div class="tuberias-fabrica" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="fabrica-escenario">
+        <div class="resplandor-fabrica" aria-hidden="true"></div>
+        <div class="brasas-fabrica" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
-        <img class="maquina-principal-fabrica"
-             [src]="spriteMaquinaPrincipal"
-             [alt]="esNivelCinco ? 'Motor goblin de producción continua' : 'Clasificador mecánico de materiales'">
+        <div class="maquina-principal-fabrica sprite-taller" role="img"
+             [attr.aria-label]="esNivelCinco ? 'Motor de madera de producción continua' : 'Clasificador mecánico de materiales'"></div>
 
         <div class="personaje-fabrica"
              [class.personaje-operaria]="esNivelCinco"
              [attr.aria-label]="nombrePersonajeFabrica + ' supervisando la fábrica'">
-          <img [src]="spritePersonajeFabrica" [alt]="nombrePersonajeFabrica">
+          <div class="personaje-sprite sprite-taller" role="img" [attr.aria-label]="nombrePersonajeFabrica"></div>
+          <div *ngIf="esNivelCinco" class="aprendiz-sprite sprite-taller" aria-hidden="true"></div>
           <span>{{ nombrePersonajeFabrica }}</span>
         </div>
 
         <div class="estaciones-fabrica" aria-label="Salidas de clasificación">
           <div class="estacion estacion-cofre" [class.activa]="estadoEscena === 'guardando'">
             <span>COFRE</span>
-            <img src="assets/images/aventura/fabrica/cofre-v2.png" alt="Cofre de diamantes">
+            <div class="estacion-sprite sprite-taller" role="img" aria-label="Cofre de diamantes"></div>
             <b>{{ diamantesGuardados }}</b>
           </div>
           <div class="estacion estacion-trituradora" [class.activa]="estadoEscena === 'destruyendo'">
             <span>TRITURADORA</span>
-            <img src="assets/images/aventura/fabrica/trituradora-v2.png" alt="Trituradora blindada">
+            <div class="estacion-sprite sprite-taller" role="img" aria-label="Trituradora blindada"></div>
             <b>{{ explosivosDestruidos }}</b>
           </div>
           <div class="estacion estacion-horno" [class.activa]="estadoEscena === 'quemando'">
             <span>HORNO</span>
-            <img src="assets/images/aventura/fabrica/horno-v2.png" alt="Horno de carbón">
+            <div class="estacion-sprite sprite-taller" role="img" aria-label="Horno de carbón"></div>
             <b>{{ carbonQuemado }}</b>
           </div>
         </div>
@@ -83,17 +88,15 @@
                  [class.quemado]="material.estado === 'quemado'"
                  [class.error]="material.estado === 'error'"
                  [attr.aria-label]="material.tipo === 'Carbon' ? 'Carbón' : material.tipo">
-              <img [src]="spriteMaterial(material.tipo)"
-                   [alt]="material.tipo === 'Carbon' ? 'Carbón' : material.tipo">
+              <div class="material-sprite sprite-taller" aria-hidden="true"></div>
             </div>
           </div>
         </div>
+        </div>
 
         <div class="mision-flotante" aria-live="polite">
-          <span class="mision-etapa">FASE {{ faseActualIndice + 1 }}/{{ fases.length }}</span>
           <div class="mision-contenido">
-            <small>{{ faseActual.concepto }}</small>
-            <strong>{{ faseActual.titulo }}</strong>
+            <small>{{ faseActual.concepto }} <span class="mision-progreso">◆ {{ fasesSuperadas }}/{{ fases.length }}</span></small>
             <p>{{ faseActual.objetivo }}</p>
           </div>
         </div>
@@ -101,7 +104,23 @@
     </section>
   </app-layout-juego>
 
-  <div class="modal-overlay" *ngIf="falloFase || gameOver">
+  <div class="modal-game-over" *ngIf="(falloFase || gameOver) && modoJuegoActual === 'aventura'" role="dialog" aria-modal="true" aria-label="Resultado de la misión">
+    <img src="assets/images/exprecionsedraco/lloro.png" class="draco-llorando" alt="Draco triste">
+    <h1>GAME OVER</h1>
+    <p class="subtitulo-derrota" *ngIf="gameOver">{{ esNivelCinco ? 'La producción se detuvo. Los duendes necesitan un bucle seguro para volver al trabajo.' : 'La fábrica tuvo que cerrar. Revisa las decisiones para clasificar los materiales con seguridad.' }}</p>
+    <p class="subtitulo-derrota">{{ bitacora }}</p>
+    <div class="errores-modal" *ngIf="errores.length">
+      <ng-container *ngFor="let error of errores"><p *ngIf="error !== bitacora">{{ error }}</p></ng-container>
+    </div>
+    <div class="botones-modal">
+      <button type="button" class="btn-verde" *ngIf="!gameOver" (click)="reintentarFase()">INTENTAR DE NUEVO</button>
+      <button type="button" class="btn-verde" *ngIf="gameOver" (click)="reiniciarNivel()">REINICIAR NIVEL</button>
+      <button type="button" class="btn-rojo" (click)="salir()">VOLVER AL MAPA</button>
+    </div>
+    <p class="vidas-restantes" *ngIf="!gameOver">Vidas restantes: {{ vidas }}</p>
+  </div>
+
+  <div class="modal-overlay" *ngIf="(falloFase || gameOver) && modoJuegoActual === 'aula'">
     <section class="modal-resultado">
       <span class="modal-icono">!</span>
       <h2>{{ gameOver ? (esNivelCinco ? 'DUENDES EN HUELGA' : 'FÁBRICA CLAUSURADA') : (estadoEscena === 'explosion' ? 'CIERRE DE EMERGENCIA' : (esNivelCinco ? 'BUCLE INTERRUMPIDO' : 'REGLA INCORRECTA')) }}</h2>
@@ -113,7 +132,7 @@
     </section>
   </div>
 
-  <div class="celebracion-overlay" *ngIf="nivelCompletado">
+  <div class="celebracion-overlay" *ngIf="nivelCompletado && modoJuegoActual === 'aula'">
     <div class="particulas-victoria" aria-hidden="true">
       <i *ngFor="let particula of [1,2,3,4,5,6,7,8,9,10,11,12]"></i>
     </div>

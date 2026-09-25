@@ -13,6 +13,8 @@
 
     <div class="mobile-divider" [attr.aria-hidden]="modoEdicion"></div>
 
+    <ng-content select="[slot=panel-editor]"></ng-content>
+
     <aside class="game-controls" [attr.aria-hidden]="modoEdicion" [attr.inert]="modoEdicion ? '' : null">
       <app-consola-codigo 
         class="console-section"

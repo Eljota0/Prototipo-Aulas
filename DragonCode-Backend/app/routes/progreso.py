@@ -18,7 +18,7 @@ from app.models.models import (
 )
 from app.schemas.progreso import GuardarProgresoRequest, ProgresoResponse
 from app.core.deps import get_current_user
-from app.core.scoring import calcular_calificacion, calcular_estrellas
+from app.core.scoring import calcular_calificacion, calcular_estrellas, calcular_estrellas_aventura
 from app.core.academic import ahora_utc, plazo_vencido
 from app.core.academic_closure import cerrar_retos_vencidos
 
@@ -116,6 +116,11 @@ def guardar_progreso(
             )
 
     estrellas_ganadas = calcular_estrellas(datos.vidas_restantes, datos.ayudas_usadas)
+    if not datos.aula_id and datos.tarjetas_usadas is not None and datos.vidas_perdidas is not None:
+        estrellas_ganadas = calcular_estrellas_aventura(
+            reto.orden, datos.ayudas_usadas, datos.tarjetas_usadas,
+            datos.vidas_perdidas, datos.intentos,
+        )
     calificacion_numerica = calcular_calificacion(datos.intentos)
 
     # El bloqueo evita descontar o premiar dos veces en solicitudes simultáneas.

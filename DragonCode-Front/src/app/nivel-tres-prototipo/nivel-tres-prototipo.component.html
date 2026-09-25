@@ -1,3 +1,6 @@
+<app-victoria-aventura *ngIf="nivelCompletado && modoJuegoActual === 'aventura'"
+  [estrellas]="estrellas" [confirmado]="progresoGuardado"
+  [mensaje]="mensajeSincronizacion" (salir)="salir()" />
 <div class="nivel-dos-shell nivel-tres-shell">
   <app-layout-juego class="juego-area"
     [configuracionTarjetas]="configuracionTarjetasActual"
@@ -18,7 +21,9 @@
     <section class="tablero-juego" aria-label="Batalla de las variables">
       <div class="hud-juego">
         <div class="vidas" aria-label="Vidas disponibles">
-          <span *ngFor="let vida of [1, 2, 3]" [class.perdida]="vida > vidas">♥</span>
+          <img *ngFor="let vida of [1, 2, 3]" class="icono-vida" [class.perdida]="vida > vidas"
+               src="assets/images/aventura/nivel1/terreno/vidas.png" alt=""
+               [attr.aria-label]="vida > vidas ? 'Vida perdida' : 'Vida disponible'">
         </div>
         
       </div>
@@ -95,7 +100,23 @@
     </section>
   </app-layout-juego>
 
-  <div class="modal-overlay" *ngIf="falloFase || gameOver">
+  <div class="modal-game-over" *ngIf="(falloFase || gameOver) && modoJuegoActual === 'aventura'" role="dialog" aria-modal="true" aria-label="Resultado de la misión">
+    <img src="assets/images/exprecionsedraco/lloro.png" class="draco-llorando" alt="Draco triste">
+    <h1>GAME OVER</h1>
+    <p class="subtitulo-derrota" *ngIf="gameOver">Draco se quedó sin energía para iluminar la cueva y completar sus hechizos.</p>
+    <p class="subtitulo-derrota">{{ bitacora }}</p>
+    <div class="errores-modal" *ngIf="errores.length">
+      <ng-container *ngFor="let error of errores"><p *ngIf="error !== bitacora">{{ error }}</p></ng-container>
+    </div>
+    <div class="botones-modal">
+      <button type="button" class="btn-verde" *ngIf="!gameOver" (click)="reintentarFase()">INTENTAR DE NUEVO</button>
+      <button type="button" class="btn-verde" *ngIf="gameOver" (click)="reiniciarNivel()">REINICIAR NIVEL</button>
+      <button type="button" class="btn-rojo" (click)="salir()">VOLVER AL MAPA</button>
+    </div>
+    <p class="vidas-restantes" *ngIf="!gameOver">Vidas restantes: {{ vidas }}</p>
+  </div>
+
+  <div class="modal-overlay" *ngIf="(falloFase || gameOver) && modoJuegoActual === 'aula'">
     <section class="modal-resultado">
       <span class="modal-icono">!</span>
       <h2>{{ gameOver ? 'SIN ENERGÍA MÁGICA' : tituloFallo }}</h2>
@@ -110,7 +131,7 @@
     </section>
   </div>
 
-  <div class="celebracion-overlay" *ngIf="nivelCompletado">
+  <div class="celebracion-overlay" *ngIf="nivelCompletado && modoJuegoActual === 'aula'">
     <div class="particulas-victoria" aria-hidden="true">
       <i *ngFor="let particula of [1,2,3,4,5,6,7,8,9,10,11,12]"></i>
     </div>

@@ -43,9 +43,12 @@ interface Rune {
 }
 
 interface WorldProgress {
-  level:  number;
-  name:   string;
-  stars:  number;   // 0-3 desde la BD
+  level: number;
+  name: string;
+  stars: number;
+  tema?: string;
+  descripcion?: string;
+  reglaEstrella3?: string;
 }
 
 type PlazoActividad = 'sin_limite' | '30_minutos' | '1_hora' | '24_horas' | '7_dias' | 'personalizado';
@@ -110,11 +113,23 @@ export class PantallaPrincipalComponent implements OnInit {
   isStarsModalOpen = false;
 
   // ── DATOS: Mundos y progreso de estrellas ────────────────────────
-  worldsProgress: WorldProgress[] = Array.from({ length: 5 }, (_, i) => ({
-    level: i + 1,
-    name:  `Mundo ${i + 1}`,
-    stars: 0
-  }));
+  worldsProgress: WorldProgress[] = Array.from({ length: 5 }, (_, i) => {
+    const reglasEstrella3 = [
+      'Resolver el nivel usando el camino óóptimo, sin colocar tarjetas/bloques adicionales innecesarios.',
+      'Superar el nivel al primer intento, sin ningún fallo.',
+      'Completar la cueva perfectamente, sin cometer errores ni perder vidas.',
+      'Clasificar los materiales sin cometer errores ni perder vidas.',
+      'Automatizar la fábrica sin cometer errores ni perder vidas.'
+    ];
+    return {
+      level: i + 1,
+      name:  NIVELES_DRAGONCODE[i].titulo,
+      tema:  NIVELES_DRAGONCODE[i].tema,
+      descripcion: NIVELES_DRAGONCODE[i].descripcion,
+      reglaEstrella3: reglasEstrella3[i],
+      stars: 0
+    };
+  });
 
   // ── ESTADO: Formulario de Creación (Parte 1) ─────────────────
   tituloReto         = '';
@@ -405,11 +420,20 @@ export class PantallaPrincipalComponent implements OnInit {
 
   /** Paso 2 → 3: Nivel seleccionado, ir a parámetros */
   siguientePaso2(): void {
-    if (this.parametrosReto.fases_seleccionadas!.length === 0) {
-      this.notificationService.show('Debes seleccionar al menos una fase.', 'error');
-      return;
-    }
     this.pasoCrearAula = 3;
+  }
+
+
+
+  clickNivelDirecto(nivelId: number): void {
+    this.nivelSeleccionado = nivelId;
+    this.parametrosReto.fases_seleccionadas = []; 
+    if (nivelId === 1) {
+      this.abrirEdicionAvanzada();
+    } else {
+      this.notificationService.show('Este nivel no tiene editor de mapas. Se usará el recorrido por defecto.', 'success');
+      this.siguientePaso2();
+    }
   }
 
   actividadDisponible(actividad: RetoPersonalizadoResponse): boolean {

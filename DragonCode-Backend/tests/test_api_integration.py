@@ -105,6 +105,42 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
                 "estrellas": {u.id: u.estrellas_totales for u in db.query(Usuario).all()},
             }
 
+    def test_estrellas_aventura_logros_saldo_y_repeticiones(self):
+        contexto = dict(aula_id=None, reto_personalizado_id=None,
+                        tarjetas_usadas=True, vidas_perdidas=0)
+        primero = self.entregar(ayudas_usadas=True, **contexto)
+        self.assertEqual(primero.status_code, 200, primero.text)
+        self.assertEqual(primero.json()['estrellas_obtenidas'], 1)
+        contexto['tarjetas_usadas'] = False
+        mejor = self.entregar(vidas_restantes=1, vidas_perdidas=2,
+                              **{k: v for k, v in contexto.items() if k != 'vidas_perdidas'})
+        self.assertEqual(mejor.json()['estrellas_obtenidas'], 3)
+        repetido = self.entregar(**contexto)
+        self.assertEqual(repetido.json()['estrellas_totales_usuario'], 3)
+        for nivel in range(2, 6):
+            # El primer intento desbloquea el siguiente; las tarjetas no penalizan.
+            resultado = self.entregar(reto_nivel_id=self.niveles[nivel],
+                                     **{**contexto, 'tarjetas_usadas': True})
+            self.assertEqual(resultado.status_code, 200, resultado.text)
+            self.assertEqual(resultado.json()['estrellas_obtenidas'], 3)
+            curado = self.entregar(reto_nivel_id=self.niveles[nivel],
+                                  ayudas_usadas=True, vidas_restantes=3, intentos=2,
+                                  **{**contexto, 'vidas_perdidas': 1})
+            self.assertEqual(curado.json()['estrellas_obtenidas'], 1)
+            self.assertEqual(curado.json()['estrellas_totales_usuario'], nivel * 3)
+
+    def test_aulas_conserva_rubrica_con_los_nuevos_campos(self):
+        entrega = self.entregar(vidas_restantes=1, tarjetas_usadas=False, vidas_perdidas=2)
+        self.assertEqual(entrega.status_code, 200, entrega.text)
+        self.assertEqual(entrega.json()['estrellas_obtenidas'], 1)
+        self.assertEqual(entrega.json()['estrellas_totales_usuario'], 0)
+
+    def test_valida_telemetria_de_estrellas(self):
+        for invalido in ({'tarjetas_usadas': 'false'}, {'vidas_perdidas': -1},
+                         {'vidas_perdidas': True}, {'vidas_perdidas': 1.5}):
+            with self.subTest(invalido=invalido):
+                self.assertEqual(self.entregar(**invalido).status_code, 422)
+
     def test_entrega_reporte_y_bloqueo_por_vencimiento(self):
         raiz = f"/api/aulas/{self.aula['id']}"
         niveles = self.client.get(f"{raiz}/niveles", headers=self.headers["jugador"])
@@ -656,21 +692,21 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
         contexto = {"aula_id": None, "reto_personalizado_id": None}
         for nivel in (1, 2):
             self.assertEqual(self.entregar(reto_nivel_id=self.niveles[nivel], **contexto).status_code, 200)
-        avatar_id = self.avatares["Drako Aprendiz"]
+        avatar_id = self.avatares["Draco Aprendiz"]
         compra = self.client.post(f"/api/usuarios/avatares/{avatar_id}/comprar", headers=self.headers["jugador"])
         self.assertEqual(compra.status_code, 200, compra.text)
-        self.assertEqual(compra.json()["estrellas_restantes"], 1)
+        self.assertEqual(compra.json()["estrellas_restantes"], 3)
         perfil = self.client.get("/api/usuarios/me", headers=self.headers["jugador"]).json()
         self.assertIsNone(perfil["avatar_actual_id"])
         self.assertIn(avatar_id, perfil["avatares_desbloqueados"])
         equipo = self.client.patch("/api/usuarios/avatares/equipar", headers=self.headers["jugador"], json={"avatar_id": avatar_id})
         self.assertEqual(equipo.status_code, 200, equipo.text)
         perfil = self.client.get("/api/usuarios/me", headers=self.headers["jugador"]).json()
-        self.assertEqual((perfil["avatar_actual_id"], perfil["estrellas_totales"]), (avatar_id, 1))
-        self.assertEqual(self.entregar(**contexto).json()["estrellas_totales_usuario"], 1)
+        self.assertEqual((perfil["avatar_actual_id"], perfil["estrellas_totales"]), (avatar_id, 3))
+        self.assertEqual(self.entregar(**contexto).json()["estrellas_totales_usuario"], 3)
         self.assertEqual(self.client.post(f"/api/usuarios/avatares/{avatar_id}/comprar", headers=self.headers["jugador"]).status_code, 400)
         with self.sessions() as db:
-            self.assertEqual(db.get(Usuario, self.ids["jugador"]).estrellas_totales, 1)
+            self.assertEqual(db.get(Usuario, self.ids["jugador"]).estrellas_totales, 3)
             self.assertEqual(db.get(Usuario, self.ids["ajeno"]).avatares_desbloqueados, [])
 
     def test_fallo_al_guardar_progreso_revierte_entrega_saldo_y_notificacion(self):
@@ -692,7 +728,7 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
         self.assertEqual(self.estado_guardado(), anterior)
 
     def test_fallo_al_comprar_avatar_no_desbloquea_ni_descuenta_estrellas(self):
-        avatar_id = self.avatares["Drako Aprendiz"]
+        avatar_id = self.avatares["Draco Aprendiz"]
         with self.sessions() as db:
             jugador = db.get(Usuario, self.ids["jugador"])
             jugador.estrellas_totales = 5
@@ -721,7 +757,7 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
             self.assertNotIn(avatar_id, jugador.avatares_desbloqueados or [])
 
     def test_fallo_al_equipar_avatar_conserva_el_avatar_anterior(self):
-        avatar_id = self.avatares["Drako Base"]
+        avatar_id = self.avatares["Draco Base"]
 
         def fallar_commit(_session):
             raise SQLAlchemyError("fallo simulado")
@@ -745,7 +781,7 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
             self.assertIsNone(db.get(Usuario, self.ids["jugador"]).avatar_actual_id)
 
     def test_saldo_insuficiente_no_compra_ni_equipa_un_avatar_de_pago(self):
-        avatar_id = self.avatares["Drako Capa"]
+        avatar_id = self.avatares["Draco Capa"]
         self.assertEqual(self.client.post(f"/api/usuarios/avatares/{avatar_id}/comprar", headers=self.headers["jugador"]).status_code, 400)
         self.assertEqual(self.client.patch("/api/usuarios/avatares/equipar", headers=self.headers["jugador"], json={"avatar_id": avatar_id}).status_code, 403)
         with self.sessions() as db:
@@ -755,7 +791,7 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
             self.assertIsNone(jugador.avatar_actual_id)
 
     def test_avatar_base_gratis_se_puede_equipar_sin_compra(self):
-        avatar_id = self.avatares["Drako Base"]
+        avatar_id = self.avatares["Draco Base"]
         catalogo = self.client.get("/api/usuarios/avatares", headers=self.headers["jugador"]).json()
         self.assertTrue(next(a for a in catalogo if a["id"] == avatar_id)["desbloqueado"])
         respuesta = self.client.patch("/api/usuarios/avatares/equipar", headers=self.headers["jugador"], json={"avatar_id": avatar_id})
@@ -763,7 +799,7 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/usuarios/me", headers=self.headers["jugador"]).json()["estrellas_totales"], 0)
 
     def test_avatares_inactivos_o_inexistentes_no_se_compran_ni_equipan(self):
-        avatar_id = self.avatares["Drako Base"]
+        avatar_id = self.avatares["Draco Base"]
         with self.sessions() as db:
             db.get(TiendaAvatar, avatar_id).activo = False
             db.commit()
@@ -783,7 +819,7 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
             {"avatar_id": "1"},
             {"avatar_id": 0},
             {"avatar_id": -1},
-            {"avatar_id": self.avatares["Drako Base"], "usuario_id": self.ids["ajeno"]},
+            {"avatar_id": self.avatares["Draco Base"], "usuario_id": self.ids["ajeno"]},
         ):
             with self.subTest(avatar=datos):
                 respuesta = self.client.patch(
@@ -800,10 +836,10 @@ class FlujoAcademicoIntegrationTests(unittest.TestCase):
 
     def test_catalogo_inicial_no_duplica_ni_sobrescribe_avatares(self):
         with self.sessions() as db:
-            avatar = db.get(TiendaAvatar, self.avatares["Drako Aprendiz"])
+            avatar = db.get(TiendaAvatar, self.avatares["Draco Aprendiz"])
             avatar.precio_estrellas = 7
             self.assertEqual(registrar_avatares_faltantes(db), 0)
-            self.assertEqual(db.query(TiendaAvatar).count(), 6)
+            self.assertEqual(db.query(TiendaAvatar).count(), 13)
             self.assertEqual(avatar.precio_estrellas, 7)
 
     def test_nota_academica_por_intentos_es_independiente_de_estrellas(self):

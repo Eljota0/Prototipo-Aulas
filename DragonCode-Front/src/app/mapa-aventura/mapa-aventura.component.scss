@@ -1137,3 +1137,27 @@
     box-shadow: inset 150px 0 150px -50px #17121E, inset -150px 0 150px -50px #17121E;
   }
 }
+
+/* ================================================================
+   TOOLTIP STATUS TEXT COLORS
+================================================================ */
+.tooltip-status {
+  font-family: 'TuFuentePixel', monospace;
+  font-size: 0.8rem;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-locked {
+  color: #ff6b6b; /* Redish for locked */
+}
+
+.status-completed {
+  color: #f1c40f; /* Gold for completed */
+}
+
+.status-available {
+  color: #82F4E0; /* Cyan for available */
+}

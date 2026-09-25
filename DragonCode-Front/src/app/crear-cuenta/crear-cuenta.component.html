@@ -1,4 +1,18 @@
-<main class="forge-layout">
+<!-- Se carga el sprite al abrir el formulario para tenerlo listo al registrarse. -->
+<div class="registro-loader" [class.registro-loader--activo]="isLoading"
+     [attr.aria-hidden]="!isLoading">
+  <div class="registro-loader__martillo" aria-hidden="true">
+    <img class="registro-loader__sprite" src="assets/images/crearcuenta/sprint-martillo.png"
+         alt="" width="2816" height="476" loading="eager">
+  </div>
+  @if (isLoading) {
+    <p class="registro-loader__texto" role="status" aria-live="polite">
+      FORJANDO TU CUENTA<span class="puntos-animados" aria-hidden="true"></span>
+    </p>
+  }
+</div>
+
+<main class="forge-layout" [attr.inert]="isLoading ? '' : null" [attr.aria-busy]="isLoading">
 
     <!-- --- SISTEMA DE PARTÍCULAS (CENIZAS) --- -->
   <div class="ashes-container">
@@ -22,7 +36,19 @@
   </div>
   
   <!-- Nuestro anfitrión (Z-Index Alto) -->
-  <img src="../../assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero1.png" alt="Draco Herrero" class="draco-sprite" fetchpriority="high" width="2788" height="1536">
+  <div class="draco-sprite" [class.draco-sprite--listo]="herreroSpriteListo"
+       role="img" aria-label="Draco Herrero">
+    <img class="draco-sprite__estatico"
+         src="assets/images/draco/dracoanimaciones/dracoherrero/dracoherrero1.png"
+         alt="" fetchpriority="high" width="2788" height="1536">
+    <div class="draco-sprite__ventana" aria-hidden="true">
+      <img #herreroSprite class="draco-sprite__hoja"
+           src="assets/images/draco/dracoanimaciones/dracoherrero/sprint-dracoherrero.png"
+           alt="" width="6902" height="1536" loading="eager" decoding="async"
+           (load)="prepararSpriteHerrero(herreroSprite)"
+           (error)="herreroSpriteListo = false">
+    </div>
+  </div>
 
   <!-- Contenedor Principal de la Tabla -->
   <section class="forge-table-wrapper">

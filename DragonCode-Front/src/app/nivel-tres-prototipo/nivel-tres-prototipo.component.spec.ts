@@ -172,14 +172,14 @@ describe('NivelTresPrototipoComponent', () => {
     componente.ngOnDestroy();
   });
 
-  it('puntúa con vidas/ayudas sin penalizar duración ni alterar nota por intentos', () => {
+  it('curarse no recupera la estrella de cero pérdidas ni altera la nota por intentos', () => {
     const componente = TestBed.createComponent(NivelTresPrototipoComponent).componentInstance;
     componente.vidas = 3;
     componente.ayudasUsadas = true;
     componente.tiempoSegundos = 900;
     componente.erroresAcumulados = 3;
     (componente as any).finalizarNivel();
-    expect(componente.estrellas).toBe(2);
+    expect(componente.estrellas).toBe(1);
     expect(componente.calificacion).toBe(6);
     expect(progresoDoble.guardarProgreso).not.toHaveBeenCalled();
     componente.ngOnDestroy();

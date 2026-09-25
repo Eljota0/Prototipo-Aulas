@@ -23,7 +23,7 @@ describe('TiendaComponent', () => {
     }));
     userService.getAvatares.and.returnValue(of([
       { id: 42, nombre_skin: 'Drako Base', url_imagen: 'assets/images/tienda/avatares/drakobase.png', precio_estrellas: 0, activo: true, desbloqueado: true },
-      { id: 81, nombre_skin: 'Drako Aprendiz', url_imagen: 'assets/images/tienda/avatares/drakoaprendiz.png', precio_estrellas: 5, activo: true, desbloqueado: false }
+      { id: 81, nombre_skin: 'Drako Aprendiz', url_imagen: 'assets/images/tienda/avatares/drakoaprendiz.png', precio_estrellas: 3, activo: true, desbloqueado: false }
     ]));
     userService.comprarAvatar.and.returnValue(of({ estrellas_restantes: 1 }));
     userService.equiparAvatar.and.returnValue(of({ avatar_id: 81 }));
@@ -50,7 +50,7 @@ describe('TiendaComponent', () => {
 
     expect(component.avatars.map(a => a.id)).toEqual([42, 81]);
     expect(tarjetas.length).toBe(2);
-    expect(fixture.nativeElement.textContent).toContain('Drako Base');
+    expect(fixture.nativeElement.textContent).toContain('Draco Base');
     expect(component.avatars[1].descripcion).toContain('conocimientos');
     expect(fixture.nativeElement.textContent).not.toContain('/ 30');
     expect(userService.getAvatares).toHaveBeenCalledTimes(1);
@@ -73,6 +73,23 @@ describe('TiendaComponent', () => {
     equipo.complete();
     expect(userService.updateProfileState).toHaveBeenCalledWith({ avatar_actual_id: 81 });
     expect(cambio).toHaveBeenCalledOnceWith(component.avatars[1].url_imagen);
+  });
+
+  it('describe las siete skins nuevas y conserva el precio e ID del servidor', () => {
+    const archivos = ['graduado', 'karate', 'payaso', 'sacerdote', 'samurai', 'superheroe', 'vaquero'];
+    userService.getAvatares.and.returnValue(of(archivos.map((archivo, i) => ({
+      id: 100 + i, nombre_skin: 'Drako ' + archivo,
+      url_imagen: `assets/images/tienda/avatares/nuevas_skins/drako${archivo}.png`,
+      precio_estrellas: 3, activo: true, desbloqueado: false
+    }))));
+    component.cargarCatalogo();
+    expect(component.avatars.length).toBe(7);
+    component.avatars.forEach((avatar, i) => {
+      expect(avatar.id).toBe(100 + i);
+      expect(avatar.nombre_skin.startsWith('Draco ')).toBeTrue();
+      expect(avatar.precio_estrellas).toBe(3);
+      expect(avatar.descripcion!.length).toBeGreaterThan(20);
+    });
   });
 
   it('doble clic o cerrar durante compra no duplica ni pierde la operación', () => {

@@ -13,6 +13,18 @@ import { NotificationService } from '../services/notification.service';
   styleUrl: './crear-cuenta.component.scss'
 })
 export class CrearCuentaComponent {
+  herreroSpriteListo = false;
+
+  async prepararSpriteHerrero(imagen: HTMLImageElement): Promise<void> {
+    try {
+      await imagen.decode();
+      this.herreroSpriteListo = true;
+    } catch {
+      // Si falla la decodificación, se conserva el fotograma estático.
+      this.herreroSpriteListo = false;
+    }
+  }
+
   // Campos del formulario
   nombre: string = '';
   apellido: string = '';
@@ -65,6 +77,8 @@ export class CrearCuentaComponent {
   }
 
   forjarCuenta(): void {
+    if (this.isLoading) return;
+
     // Limpiamos estados de error antes de validar
     this.errorRequisitos = false;
     this.errorCoincidencia = false;

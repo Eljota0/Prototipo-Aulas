@@ -12,6 +12,9 @@ class GuardarProgresoRequest(BaseModel):
     codigo_solucion: str = Field(min_length=1, max_length=20000, strict=True)
     vidas_restantes: int = Field(ge=1, le=3, strict=True)
     ayudas_usadas: bool = Field(strict=True)
+    # Opcionales para clientes anteriores; aulas mantiene su rúbrica original.
+    tarjetas_usadas: Optional[bool] = Field(default=None, strict=True)
+    vidas_perdidas: Optional[int] = Field(default=None, ge=0, le=1000, strict=True)
     aula_id:         Optional[str] = None
     reto_personalizado_id: Optional[str] = None
 

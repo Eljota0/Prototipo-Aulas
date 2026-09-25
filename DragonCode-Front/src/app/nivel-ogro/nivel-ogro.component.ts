@@ -100,6 +100,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   cofresRecolectados: number = 0;
   totalCofresNivel: number = 5;
   ayudasUsadas: boolean = false;
+  tarjetasUsadas = false;
   estrellasFinales: number = 0;
   arrayEstrellas: number[] = []; // Para iterar en el HTML
   efectoCuracionActivo: boolean = false;
@@ -148,6 +149,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   totalNiveles: number = 0;
   inputTotalNiveles: number = 3; // Valor por defecto
   editorInicializado: boolean = false;
+  dimensionesFijadas: boolean = false;
   esAulaActiva: boolean = false;
 
   jugando: boolean = false; // Controla si estamos probando el nivel
@@ -598,6 +600,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
 
     switch (tipo) {
       case 'libro':
+        if (!this.esAulaActiva && !this.esModoProfesor) this.ayudasUsadas = true;
         this.abrirManual();
         break;
 
@@ -652,7 +655,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   pintarCelda(celda: Casilla) {
-    if (!this.modoEditor) return;
+    if (!this.modoEditor || !this.dimensionesFijadas) return;
     if (celda.zona === 'superior') return;
     
     // LÓGICA DEL PINCEL CONTEXTUAL (META)
@@ -734,7 +737,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   cargarNivelEnPantalla(nuevoNivel: number) {
     // 1. Guardar el progreso del nivel actual (si ya estábamos editando uno)
-    if (this.nivelActual > 0 && this.tablero.length > 0) {
+    if (this.nivelActual > 0 && this.tablero.length > 0 && this.dimensionesFijadas) {
       this.borradoresNiveles[this.nivelActual] = {
         columnas: this.columnas,
         filasEditables: this.inputFilas,
@@ -752,9 +755,13 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
       this.inputFilas = borrador.filasEditables;
       this.columnas = borrador.columnas;
       this.tablero = JSON.parse(JSON.stringify(borrador.tablero));
+      this.dimensionesFijadas = true;
       this.forzarRecalculoFisico();
     } else {
-      this.aplicarDimensiones(); // Genera matriz nueva
+      this.dimensionesFijadas = false;
+      this.inputColumnas = 4;
+      this.inputFilas = 4;
+      this.aplicarDimensiones(); // Genera un tablero visual previo de 4x4
     }
   }
 
@@ -819,6 +826,15 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     
     // Abajo (por defecto)
     return ruta + `ogrocamino${this.ogro.frameActual}.png`;
+  }
+
+  confirmarDimensiones() {
+    this.aplicarDimensiones();
+    this.dimensionesFijadas = true;
+  }
+
+  cambiarDimensiones() {
+    this.dimensionesFijadas = false;
   }
 
   aplicarDimensiones() {
@@ -955,6 +971,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     this.tiempoInicioMs = 0;
     this.contadorIntentos = 0;
     this.ayudasUsadas = false;
+    this.tarjetasUsadas = false;
     
     // 1. Restauramos mapa
     if (this.tableroSnapshot && this.tableroSnapshot.length > 0) {
@@ -1161,6 +1178,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
             intentos: this.contadorIntentos,
             vidas_restantes: this.vidasActuales,
             ayudas_usadas: aulaActiva ? false : this.ayudasUsadas,
+            ...(!aulaActiva ? { tarjetas_usadas: this.tarjetasUsadas, vidas_perdidas: 0 } : {}),
             codigo_solucion: this.codigoUsuario,
             aula_id: aulaActiva ? aulaActiva : undefined,
             reto_personalizado_id: aulaActiva ? (this as any).retoActualId : undefined
@@ -1253,6 +1271,7 @@ export class NivelOgroComponent implements OnInit, AfterViewInit, OnDestroy {
     this.nivelActual = 1;
     this.vidasActuales = this.maxVidas;
     this.ayudasUsadas = false;
+    this.tarjetasUsadas = false;
     this.cofresRecolectados = 0;
     
     if (this.layoutJuego) {

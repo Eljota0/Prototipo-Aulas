@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { LayoutJuegoComponent } from '../layout-juego/layout-juego.component';
 import { NivelOgroComponent } from './nivel-ogro.component';
 
 describe('NivelOgroComponent: pantalla de victoria', () => {
@@ -35,6 +37,8 @@ describe('NivelOgroComponent: pantalla de victoria', () => {
     expect(document.activeElement).toBe(dialogo.querySelector('h1'));
     expect(dialogo.getAttribute('aria-labelledby')).toBe('titulo-victoria');
     expect(dialogo.textContent).toContain('¡ACTIVIDAD COMPLETADA!');
+    expect(dialogo.classList.contains('victoria-aventura')).toBeFalse();
+    expect(dialogo.querySelector('.victoria-felicitacion')).toBeNull();
   });
 
   it('conserva las estrellas, el mensaje y la acción del aula', () => {
@@ -48,28 +52,68 @@ describe('NivelOgroComponent: pantalla de victoria', () => {
     expect(volver).toHaveBeenCalledTimes(1);
   });
 
+  it('registra el uso de tarjetas del nivel 1 aunque después se borre la consola', () => {
+    component.esAulaActiva = false;
+    component.pantallaNivelCompletado = false;
+    fixture.detectChanges();
+    const layout = fixture.debugElement.query(By.directive(LayoutJuegoComponent)).componentInstance as LayoutJuegoComponent;
+    expect(component.tarjetasUsadas).toBeFalse();
+    layout.onUsarTarjeta.emit({ accion: 'ogro.caminarAbajo();' } as any);
+    component.codigoUsuario = '';
+    expect(component.tarjetasUsadas).toBeTrue();
+  });
+
   it('mantiene el título y la salida propios de una misión de aventura', () => {
     const salir = spyOn(component, 'salirMenuPrincipal');
     component.esAulaActiva = false;
     fixture.detectChanges();
     const dialogo: HTMLDialogElement = fixture.nativeElement.querySelector('.modal-victoria');
     expect(dialogo.textContent).toContain('¡MISIÓN COMPLETADA!');
+    expect(dialogo.classList.contains('victoria-aventura')).toBeTrue();
+    expect(dialogo.textContent).toContain('¡Felicidades! ¡Has completado la aventura!');
+    const limites = dialogo.getBoundingClientRect();
+    expect(limites.width).toBeCloseTo(window.innerWidth, 0);
+    expect(limites.height).toBeCloseTo(window.innerHeight, 0);
+    expect(getComputedStyle(dialogo).borderTopWidth).toBe('0px');
+    expect(dialogo.querySelectorAll('.victoria-estrella').length).toBe(3);
     const boton = dialogo.querySelector('button')!;
     expect(boton.textContent).toContain('SALIR DE LA MISIÓN');
     boton.click();
     expect(salir).toHaveBeenCalledTimes(1);
   });
 
+  it('no aplica la presentación de aventura al editor de mapas personalizados', () => {
+    component.esAulaActiva = false;
+    component.esModoProfesor = true;
+    fixture.detectChanges();
+    const dialogo: HTMLDialogElement = fixture.nativeElement.querySelector('.modal-victoria');
+    expect(dialogo.classList.contains('victoria-aventura')).toBeFalse();
+    expect(dialogo.querySelector('.victoria-felicitacion')).toBeNull();
+    expect(getComputedStyle(dialogo).borderTopWidth).toBe('4px');
+  });
+
+  it('conserva el aviso de guardado fallido en aventura sin anunciar una recompensa', () => {
+    component.esAulaActiva = false;
+    component.arrayEstrellas = [];
+    component.mensajePuntaje = 'Completaste el recorrido, pero no se confirmó el guardado.';
+    fixture.detectChanges();
+    const dialogo: HTMLDialogElement = fixture.nativeElement.querySelector('.modal-victoria');
+    expect(dialogo.querySelector('#mensaje-victoria')?.textContent).toBe(component.mensajePuntaje);
+    expect(dialogo.querySelector('.victoria-felicitacion')).toBeNull();
+    expect(dialogo.querySelector('.victoria-estrellas')).toBeNull();
+    expect(getComputedStyle(dialogo).overflowY).toBe('auto');
+  });
+
   for (const movil of [false, true]) {
-    it(`el manual explica estrellas sin penalizar tarjetas (móvil: ${movil})`, () => {
+    it(`el manual explica la estrella exclusiva de consola (móvil: ${movil})`, () => {
       component.pantallaNivelCompletado = false;
       component.mostrarManual = true;
       component.esMovil = movil;
       component.paginaActual = movil ? 5 : 4;
       fixture.detectChanges();
       const texto = fixture.nativeElement.querySelector('.manual-overlay').textContent;
-      expect(texto).toContain('ninguna de esas opciones penaliza');
-      expect(texto).toContain('Conserva los tres corazones');
+      expect(texto).toContain('sin usar Tarjetas de Acción');
+      expect(texto).toContain('Perder vidas no quita esta estrella');
       expect(texto).not.toContain('tipear cada línea a mano');
     });
   }

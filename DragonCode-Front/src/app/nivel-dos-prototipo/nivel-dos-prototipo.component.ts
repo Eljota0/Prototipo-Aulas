@@ -1,3 +1,4 @@
+import { VictoriaAventuraComponent } from '../victoria/victoria-aventura.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewChild, ChangeDetectorRef , HostListener} from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +17,7 @@ import {
 } from '../services/aulas.service';
 import { LoaderService } from '../services/loader.service';
 import { ProgresoService } from '../services/progreso.service';
-import { calcularEstrellas } from '../core/estrellas';
+import { calcularEstrellas, calcularEstrellasAventura } from '../core/estrellas';
 import nivel2Data from '../../assets/data/aventuraniveles/nivel-2.json';
 import { ConfiguracionNivelDos } from '../core/configuracion-niveles-aula';
 
@@ -78,7 +79,7 @@ interface DialogNode {
 @Component({
   selector: 'app-nivel-dos-prototipo',
   standalone: true,
-  imports: [CommonModule, FormsModule, LayoutJuegoComponent],
+  imports: [VictoriaAventuraComponent, CommonModule, FormsModule, LayoutJuegoComponent],
   templateUrl: './nivel-dos-prototipo.component.html',
   styleUrl: './nivel-dos-prototipo.component.scss'
 })
@@ -378,7 +379,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
   registrarAyudaUsada() { this.ayudaUsada = true; }
 
   manejarUsoTarjeta(tarjeta: TarjetaConfig): void {
-    if (this.faseActual.numero > 3) { this.ayudaUsada = true; return; }
+    if (this.faseActual.numero > 3) return;
 
     if (this.layoutJuego && this.layoutJuego.consola) {
       this.layoutJuego.consola.guardarEstadoPlantilla(this.plantillaActiva);
@@ -1081,7 +1082,8 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
     const intentos = this.intentosCalificables;
 
     this.calificacion = intentos <= 1 ? 10 : intentos <= 3 ? 8 : 6;
-    this.estrellas = calcularEstrellas(this.vidas, this.ayudaUsada);
+    this.estrellas = this.esActividadAula ? calcularEstrellas(this.vidas, this.ayudaUsada)
+      : calcularEstrellasAventura(2, this.ayudaUsada, false, this.erroresAcumulados, this.intentosCalificables);
     this.guardarProgreso();
   }
 
@@ -1216,6 +1218,7 @@ export class NivelDosPrototipoComponent implements OnInit, OnDestroy {
       intentos: this.intentosCalificables,
       vidas_restantes: this.vidas,
       ayudas_usadas: this.esActividadAula ? false : this.ayudaUsada,
+      ...(!this.esActividadAula ? { tarjetas_usadas: false, vidas_perdidas: this.erroresAcumulados } : {}),
       codigo_solucion: codigoSolucion,
       aula_id: this.aulaActualId,
       reto_personalizado_id: this.retoActualId
